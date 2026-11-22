@@ -6,42 +6,47 @@
   <meta name="theme-color" content="#090d1a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Son İstasyon v2 — 7/24 Gece Vardiyası</title>
+  <title>Son İstasyon v3.0 — 7/24 Gece Vardiyası</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./icon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <main class="phone-stage">
+  <main id="phoneStage" class="phone-stage">
     <div id="toastBanner" class="toast-banner hidden">Bilgi</div>
 
     <!-- AÇILIŞ EKRANI -->
     <section id="startScreen" class="start-screen">
       <div>
-        <div style="font-size: 11.5px; font-weight: 800; color: #fde68a; letter-spacing: 1.5px;">7/24 BÜFE • POMPA 4 • GİZEM</div>
+        <div style="font-size: 11px; font-weight: 800; color: #fde68a; letter-spacing: 1.4px;">7/24 BÜFE • KİMLİK • GİZLİ TELEFON • KAMERA</div>
         <h1 class="neon-logo">SON İSTASYON</h1>
-        <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">v2.0 Detaylı Sürüm — 3 Gece / 15 Müşteri</p>
+        <p style="font-size: 11.5px; color: #94a3b8; margin-top: 3px;">v3.0 Pro Sürüm — 25 Hikaye Karakteri + Sonsuz Vardiya</p>
       </div>
 
       <div class="boss-sms">
-        <h4 id="startNightTitle" style="font-size: 12.5px; color: #fde68a; margin-bottom: 4px;">📩 Patron (Cevdet Abi)</h4>
-        <p id="bossNoteText" style="font-size: 12.5px; line-height: 1.42; color: #e2e8f0;"></p>
+        <h4 id="startNightTitle" style="font-size: 12px; color: #fde68a; margin-bottom: 3px;">📩 Patron (Cevdet Abi)</h4>
+        <p id="bossNoteText" style="font-size: 12px; line-height: 1.38; color: #e2e8f0;"></p>
       </div>
 
-      <div style="text-align:left; font-size:12px; background:rgba(255,255,255,0.05); padding:11px; border-radius:12px; display:grid; gap:6px;">
-        <div>⛽ <strong>Pompa &amp; Tost:</strong> Benzini basılı tutarak tam tutarda durdur; tostu yakmadan yeşil bölgede al!</div>
-        <div>🟣 <strong>Mor Işık &amp; Kamera:</strong> Paranın sahte olup olmadığını kontrol et, <em>Arka Depo</em> kamerasını unutma!</div>
-        <div>📱 <strong>Şifreli Telefonlar:</strong> İpuçlarından 4 haneli şifreyi çözüp gizli mesajları yakala!</div>
+      <div style="text-align:left; font-size:11.5px; background:rgba(255,255,255,0.05); padding:10px; border-radius:11px; display:grid; gap:5px;">
+        <div>⛽ <strong>Zengin Seçenekler:</strong> Benzin/Mazot/LPG, 4 çeşit çay-kahve, 2 çeşit tost ve 4 market ürünü!</div>
+        <div>🪪 <strong>Kimlik &amp; Görsel Kamera:</strong> Ehliyeti ve aranan plakayı incele, elektrik kesilirse şalteri kaldır!</div>
+        <div>🤫 <strong>4 Farklı Karar:</strong> Satış Yap, mağdurları <em>Arka Odaya Sakla</em>, Kapıyı Kilitle ya da <em>112 Polis</em>!</div>
       </div>
 
       <div>
-        <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 6px; font-weight: 700;">BÖLÜM SEÇİMİ (HER GECE 5 MÜŞTERİ):</div>
-        <div class="night-select-row" style="margin-bottom: 10px;">
-          <button class="night-pill-btn active" data-night="0">1. Gece</button>
-          <button class="night-pill-btn" data-night="1">2. Gece</button>
-          <button class="night-pill-btn" data-night="2">3. Gece</button>
+        <div style="font-size: 10.5px; color: #cbd5e1; margin-bottom: 5px; font-weight: 700;">HİKAYE GECELERİ (HER GECE BAMBAŞKA 5 MÜŞTERİ):</div>
+        <div class="night-select-row">
+          <button class="night-pill-btn active" data-night="0">1.Gece</button>
+          <button class="night-pill-btn" data-night="1">2.Gece</button>
+          <button class="night-pill-btn" data-night="2">3.Gece</button>
+          <button class="night-pill-btn" data-night="3">4.Gece</button>
+          <button class="night-pill-btn" data-night="4">5.Gece</button>
         </div>
-        <button id="startShiftBtn" class="primary-btn" style="font-size: 15.5px; padding: 13px;">
+        <button id="endlessSelectBtn" class="endless-mode-btn">
+          ♾️ SONSUZ RASTGELE VARDİYA (Her Seferinde Yeni Müşteriler!)
+        </button>
+        <button id="startShiftBtn" class="primary-btn" style="font-size: 15px; padding: 12px; margin-top: 8px;">
           🌙 VARDİYAYI BAŞLAT
         </button>
       </div>
@@ -49,10 +54,10 @@
 
     <!-- ÜST HUD -->
     <header class="hud-bar">
-      <div class="hud-pill hud-night" id="nightBadge">Gece 1</div>
+      <div class="hud-pill hud-night" id="nightBadge">Gece 1/5</div>
       <div class="hud-pill hud-clock">🕒 <span id="clockText">00:15</span></div>
       <div class="hud-pill" id="customerCounter">1/5</div>
-      <div class="hud-pill hud-cash">💵 <span id="cashText">200</span> ₺</div>
+      <div class="hud-pill hud-cash">💵 <span id="cashText">240</span> ₺</div>
       <button id="muteBtn" class="icon-btn" title="Ses">🔊</button>
     </header>
 
@@ -73,17 +78,18 @@
           <span class="rec-dot"></span>
           <span id="cctvBtnLabel">KAMERA (2)</span>
         </button>
+        <button id="wantedBtn" class="scene-btn wanted-btn">
+          🎯 Arananlar
+        </button>
         <button id="cluesBtn" class="scene-btn clues-btn">
-          📋 Kanıtlar (<span id="clueCountText">0</span>/6)
+          🏅 Kanıt &amp; Rozet (<span id="clueCountText">0</span>)
         </button>
       </div>
 
       <div class="outside-lot">
         <div class="neon-canopy">SON İSTASYON • POMPA 04</div>
         <div id="pumpCarWrap" class="pump-car-wrap offscreen">
-          <div id="carMini" class="car-mini">
-            <div class="car-headlight"></div>
-          </div>
+          <div id="outsideCarSvgHolder"></div>
           <div class="pump-box">04</div>
         </div>
       </div>
@@ -100,10 +106,16 @@
       </div>
     </section>
 
-    <!-- DİYALOG SORULARI -->
-    <div id="questionRow" class="question-row"></div>
+    <!-- DİYALOG SORULARI + KİMLİK İSTE + ŞALTER -->
+    <div class="interaction-strip">
+      <div id="questionRow" class="question-row"></div>
+      <div class="tools-mini-row">
+        <button id="askIdBtn" class="mini-action-btn id-btn">🪪 Kimlik / Ehliyet İste</button>
+        <button id="breakerAlertBtn" class="mini-action-btn power-alert" style="display:none;">⚡ ŞALTER ATTI! AÇ!</button>
+      </div>
+    </div>
 
-    <!-- ORTA 3x2 İSTASYON TEZGÂHI -->
+    <!-- ORTA 3x2 ZENGİN TEZGÂH -->
     <section class="counter-zone">
       <div class="order-ticket">
         <span class="ticket-label">🧾 İSTEK FİŞİ:</span>
@@ -119,23 +131,23 @@
 
         <button id="btnCoffee" class="station-card">
           <span class="st-emoji">☕</span>
-          <span class="st-title">Kahve</span>
-          <span id="subCoffee" class="st-sub">İstenmedi</span>
+          <span class="st-title">Çay &amp; Kahve</span>
+          <span id="subCoffee" class="st-sub">4 Seçenek</span>
         </button>
 
         <button id="btnToast" class="station-card">
           <span class="st-emoji">🥪</span>
           <span class="st-title">Tost Izgara</span>
-          <span id="subToast" class="st-sub">İstenmedi</span>
+          <span id="subToast" class="st-sub">2 Seçenek</span>
           <div id="grillBarWrap" class="grill-bar-wrap">
             <div id="grillBarFill" class="grill-bar-fill"></div>
           </div>
         </button>
 
-        <button id="btnWater" class="station-card">
-          <span class="st-emoji">💧</span>
-          <span class="st-title">Soğuk Su</span>
-          <span id="subWater" class="st-sub">İstenmedi</span>
+        <button id="btnMarket" class="station-card">
+          <span class="st-emoji">🛒</span>
+          <span class="st-title">Market Rafı</span>
+          <span id="subMarket" class="st-sub">4 Ürün</span>
         </button>
 
         <button id="btnUv" class="station-card">
@@ -153,11 +165,15 @@
       </div>
     </section>
 
-    <!-- ALT KARAR ÇUBUĞU -->
+    <!-- ALT 4 SEÇENEKLİ KARAR ÇUBUĞU -->
     <footer class="decision-bar">
       <button id="btnServe" class="dec-btn btn-serve">
-        <span>✅ SATIŞI YAP</span>
-        <small id="serveSubText">Siparişi Ver</small>
+        <span>✅ SATIŞ YAP</span>
+        <small id="serveSubText">Teslim Et</small>
+      </button>
+      <button id="btnHide" class="dec-btn btn-hide">
+        <span>🤫 SAKLA</span>
+        <small>Arka Odaya Al</small>
       </button>
       <button id="btnLock" class="dec-btn btn-lock">
         <span>🔒 KİLİTLE</span>
@@ -169,52 +185,126 @@
       </button>
     </footer>
 
-    <!-- MODAL A: POMPA 4 BENZİN SAYACI -->
+    <!-- MODAL 1: POMPA 4 (3 YAKIT TÜRÜ + SAYACI BASILI TUT) -->
     <div id="fuelModal" class="overlay-modal hidden">
       <div class="modal-box">
-        <h3 style="font-size: 16px; font-weight: 900;">⛽ Pompa 4 Yakıt Sayacı</h3>
-        <p style="font-size: 12px; color: #cbd5e1; margin-top: 3px;">Butona basılı tutarak sayacı müşterinin istediği tutarda durdur!</p>
+        <h3 style="font-size: 15.5px; font-weight: 900;">⛽ Pompa 4 — Yakıt Türü &amp; Sayaç</h3>
+        <p style="font-size: 11.5px; color: #cbd5e1; margin-top: 2px;">Önce doğru yakıt tabancasını seç, sonra basılı tutarak hedef tutarda bırak:</p>
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px;">
+          <button class="choice-tile fuel-type-btn selected" data-ftype="benzin">🟢 Benzin</button>
+          <button class="choice-tile fuel-type-btn" data-ftype="mazot">⚫ Mazot</button>
+          <button class="choice-tile fuel-type-btn" data-ftype="lpg">🔵 LPG</button>
+        </div>
         <div class="pump-meter-screen">
           <div class="pump-digits"><span id="pumpCurrentVal">0</span> ₺</div>
-          <div class="pump-target-lbl">HEDEF TUTAR: <span id="pumpTargetVal">300</span> ₺</div>
+          <div style="font-size:11.5px; color:#fde68a; font-weight:800; margin-top:3px;">
+            İSTENEN: <span id="pumpTargetVal">300 ₺ Benzin</span>
+          </div>
         </div>
         <button id="holdPumpBtn" class="hold-pump-btn">⛽ POMPALA (BASILI TUT)</button>
         <button id="closeFuelBtn" class="secondary-btn">Kapat</button>
       </div>
     </div>
 
-    <!-- MODAL B: KAHVE SEÇİMİ -->
+    <!-- MODAL 2: SICAK İÇECEK BARI (4 SEÇENEK) -->
     <div id="coffeeModal" class="overlay-modal hidden">
       <div class="modal-box">
-        <h3 style="font-size: 16px; font-weight: 900; margin-bottom: 6px;">☕ Kahve Makinesi</h3>
-        <p style="font-size: 12.5px; color: #cbd5e1; margin-bottom: 12px;">Müşterinin istediği kahve türünü seç:</p>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-          <button id="brewSadeBtn" class="primary-btn" style="background:#78350f;">☕ Sade Kahve</button>
-          <button id="brewSutluBtn" class="primary-btn" style="background:#b45309;">🥛 Sütlü Kahve</button>
+        <h3 style="font-size: 15.5px; font-weight: 900;">☕ Sıcak İçecek Barı</h3>
+        <p style="font-size: 12px; color: #cbd5e1; margin-top: 3px;">Müşterinin istediği içeceği hazırla:</p>
+        <div class="choice-grid-2">
+          <button class="choice-tile drink-pick-btn" data-drink="cay">🫖 Demli Çay</button>
+          <button class="choice-tile drink-pick-btn" data-drink="turk">☕ Türk Kahvesi</button>
+          <button class="choice-tile drink-pick-btn" data-drink="sade">🥤 Sade Filtre</button>
+          <button class="choice-tile drink-pick-btn" data-drink="sutlu">🥛 Sütlü Latte</button>
         </div>
         <button id="closeCoffeeBtn" class="secondary-btn">İptal</button>
       </div>
     </div>
 
-    <!-- MODAL C: MOR IŞIK (SAHTE PARA KONTROLÜ) -->
+    <!-- MODAL 3: TOST SEÇİMİ (2 SEÇENEK) -->
+    <div id="toastModal" class="overlay-modal hidden">
+      <div class="modal-box">
+        <h3 style="font-size: 15.5px; font-weight: 900;">🥪 Tost Izgarası Seçimi</h3>
+        <p style="font-size: 12px; color: #cbd5e1; margin-top: 3px;">Izgaraya hangi tostu basacaksın? (Sonra çubuk yeşil olunca al!)</p>
+        <div class="choice-grid-2">
+          <button class="choice-tile toast-pick-btn" data-toast="kasarli">🧀 Kaşarlı Tost</button>
+          <button class="choice-tile toast-pick-btn" data-toast="sucuklu">🌶️ Sucuklu Tost</button>
+        </div>
+        <button id="closeToastBtn" class="secondary-btn">İptal</button>
+      </div>
+    </div>
+
+    <!-- MODAL 4: MARKET RAFI (4 SEÇENEK) -->
+    <div id="marketModal" class="overlay-modal hidden">
+      <div class="modal-box">
+        <h3 style="font-size: 15.5px; font-weight: 900;">🛒 Gece Marketi &amp; Oto Rafı</h3>
+        <p style="font-size: 12px; color: #cbd5e1; margin-top: 3px;">Raftan istenen ürünü seç:</p>
+        <div class="choice-grid-2">
+          <button class="choice-tile market-pick-btn" data-market="su">💧 Soğuk Su</button>
+          <button class="choice-tile market-pick-btn" data-market="enerji">⚡ Enerji İçeceği</button>
+          <button class="choice-tile market-pick-btn" data-market="cikolata">🍫 Fıstıklı Çikolata</button>
+          <button class="choice-tile market-pick-btn" data-market="yag">🛢️ Motor Yağı</button>
+        </div>
+        <button id="closeMarketBtn" class="secondary-btn">İptal</button>
+      </div>
+    </div>
+
+    <!-- MODAL 5: KİMLİK / EHLİYET KONTROLÜ -->
+    <div id="idModal" class="overlay-modal hidden">
+      <div class="modal-box">
+        <h3 style="font-size: 15.5px; font-weight: 900;">🪪 Sürücü Belgesi &amp; Kimlik Kontrolü</h3>
+        <div class="id-card-visual">
+          <div style="font-size:10px; font-weight:900; color:#0369a1; margin-bottom:6px;">TÜRKİYE CUMHURİYETİ SÜRÜCÜ BELGESİ</div>
+          <div class="id-row"><span>Ad Soyad:</span> <strong id="idFullName"></strong></div>
+          <div class="id-row"><span>Doğum Yılı:</span> <strong id="idBirthYear"></strong></div>
+          <div class="id-row"><span>Geçerlilik Tarihi:</span> <strong id="idValidUntil"></strong></div>
+          <div class="id-row"><span>Kayıtlı Plaka:</span> <strong id="idPlateMatch"></strong></div>
+        </div>
+        <p style="font-size: 11.5px; color: #fde68a; margin-bottom: 10px;">
+          💡 İpucu: Plaka dışarıdaki araçla uyuşuyor mu ve geçerlilik tarihi dolmuş mu kontrol et! Doğum yılı şifreli telefonlarda da işe yarayabilir.
+        </p>
+        <button id="closeIdBtn" class="primary-btn">Kimliği Geri Ver</button>
+      </div>
+    </div>
+
+    <!-- MODAL 6: ARANANLAR BÜLTENİ -->
+    <div id="wantedModal" class="overlay-modal hidden">
+      <div class="modal-box" style="border-color:#ef4444;">
+        <span class="stamp-badge stamp-bad">🚨 EMNİYET GECE BÜLTENİ</span>
+        <h3 id="wantedTitle" style="font-size:16px; font-weight:900; color:#fecaca; margin-bottom:6px;"></h3>
+        <p id="wantedDesc" style="font-size:12.5px; line-height:1.45; color:#e2e8f0; margin-bottom:12px;"></p>
+        <button id="closeWantedBtn" class="primary-btn">Anlaşıldı</button>
+      </div>
+    </div>
+
+    <!-- MODAL 7: ELEKTRİK ŞALTER KUTUSU (SÜRPRİZ GECE OLAYI!) -->
+    <div id="breakerModal" class="overlay-modal hidden">
+      <div class="modal-box" style="border-color:#facc15;">
+        <h3 style="font-size: 16px; font-weight: 900; color: #fde68a;">⚡ SİGORTA ATTI! Şalter Kutusu</h3>
+        <p style="font-size: 12px; color: #cbd5e1; margin-top: 3px;">İstasyon karanlığa gömüldü! Tüm kırmızı sigortaları dokunarak YEŞİL (AÇIK) konuma getir:</p>
+        <div id="breakerGrid" class="breaker-grid"></div>
+        <button id="closeBreakerBtn" class="secondary-btn">Kapat</button>
+      </div>
+    </div>
+
+    <!-- MODAL 8: MOR IŞIK -->
     <div id="uvModal" class="overlay-modal hidden">
       <div class="modal-box">
-        <h3 style="font-size: 16px; font-weight: 900;">🟣 Mor Işık (Banknot Kontrolü)</h3>
-        <p style="font-size: 12px; color: #cbd5e1; margin-top: 3px;">Müşterinin tezgâha bıraktığı nakit parayı mor ışıkla incele:</p>
+        <h3 style="font-size: 15.5px; font-weight: 900;">🟣 Mor Işık (Sahte Para Kontrolü)</h3>
         <div id="banknoteCard" class="banknote-card">
-          <div style="display:flex; justify-content:space-between; font-weight:900; font-size:18px;">
+          <div style="display:flex; justify-content:space-between; font-weight:900; font-size:17px;">
             <span id="billDenomText">200 ₺</span>
-            <span style="font-size:11px;" id="billSerialText">SERİ: TR-884192</span>
+            <span style="font-size:11px;" id="billSerialText">SERİ</span>
           </div>
-          <div style="font-size:11px; margin-top:4px;">TÜRKİYE CUMHURİYET MERKEZ BANKASI</div>
-          <div id="uvSecretStrip" class="uv-secret-strip uv-real">200 ₺ ORİJİNAL ŞERİT ✓</div>
+          <div style="font-size:10.5px; margin-top:3px;">TÜRKİYE CUMHURİYET MERKEZ BANKASI</div>
+          <div id="uvSecretStrip" class="uv-secret-strip uv-real"></div>
         </div>
         <button id="toggleUvBeamBtn" class="primary-btn" style="background:#7e22ce;">🔦 MOR IŞIĞI AÇ / KAPAT</button>
         <button id="closeUvBtn" class="secondary-btn">Kasaya Dön</button>
       </div>
     </div>
 
-    <!-- MODAL D: ÇİFT KAMERALI GÜVENLİK MONİTÖRÜ -->
+    <!-- MODAL 9: GÖRSEL ÇİFT GÜVENLİK KAMERASI -->
     <div id="cctvModal" class="overlay-modal hidden">
       <div class="cctv-frame">
         <div class="cam-tabs">
@@ -223,16 +313,13 @@
         </div>
 
         <div id="cam1View">
-          <div style="font-size: 12px; margin-bottom: 4px;">ARAÇ: <strong id="cctvCarType"></strong></div>
-          <div class="plate-box">
-            <span class="plate-tr">TR</span>
-            <span id="cctvPlate" class="plate-num">52 TR 618</span>
-          </div>
+          <div id="cam1SvgBox"></div>
+          <div style="font-size: 11.5px; margin-bottom: 4px;">ARAÇ: <strong id="cctvCarType"></strong> • PLAKA: <strong id="cctvPlate"></strong></div>
           <div id="cctvNote" class="cctv-note"></div>
         </div>
 
         <div id="cam2View" style="display:none;">
-          <div style="font-size: 12px; margin-bottom: 6px;">KONUM: <strong>ARKA DEPO VE KASA KAPISI</strong></div>
+          <div id="cam2SvgBox"></div>
           <div id="depotNoteBox" class="cctv-note"></div>
           <button id="triggerAlarmBtn" class="primary-btn" style="background:#dc2626; margin-bottom:8px; display:none;">
             🔔 SPOT IŞIĞI VE DEPO ALARMINI ÇAL!
@@ -243,73 +330,80 @@
       </div>
     </div>
 
-    <!-- MODAL E: ŞARJDAKİ TELEFON & 4 HANELİ ŞİFRE -->
+    <!-- MODAL 10: ŞARJDAKİ TELEFON + ŞÜPHE BARI -->
     <div id="phoneModal" class="overlay-modal hidden">
       <div id="phoneFrame" class="lockscreen-phone">
-        <div class="phone-notch"></div>
-        <div id="phoneClock" style="text-align:center; font-size:28px; font-weight:800;">01:10</div>
-        <div id="phoneOwner" style="text-align:center; font-size:11px; color:#cbd5e1; margin-bottom:10px;">Şarj Oluyor ⚡</div>
+        <div class="suspicion-wrap">
+          <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:800; color:#fde68a;">
+            <span>👀 Müşteri Şüphesi</span>
+            <span id="suspicionPct">0%</span>
+          </div>
+          <div class="suspicion-bar-bg"><div id="suspicionFill" class="suspicion-bar-fill"></div></div>
+        </div>
 
-        <!-- ŞİFRELİ GÖRÜNÜM -->
+        <div id="phoneClock" style="text-align:center; font-size:25px; font-weight:800;">01:10</div>
+        <div id="phoneOwner" style="text-align:center; font-size:10.5px; color:#cbd5e1; margin-bottom:8px;">Şarjda ⚡</div>
+
         <div id="pinLockSection" style="display:none;">
-          <div style="font-size:11.5px; text-align:center; color:#fde68a; background:rgba(0,0,0,0.35); padding:7px; border-radius:9px;" id="pinHintText"></div>
+          <div style="font-size:11px; text-align:center; color:#fde68a; background:rgba(0,0,0,0.35); padding:6px; border-radius:8px;" id="pinHintText"></div>
           <div id="pinDots" class="pin-dots">
             <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
           </div>
           <div id="pinPad" class="pin-pad"></div>
-          <button id="revealPinBtn" class="secondary-btn" style="font-size:11px; background:rgba(255,255,255,0.12);">🔍 Şifreyi Çözemedim (İpucu Aç)</button>
+          <button id="revealPinBtn" class="secondary-btn" style="font-size:10.5px; background:rgba(255,255,255,0.12);">🔍 Şifreyi Göster (İpucu)</button>
         </div>
 
-        <!-- AÇIK BİLDİRİMLER -->
         <div id="notifList"></div>
-
-        <button id="closePhoneBtn" class="secondary-btn">TELEFONU TEZGÂHA BIRAK</button>
+        <button id="closePhoneBtn" class="secondary-btn">TELEFONU BIRAK</button>
       </div>
     </div>
 
-    <!-- MODAL F: KANIT PANOSU -->
+    <!-- MODAL 11: KANIT PANOSU VE BAŞARIM ROZETLERİ -->
     <div id="cluesModal" class="overlay-modal hidden">
       <div class="modal-box">
-        <h3 style="font-size: 16px; font-weight: 900; color: #fde68a; margin-bottom: 8px;">📋 Dedektif Kanıt Panosu</h3>
-        <div id="cluesListContainer" style="display:grid; gap:8px; margin-bottom:12px;"></div>
-        <button id="closeCluesBtn" class="primary-btn">Panoyu Kapat</button>
+        <h3 style="font-size: 15.5px; font-weight: 900; color: #fde68a; margin-bottom: 6px;">🏅 Rozetlerim &amp; Kanıt Panosu</h3>
+        <div id="badgesListContainer" style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;"></div>
+        <h4 style="font-size: 13px; color: #93c5fd; margin-bottom: 6px;">📋 Hikaye Kanıtları</h4>
+        <div id="cluesListContainer" style="display:grid; gap:6px; margin-bottom:10px;"></div>
+        <button id="closeCluesBtn" class="primary-btn">Kapat</button>
       </div>
     </div>
 
-    <!-- MODAL G: MÜŞTERİ SONUÇ KARTI -->
+    <!-- MODAL 12: MÜŞTERİ SONUÇ KARTI -->
     <div id="outcomeModal" class="overlay-modal hidden">
       <div class="modal-box">
         <span id="outcomeBadge" class="stamp-badge stamp-good">DOĞRU KARAR</span>
-        <h3 id="outcomeTitle" style="font-size:17px; font-weight:900; margin-bottom:7px;"></h3>
-        <p id="outcomeDesc" style="font-size:13px; line-height:1.45; color:#cbd5e1; margin-bottom:14px;"></p>
-        <button id="nextCustomerBtn" class="primary-btn">SIRADAKİ MÜŞTERİYİ BEKLE ➔</button>
+        <h3 id="outcomeTitle" style="font-size:16.5px; font-weight:900; margin-bottom:6px;"></h3>
+        <p id="outcomeDesc" style="font-size:12.5px; line-height:1.42; color:#cbd5e1; margin-bottom:12px;"></p>
+        <button id="nextCustomerBtn" class="primary-btn">SIRADAKİ MÜŞTERİ ➔</button>
       </div>
     </div>
 
-    <!-- MODAL H: GECE SONU GAZETESİ & İSTASYON GELİŞTİRME DÜKKÂNI -->
+    <!-- MODAL 13: GECE SONU GAZETESİ & 6 EKİPMANLI DÜKKÂN -->
     <div id="nightEndModal" class="overlay-modal hidden">
       <div class="modal-box">
-        <div style="background:#f5efe0; color:#1c1917; border:2.5px solid #090d1a; border-radius:11px; padding:12px; margin-bottom:12px;">
-          <div style="font-size:9.5px; font-weight:900; text-align:center; border-bottom:2px solid #1c1917; padding-bottom:4px; margin-bottom:6px;">
+        <div style="background:#f5efe0; color:#1c1917; border:2.5px solid #090d1a; border-radius:10px; padding:10px; margin-bottom:10px;">
+          <div style="font-size:9px; font-weight:900; text-align:center; border-bottom:2px solid #1c1917; padding-bottom:3px; margin-bottom:5px;">
             KASABA EKSPRES • SABAH 06:00 BASKISI
           </div>
-          <h3 id="paperHeadline" style="font-size:14.5px; font-weight:900; color:#991b1b; margin-bottom:5px;"></h3>
-          <p id="paperSummary" style="font-size:12px; line-height:1.4;"></p>
+          <h3 id="paperHeadline" style="font-size:14px; font-weight:900; color:#991b1b; margin-bottom:4px;"></h3>
+          <p id="paperSummary" style="font-size:11.5px; line-height:1.38;"></p>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <strong style="font-size:13.5px; color:#fde68a;">🛠️ İstasyon Geliştirme</strong>
-          <span style="font-size:12.5px; font-weight:900; color:#4ade80;">Kasa: <span id="shopCashText">0</span> ₺</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <strong style="font-size:13px; color:#fde68a;">🛠️ İstasyon Geliştirme (6 Ekipman)</strong>
+          <span style="font-size:12px; font-weight:900; color:#4ade80;">Kasa: <span id="shopCashText">0</span> ₺</span>
         </div>
-        <div id="shopListContainer" style="margin-bottom:12px;"></div>
+        <div id="shopListContainer" style="margin-bottom:10px;"></div>
 
-        <button id="nextNightBtn" class="primary-btn">🌙 SIRADAKİ GECEYE GEÇ ➔</button>
+        <button id="nextNightBtn" class="primary-btn">🌙 SIRADAKİ VARDİYAYA GEÇ ➔</button>
       </div>
     </div>
   </main>
 
   <script src="./audio.js"></script>
-  <script src="./portraits.js"></script>
+  <script src="./visuals.js"></script>
+  <script src="./catalog.js"></script>
   <script src="./story.js"></script>
   <script src="./game.js"></script>
 </body>
