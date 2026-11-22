@@ -1,0 +1,19 @@
+{
+  "name": "Son İstasyon — Gece Vardiyası",
+  "short_name": "Son İstasyon",
+  "description": "Issız bir 7/24 gece benzinliğinde büfe işlet, şarjdaki telefonların sırlarını yakala ve doğru kararı ver.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090d1a",
+  "theme_color": "#090d1a",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
