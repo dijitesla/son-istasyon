@@ -992,3 +992,180 @@ window.GAME_NIGHTS = [
     ]
   }
 ];
+
+
+// ============================================================================
+// v4.0 HİKAYE ZENGİNLEŞTİRME KATMANI
+// (Bagaj Feneri, Köpek Duman Sezgisi, Sabit Hat Telefonu, Veresiye & Para Üstü, Fotoğraf Galerisi)
+// ============================================================================
+(function enrichStoryV4() {
+  const threatIds = new Set([
+    "n1_3", "n1_4", "n1_5",
+    "n2_3", "n2_5",
+    "n3_3", "n3_5",
+    "n4_3", "n4_5",
+    "n5_3", "n5_5"
+  ]);
+
+  const trunkMap = {
+    n1_1: { type: "clean_tools", label: "📦 Fındık Çuvalları ve Kriko (Temiz)", suspicious: false },
+    n1_2: { type: "clean_tools", label: "🧳 Aceleyle Toplanmış Kıyafet Valizi (Temiz)", suspicious: false },
+    n1_3: { type: "fake_money", label: "🚨 SAHTE 200 TL BASKI KALIPLARI!", suspicious: true },
+    n1_4: { type: "ropes", label: "🚨 ŞÜPHELİ HALAT VE KIRIK TELEFON!", suspicious: true },
+    n1_5: { type: "vest_evidence", label: "🚨 EMRE'NİN YELEĞİ VE DEMİR LEVYE!", suspicious: true },
+
+    n2_1: { type: "kitten", label: "🐱 Yağmurdan Kurtarılmış Yavru Kedi! (Temiz)", suspicious: false },
+    n2_3: { type: "stolen_plates", label: "🚨 SAHTE MÜFETTİŞ DOSYALARI VE PLAKA!", suspicious: true },
+    n2_4: { type: "clean_tools", label: "🎸 Plak Çantası ve Yedek Kablolar (Temiz)", suspicious: false },
+    n2_5: { type: "ropes", label: "🚨 OKSİJEN KAYNAĞI VE BAĞLAMA İPLERİ!", suspicious: true },
+
+    n3_1: { type: "clean_tools", label: "🧰 Taksi İlk Yardım Çantası (Temiz)", suspicious: false },
+    n3_2: { type: "kitten", label: "🐱 Gelin Çiçeği ve Küçük Kedi Sepeti (Temiz)", suspicious: false },
+    n3_3: { type: "fake_money", label: "🚨 FOTOKOPİ SAHTE PARA DESTELERİ!", suspicious: true },
+    n3_4: { type: "clean_tools", label: "📁 Savcılığa Verilecek Muhasebe Belgeleri (Temiz)", suspicious: false },
+    n3_5: { type: "stolen_plates", label: "🚨 ÇALINTI PLAKALAR VE SUSTURUCU KUTUSU!", suspicious: true },
+
+    n4_1: { type: "clean_tools", label: "🧰 Askeri Kamp Çantası ve Harita (Temiz)", suspicious: false },
+    n4_2: { type: "clean_tools", label: "💻 Sunucu Kasası ve Kablo Çantası (Temiz)", suspicious: false },
+    n4_3: { type: "fake_money", label: "🚨 KAÇAK KAZI DEDEKTÖRÜ VE SAHTE PARA!", suspicious: true },
+    n4_5: { type: "ropes", label: "🚨 SEDYE YOK! YERİNDE HALAT VE BANT VAR!", suspicious: true },
+
+    n5_1: { type: "clean_tools", label: "📷 Basın Kamerası ve Tripod (Temiz)", suspicious: false },
+    n5_2: { type: "clean_tools", label: "🧳 Yolcu Valizleri (Temiz)", suspicious: false },
+    n5_3: { type: "fake_money", label: "🚨 SAHTE RÜŞVET DESTELERİ!", suspicious: true },
+    n5_5: { type: "gold_case", label: "🚨 POMPA 4 ZULASI İÇİN BOŞ ÇELİK ALTIN ÇANTASI!", suspicious: true }
+  };
+
+  const landlineMap = {
+    n1_3: {
+      caller: "Telefon Dolandırıcısı (Sahte Patron)",
+      text: "Alo genç! Ben Cevdet Abinin ortağıyım, kasadan 150 TL ayırıp hemen dışarıdaki kuryeye teslim et!",
+      isScam: true
+    },
+    n1_5: {
+      caller: "155 Polis Haber Merkezi",
+      text: "Son İstasyon dikkat! Sonu 404 plakalı araç istasyonunuzda sinyal verdi! Bagajı fenerle kontrol edip hemen 112'ye basın!",
+      isScam: false
+    },
+    n2_3: {
+      caller: "İlçe Emniyet Nöbetçi Amirliği",
+      text: "İyi geceler, bu gece bölgemizde resmi teftiş YOKTUR. Kendini müfettiş tanıtan biri gelirse kimliğine bakın ve 112'ye bildirin!",
+      isScam: false
+    },
+    n3_1: {
+      caller: "Mahmut Abinin Eşi (Sabit Hat)",
+      text: "İyi geceler evladım, bizim bey sabaha kadar direksiyon sallıyor, çayını demli ver de uyuklamasın olur mu?",
+      isScam: false
+    },
+    n3_3: {
+      caller: "Sahte Banka Görevlisi (Dolandırıcı)",
+      text: "İyi geceler, yazar kasa güncellemesi için kasadaki 150 TL'yi ayırmanız gerekiyor, onaylıyor musunuz?",
+      isScam: true
+    },
+    n4_5: {
+      caller: "Devlet Hastanesi Başhekimliği",
+      text: "ACİL UYARI! 34 KZG 112 plakalı ambulans hastanemize ait DEĞİLDİR! Sakın yaralı teslim etmeyin!",
+      isScam: false
+    },
+    n5_2: {
+      caller: "Dolandırıcı Hat",
+      text: "Alo kardeşim, ben otobüs firması müdürüyüm, kaptandan para alma kasadan 150 TL iade et!",
+      isScam: true
+    },
+    n5_5: {
+      caller: "Özel Harekat Komiseri",
+      text: "Evlat sakın panik yapma, tüm istasyonu sardık! Kuzgun'un bagajını ve telefonunu belgelediğin an 112 butonuna bas, baskını başlatıyoruz!",
+      isScam: false
+    }
+  };
+
+  const creditCustomers = {
+    n2_2: { asksCredit: true, creditHonest: true, creditAmount: 135, note: "Abi pos cihazım bozuldu, cüzdan da dükkânda kaldı! Veresiye yazsan yarın gece iki katıyla bıraksam?" },
+    n4_2: { asksCredit: true, creditHonest: true, creditAmount: 150, note: "Abi öğrenci kartımın limiti gece kilitlenmiş ya... Veresiye defterine yazsan yarın burs yatınca 2 katı ödesem?" },
+    n4_3: { asksCredit: true, creditHonest: false, creditAmount: 155, note: "Yeğenim istersen veresiye de yazabilirsin, yarın uğrar fazlasıyla veririm hehe!" }
+  };
+
+  const galleryMap = {
+    n1_2: [
+      { theme: "car", caption: "Bora'nın evin önünde bekleyen gri spor arabası" }
+    ],
+    n1_5: [
+      { theme: "hatch", caption: "Pompa 4'ün altındaki gizli kapağın işaretli fotoğrafı!" }
+    ],
+    n2_5: [
+      { theme: "hatch", caption: "Eski maden deposu ve Pompa 4 tünel krokisi" }
+    ],
+    n3_2: [
+      { theme: "car", caption: "Ablamın gönderdiği güvenli buluşma konumu" }
+    ],
+    n3_4: [
+      { theme: "ledger", caption: "Kuzgun'un gizli defteri: Plaka 06 KZG 001 • Kod 4004!" }
+    ],
+    n5_3: [
+      { theme: "pier", caption: "Sabah 06:00 kaçış gemisinin liman fotoğrafı" }
+    ],
+    n5_5: [
+      { theme: "hatch", caption: "Pompa 4 altındaki altın çantalarının son görüntüsü" },
+      { theme: "pier", caption: "06:00'da kalkacak kaçak kargo gemisi" }
+    ]
+  };
+
+  window.GAME_NIGHTS.forEach((night) => {
+    night.customers.forEach((c) => {
+      c.isThreat = threatIds.has(c.id);
+
+      if (c.car.shape !== "walk" && c.car.shape !== "moto") {
+        c.trunkData = trunkMap[c.id] || {
+          type: "clean_tools",
+          label: "🧰 Yedek Lastik ve Çanta (Temiz)",
+          suspicious: false
+        };
+      } else {
+        c.trunkData = null;
+      }
+
+      c.landlineCall = landlineMap[c.id] || null;
+
+      const cred = creditCustomers[c.id];
+      const billCost = c.reward || 140;
+      const paidWith = billCost <= 160 ? 200 : 500;
+
+      c.payment = {
+        billCost,
+        paidWith,
+        asksCredit: cred ? cred.asksCredit : false,
+        creditHonest: cred ? cred.creditHonest : false,
+        creditAmount: cred ? cred.creditAmount : billCost
+      };
+
+      // Nakit banknot kupürünü paidWith ile eşitle
+      c.cashBill.denom = paidWith;
+      if (!c.cashBill.fake) {
+        c.cashBill.uvText = `${paidWith} ₺ ORİJİNAL GÜVENLİK ŞERİDİ ✓`;
+      }
+
+      if (cred) {
+        c.greeting += ` (${cred.note})`;
+        c.outcomes.credit = cred.creditHonest
+          ? {
+              correct: true,
+              badge: "ESNAF GÜVENİ!",
+              title: `${c.name} Veresiye Defterine Yazıldı!`,
+              desc: "Zor durumdaki dürüst müşteriye güvendin. Bir sonraki gece başında borcunu 2 KATIYLA ödeyecek!"
+            }
+          : {
+              correct: false,
+              badge: "VERESİYE ÇARPTI!",
+              title: "Sahte Kimlikli Defineciyi Veresiye Yazdın!",
+              desc: "Adam sahte isim vermiş, borcun üstüne yatacak!"
+            };
+      }
+
+      if (c.phoneData) {
+        c.phoneData.gallery = galleryMap[c.id] || [
+          { theme: "car", caption: "Gece yolculuğu kamera görüntüsü" }
+        ];
+      }
+    });
+  });
+})();

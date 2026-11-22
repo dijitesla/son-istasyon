@@ -1,4 +1,5 @@
-// Son İstasyon v3.0 — Ana Oyun Motoru (5 Hikaye Gecesi + Sonsuz Rastgele Vardiya)
+// Son İstasyon v4.0 — Ana Oyun Motoru
+// (El Fenerli Bagaj, Köpek Duman, Çalan Sabit Telefon, Para Üstü & Veresiye Defteri, Fotoğraf Galerisi)
 
 (function () {
   const storyNights = window.GAME_NIGHTS;
@@ -8,13 +9,14 @@
   const clueDb = window.CLUE_DATABASE;
   const sfx = window.sfx;
 
-  const SAVE_KEY = "son_istasyon_v3_save";
+  const SAVE_KEY = "son_istasyon_v4_save";
 
   let persistent = {
-    cash: 250,
+    cash: 260,
     upgrades: {},
     clues: {},
     badges: {},
+    ledger: [],
     endlessShift: 1
   };
 
@@ -26,6 +28,7 @@
       if (p.upgrades) persistent.upgrades = p.upgrades;
       if (p.clues) persistent.clues = p.clues;
       if (p.badges) persistent.badges = p.badges;
+      if (Array.isArray(p.ledger)) persistent.ledger = p.ledger;
       if (typeof p.endlessShift === "number") persistent.endlessShift = p.endlessShift;
     }
   } catch (_) {}
@@ -42,22 +45,31 @@
     saveProgress();
     const b = badgesList.find((x) => x.id === badgeId);
     if (b) {
-      setTimeout(() => showToast(`🏅 Yeni Rozet: ${b.icon} ${b.name}!`), 600);
+      setTimeout(() => showToast(`🏅 Yeni Rozet: ${b.icon} ${b.name}!`), 550);
     }
   }
 
   let state = {
-    mode: "story", // story | endless
+    mode: "story",
     nightIdx: 0,
     activeNightObj: storyNights[0],
     custIdx: 0,
     correctInNight: 0,
     tipEarned: 0,
 
+    dumanFed: false,
+    trunkInspected: false,
+
+    landlineActive: false,
+    landlineAnswered: false,
+    landlineTimer: null,
+
+    selectedChange: 0,
+
     selectedFuelType: "benzin",
     fuelDone: false,
     drinkDone: false,
-    toastState: "idle", // idle | cooking | done
+    toastState: "idle",
     grillVal: 0,
     grillInterval: null,
     marketDone: false,
@@ -69,8 +81,9 @@
     breakers: [false, false, false, false],
     outageTimer: null,
 
-    phoneState: "none", // none | waiting_plug | charging | ringing | read | snatched
+    phoneState: "none",
     phoneUnlocked: false,
+    phoneTab: "msgs", // msgs | gallery
     pinInput: "",
     suspicion: 0,
     suspicionInterval: null,
@@ -102,6 +115,7 @@
     wantedBtn: document.getElementById("wantedBtn"),
     cluesBtn: document.getElementById("cluesBtn"),
     clueCountText: document.getElementById("clueCountText"),
+    dumanPill: document.getElementById("dumanPill"),
 
     pumpCarWrap: document.getElementById("pumpCarWrap"),
     outsideCarSvgHolder: document.getElementById("outsideCarSvgHolder"),
@@ -112,6 +126,9 @@
 
     questionRow: document.getElementById("questionRow"),
     askIdBtn: document.getElementById("askIdBtn"),
+    trunkSearchBtn: document.getElementById("trunkSearchBtn"),
+    openLedgerBtn: document.getElementById("openLedgerBtn"),
+    landlineRingBtn: document.getElementById("landlineRingBtn"),
     breakerAlertBtn: document.getElementById("breakerAlertBtn"),
     ticketBadges: document.getElementById("ticketBadges"),
 
@@ -138,6 +155,45 @@
     btnLock: document.getElementById("btnLock"),
     btnPolice: document.getElementById("btnPolice"),
 
+    // Yeni v4 Modallar
+    trunkModal: document.getElementById("trunkModal"),
+    trunkViewport: document.getElementById("trunkViewport"),
+    trunkSvgHolder: document.getElementById("trunkSvgHolder"),
+    flashlightMask: document.getElementById("flashlightMask"),
+    trunkResultBox: document.getElementById("trunkResultBox"),
+    closeTrunkBtn: document.getElementById("closeTrunkBtn"),
+
+    dumanModal: document.getElementById("dumanModal"),
+    dumanStatusDesc: document.getElementById("dumanStatusDesc"),
+    feedDumanBtn: document.getElementById("feedDumanBtn"),
+    petDumanBtn: document.getElementById("petDumanBtn"),
+    closeDumanBtn: document.getElementById("closeDumanBtn"),
+
+    landlineModal: document.getElementById("landlineModal"),
+    landlineCallerText: document.getElementById("landlineCallerText"),
+    landlineBodyText: document.getElementById("landlineBodyText"),
+    landlineScamChoices: document.getElementById("landlineScamChoices"),
+    scamAcceptBtn: document.getElementById("scamAcceptBtn"),
+    scamRejectBtn: document.getElementById("scamRejectBtn"),
+    closeLandlineBtn: document.getElementById("closeLandlineBtn"),
+
+    registerModal: document.getElementById("registerModal"),
+    regPaidWith: document.getElementById("regPaidWith"),
+    regBillCost: document.getElementById("regBillCost"),
+    regTargetChange: document.getElementById("regTargetChange"),
+    regCurrentChange: document.getElementById("regCurrentChange"),
+    resetChangeBtn: document.getElementById("resetChangeBtn"),
+    autoChangeBtn: document.getElementById("autoChangeBtn"),
+    confirmSaleBtn: document.getElementById("confirmSaleBtn"),
+    writeCreditActionBtn: document.getElementById("writeCreditActionBtn"),
+    closeRegisterBtn: document.getElementById("closeRegisterBtn"),
+
+    ledgerModal: document.getElementById("ledgerModal"),
+    ledgerEntriesBox: document.getElementById("ledgerEntriesBox"),
+    writeCreditQuickBtn: document.getElementById("writeCreditQuickBtn"),
+    closeLedgerBtn: document.getElementById("closeLedgerBtn"),
+
+    // Mevcut Modallar
     fuelModal: document.getElementById("fuelModal"),
     pumpCurrentVal: document.getElementById("pumpCurrentVal"),
     pumpTargetVal: document.getElementById("pumpTargetVal"),
@@ -146,10 +202,8 @@
 
     coffeeModal: document.getElementById("coffeeModal"),
     closeCoffeeBtn: document.getElementById("closeCoffeeBtn"),
-
     toastModal: document.getElementById("toastModal"),
     closeToastBtn: document.getElementById("closeToastBtn"),
-
     marketModal: document.getElementById("marketModal"),
     closeMarketBtn: document.getElementById("closeMarketBtn"),
 
@@ -202,7 +256,11 @@
     pinDots: document.getElementById("pinDots"),
     pinPad: document.getElementById("pinPad"),
     revealPinBtn: document.getElementById("revealPinBtn"),
+    unlockedPhoneContent: document.getElementById("unlockedPhoneContent"),
+    phoneTabMsgs: document.getElementById("phoneTabMsgs"),
+    phoneTabGallery: document.getElementById("phoneTabGallery"),
     notifList: document.getElementById("notifList"),
+    galleryList: document.getElementById("galleryList"),
     closePhoneBtn: document.getElementById("closePhoneBtn"),
 
     cluesModal: document.getElementById("cluesModal"),
@@ -224,25 +282,25 @@
     nextNightBtn: document.getElementById("nextNightBtn")
   };
 
-  // Yağmur Efekti
+  // Yağmur
   const canvas = document.getElementById("rainCanvas");
   const ctx = canvas.getContext("2d");
   let drops = [];
 
   function resizeRain() {
     canvas.width = canvas.clientWidth || 400;
-    canvas.height = canvas.clientHeight || 210;
-    drops = Array.from({ length: 50 }, () => ({
+    canvas.height = canvas.clientHeight || 205;
+    drops = Array.from({ length: 48 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      len: 10 + Math.random() * 13,
+      len: 10 + Math.random() * 12,
       speed: 4.6 + Math.random() * 4
     }));
   }
 
   function drawRain() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "rgba(148, 197, 255, 0.27)";
+    ctx.strokeStyle = "rgba(148, 197, 255, 0.26)";
     ctx.lineWidth = 1.2;
     ctx.beginPath();
     for (const d of drops) {
@@ -267,7 +325,7 @@
     el.toastBanner.textContent = msg;
     el.toastBanner.classList.remove("hidden");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => el.toastBanner.classList.add("hidden"), 2300);
+    toastTimer = setTimeout(() => el.toastBanner.classList.add("hidden"), 2500);
   }
 
   function curNight() {
@@ -284,7 +342,6 @@
     el.cashText.textContent = String(persistent.cash);
   }
 
-  // Başlangıç Seçimleri
   function selectStoryNight(idx) {
     state.mode = "story";
     state.nightIdx = idx;
@@ -335,13 +392,66 @@
     return true;
   }
 
+  // Vardiya başında önceki geceden kalan veresiyeleri tahsil et!
+  function settlePreviousLedger() {
+    let gained = 0;
+    let scammed = 0;
+    persistent.ledger.forEach((entry) => {
+      if (!entry.settled) {
+        entry.settled = true;
+        if (entry.honest) {
+          const payback = entry.amount * 2;
+          persistent.cash += payback;
+          gained += payback;
+          entry.resultText = `✓ Sözünü tuttu, +${payback} ₺ ödedi!`;
+        } else {
+          scammed += 1;
+          entry.resultText = `❌ Sahte isim vermiş, borcun üstüne yattı!`;
+        }
+      }
+    });
+    saveProgress();
+    if (gained > 0) {
+      setTimeout(() => {
+        sfx.cashRegister();
+        showToast(`📓 Veresiye Müjdesi! Dünkü borç 2 katıyla (+${gained} ₺) ödendi!`);
+      }, 650);
+    } else if (scammed > 0) {
+      setTimeout(() => {
+        sfx.burnFail();
+        showToast("⚠️ Dünkü veresiye sahte çıktı, borç ödenmedi!");
+      }, 650);
+    }
+  }
+
+  function updateDumanUI() {
+    const c = curCust();
+    el.dumanPill.classList.remove("happy", "growling");
+    if (!state.dumanFed) {
+      el.dumanPill.textContent = "🐕 Duman: Aç 🦴";
+      return;
+    }
+    if (c.isThreat) {
+      el.dumanPill.classList.add("growling");
+      el.dumanPill.textContent = "🐕 Hırlıyor! 💢";
+    } else {
+      el.dumanPill.classList.add("happy");
+      el.dumanPill.textContent = "🐕 Dost 🐾";
+    }
+  }
+
   function renderUI() {
     const c = curCust();
     const req = c.requests;
     updateHeaderCounts();
+    updateDumanUI();
 
     el.phoneStage.classList.toggle("blackout", state.isBlackout);
     el.breakerAlertBtn.style.display = state.isBlackout ? "flex" : "none";
+    el.landlineRingBtn.style.display = state.landlineActive && !state.landlineAnswered ? "flex" : "none";
+
+    // Veresiye isteyen müşteride buton parlasın
+    el.openLedgerBtn.textContent = c.payment && c.payment.asksCredit ? "📓 Veresiye!" : "📓 Defter";
 
     // İstek Fişi
     el.ticketBadges.innerHTML = "";
@@ -358,35 +468,23 @@
     if (req.market) addChip(catalog.market[req.market].label, state.marketDone);
     if (c.wantsCharger) addChip("🔌 Şarj", state.phoneState !== "waiting_plug");
 
-    // 1. Pompa
+    // İstasyon Kartları
     el.btnFuel.classList.remove("needed", "prepared");
     if (req.fuel > 0) {
-      if (state.fuelDone) {
-        el.btnFuel.classList.add("prepared");
-        el.subFuel.textContent = "Dolu ✓";
-      } else {
-        el.btnFuel.classList.add("needed");
-        el.subFuel.textContent = `${req.fuel}₺ ${catalog.fuels[req.fuelType].short}`;
-      }
+      el.btnFuel.classList.add(state.fuelDone ? "prepared" : "needed");
+      el.subFuel.textContent = state.fuelDone ? "Dolu ✓" : `${req.fuel}₺ ${catalog.fuels[req.fuelType].short}`;
     } else {
       el.subFuel.textContent = "İstenmedi";
     }
 
-    // 2. Çay & Kahve
     el.btnCoffee.classList.remove("needed", "prepared");
     if (req.drink) {
-      if (state.drinkDone) {
-        el.btnCoffee.classList.add("prepared");
-        el.subCoffee.textContent = "Hazır ✓";
-      } else {
-        el.btnCoffee.classList.add("needed");
-        el.subCoffee.textContent = catalog.drinks[req.drink].short;
-      }
+      el.btnCoffee.classList.add(state.drinkDone ? "prepared" : "needed");
+      el.subCoffee.textContent = state.drinkDone ? "Hazır ✓" : catalog.drinks[req.drink].short;
     } else {
       el.subCoffee.textContent = "İstenmedi";
     }
 
-    // 3. Tost
     el.btnToast.classList.remove("needed", "prepared");
     if (req.toast) {
       if (state.toastState === "done") {
@@ -407,30 +505,18 @@
       el.grillBarWrap.classList.remove("active");
     }
 
-    // 4. Market Rafı
     el.btnMarket.classList.remove("needed", "prepared");
     if (req.market) {
-      if (state.marketDone) {
-        el.btnMarket.classList.add("prepared");
-        el.subMarket.textContent = "Verildi ✓";
-      } else {
-        el.btnMarket.classList.add("needed");
-        el.subMarket.textContent = catalog.market[req.market].short;
-      }
+      el.btnMarket.classList.add(state.marketDone ? "prepared" : "needed");
+      el.subMarket.textContent = state.marketDone ? "Verildi ✓" : catalog.market[req.market].short;
     } else {
       el.subMarket.textContent = "İstenmedi";
     }
 
-    // 5. Mor Işık
     el.btnUv.classList.remove("prepared", "uv-suspect");
     if (state.uvChecked) {
-      if (c.cashBill.fake) {
-        el.btnUv.classList.add("uv-suspect");
-        el.subUv.textContent = "⚠️ SAHTE!";
-      } else {
-        el.btnUv.classList.add("prepared");
-        el.subUv.textContent = `${c.cashBill.denom}₺ Gerçek ✓`;
-      }
+      el.btnUv.classList.add(c.cashBill.fake ? "uv-suspect" : "prepared");
+      el.subUv.textContent = c.cashBill.fake ? "⚠️ SAHTE!" : `${c.cashBill.denom}₺ Gerçek ✓`;
     } else if (persistent.upgrades.proUv && c.cashBill.fake) {
       el.btnUv.classList.add("uv-suspect");
       el.subUv.textContent = "⚠️ Şüpheli!";
@@ -438,7 +524,6 @@
       el.subUv.textContent = `${c.cashBill.denom}₺ İncele`;
     }
 
-    // 6. Şarj Prizi
     el.btnPhone.classList.remove("needed", "prepared", "phone-ringing");
     el.phoneBadge.style.display = "none";
     if (state.phoneState === "none") {
@@ -455,19 +540,18 @@
     } else if (state.phoneState === "ringing") {
       el.btnPhone.classList.add("phone-ringing");
       el.phoneEmoji.textContent = c.phoneData.locked ? "🔒" : "📲";
-      el.subPhone.textContent = c.phoneData.locked ? "Şifreli!" : "Mesaj Var!";
+      el.subPhone.textContent = c.phoneData.locked ? "Şifreli!" : "Mesaj+Galeri";
       el.phoneBadge.style.display = "inline-block";
     } else if (state.phoneState === "read") {
       el.btnPhone.classList.add("prepared");
       el.phoneEmoji.textContent = "📱";
-      el.subPhone.textContent = "Tekrar Bak";
+      el.subPhone.textContent = "Mesaj+Galeri";
     } else if (state.phoneState === "snatched") {
       el.phoneEmoji.textContent = "😠";
       el.subPhone.textContent = "Geri Aldı!";
     }
 
-    // Kamera Alarmı
-    if (c.depotIntruder && !state.intruderScared && persistent.upgrades.depotAlarm) {
+    if (c.depotIntruder && !state.intruderScared && (persistent.upgrades.depotAlarm || state.dumanFed)) {
       el.cctvBtn.classList.add("danger-blink");
       el.cctvBtnLabel.textContent = "🚨 DEPO!";
     } else {
@@ -475,10 +559,9 @@
       el.cctvBtnLabel.textContent = "KAMERA (2)";
     }
 
-    // Satış Butonu
     if (isOrderComplete() && !state.isBlackout) {
       el.btnServe.classList.remove("locked-serve");
-      el.serveSubText.textContent = `+${c.reward + state.tipEarned} ₺`;
+      el.serveSubText.textContent = c.payment.asksCredit ? "Kasa / Veresiye" : `Tutar: ${c.payment.billCost}₺`;
     } else {
       el.btnServe.classList.add("locked-serve");
       el.serveSubText.textContent = state.isBlackout ? "Şalter Kapalı!" : "İsteği Hazırla";
@@ -488,12 +571,18 @@
   function loadCustomer(idx) {
     clearTimeout(state.phoneTimer);
     clearTimeout(state.outageTimer);
+    clearTimeout(state.landlineTimer);
     clearInterval(state.grillInterval);
     clearInterval(state.pumpInterval);
     stopPhoneSuspicion();
 
     state.custIdx = idx;
     state.tipEarned = 0;
+    state.trunkInspected = false;
+    state.landlineActive = false;
+    state.landlineAnswered = false;
+    state.selectedChange = 0;
+
     state.fuelDone = false;
     state.drinkDone = false;
     state.toastState = "idle";
@@ -503,6 +592,7 @@
     state.uvLightOn = false;
     state.isBlackout = false;
     state.phoneUnlocked = false;
+    state.phoneTab = "msgs";
     state.pinInput = "";
     state.suspicion = 0;
     state.intruderScared = false;
@@ -516,7 +606,6 @@
     el.customerCounter.textContent = `${idx + 1}/${n.customers.length}`;
     el.radioText.textContent = c.radioTicker;
 
-    // Pencere Dışı Gerçek Araç Çizimi
     el.pumpCarWrap.classList.add("offscreen");
     el.avatarHolder.classList.add("entering");
 
@@ -531,20 +620,34 @@
       setCustomerMood("neutral");
       el.avatarHolder.classList.remove("entering");
       sfx.doorBell();
+
+      // Köpek Duman tehlike sezgisi!
+      if (state.dumanFed && c.isThreat) {
+        setTimeout(() => {
+          sfx.dogGrowl();
+          showToast("🐕 Duman bu müşteriye hırlıyor! Dikkat et!");
+        }, 420);
+      }
     }, 170);
 
-    // Elektrik Kesintisi Sürprizi!
     if (c.powerOutage) {
-      state.outageTimer = setTimeout(() => {
-        triggerBlackout();
-      }, 1300);
+      state.outageTimer = setTimeout(triggerBlackout, 1300);
+    }
+
+    // Sabit büfe telefonu çalma sürprizi!
+    if (c.landlineCall) {
+      state.landlineTimer = setTimeout(() => {
+        state.landlineActive = true;
+        sfx.landlineRing();
+        showToast("☎️ Büfenin sabit telefonu çalıyor!");
+        renderUI();
+      }, 2100);
     }
 
     el.speakerName.textContent = c.name;
     el.speakerRole.textContent = c.role;
     el.speechText.textContent = `"${c.greeting}"`;
 
-    // 3 Diyalog Sorusu
     el.questionRow.innerHTML = "";
     c.questions.forEach((q) => {
       const b = document.createElement("button");
@@ -562,7 +665,224 @@
     renderUI();
   }
 
-  // ================= ELEKTRİK ŞALTER SÜRPRİZİ =================
+  // ================= YENİ 1: EL FENERİYLE BAGAJ ARAMA =================
+  function moveFlashlight(e) {
+    const rect = el.trunkViewport.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const xPct = Math.max(5, Math.min(95, ((clientX - rect.left) / rect.width) * 100));
+    const yPct = Math.max(5, Math.min(95, ((clientY - rect.top) / rect.height) * 100));
+
+    el.flashlightMask.style.setProperty("--fx", `${xPct}%`);
+    el.flashlightMask.style.setProperty("--fy", `${yPct}%`);
+
+    if (xPct > 26 && xPct < 76 && yPct > 22 && yPct < 82 && !state.trunkInspected) {
+      state.trunkInspected = true;
+      const td = curCust().trunkData;
+      el.trunkResultBox.textContent = `🔦 Bulundu: ${td.label}`;
+      el.trunkResultBox.style.color = td.suspicious ? "#fca5a5" : "#86efac";
+      if (td.suspicious) {
+        sfx.alarmBlast();
+        unlockBadge("trunk_detective");
+      } else {
+        sfx.tap();
+      }
+    }
+  }
+
+  el.trunkSearchBtn.addEventListener("click", () => {
+    const c = curCust();
+    if (!c.trunkData) {
+      sfx.tap();
+      showToast("Bu müşteride aranacak araç bagajı yok!");
+      return;
+    }
+    sfx.flashlightClick();
+    el.trunkSvgHolder.innerHTML = window.renderTrunkInteriorSVG(c.trunkData.type, c.trunkData.label);
+    el.flashlightMask.style.setProperty("--fx", "14%");
+    el.flashlightMask.style.setProperty("--fy", "20%");
+    el.trunkResultBox.textContent = state.trunkInspected
+      ? `🔦 Bulundu: ${c.trunkData.label}`
+      : "🔍 Parmağını karanlık bagajın ortasına doğru gezdir...";
+    el.trunkModal.classList.remove("hidden");
+  });
+
+  el.trunkViewport.addEventListener("pointerdown", moveFlashlight);
+  el.trunkViewport.addEventListener("pointermove", moveFlashlight);
+  el.closeTrunkBtn.addEventListener("click", () => el.trunkModal.classList.add("hidden"));
+
+  // ================= YENİ 2: İSTASYON KÖPEĞİ DUMAN =================
+  el.dumanPill.addEventListener("click", () => {
+    sfx.tap();
+    el.dumanStatusDesc.textContent = state.dumanFed
+      ? "Duman bu gece karnını doyurdu, gözü kulağı kapıda! Tehlikeli veya yalancı müşteri geldiğinde hırlayarak seni uyarır ve arka depoyu kollar."
+      : "Sadık dostun Duman şu an aç ve kulübesinde uyukluyor. 20 ₺ karşılığında mama ve su verirsen sabaha kadar tehlikeli müşterilere hırlayarak seni önceden uyarır!";
+    el.feedDumanBtn.disabled = state.dumanFed;
+    el.feedDumanBtn.textContent = state.dumanFed ? "🍖 Karnı Tok ✓" : "🍖 Mama & Su Ver (20 ₺)";
+    el.dumanModal.classList.remove("hidden");
+  });
+
+  el.feedDumanBtn.addEventListener("click", () => {
+    if (state.dumanFed) return;
+    if (persistent.cash < 20) {
+      sfx.burnFail();
+      showToast("Mama için 20 ₺ gerekli!");
+      return;
+    }
+    persistent.cash -= 20;
+    state.dumanFed = true;
+    saveProgress();
+    sfx.dogBark();
+    unlockBadge("dog_friend");
+    el.dumanModal.classList.add("hidden");
+    showToast("🐕 Duman doydu! Artık tehlikeli müşterilere hırlayacak!");
+    renderUI();
+  });
+
+  el.petDumanBtn.addEventListener("click", () => {
+    sfx.dogBark();
+    showToast("🐕 Duman keyifle kuyruk salladı!");
+  });
+
+  el.closeDumanBtn.addEventListener("click", () => el.dumanModal.classList.add("hidden"));
+
+  // ================= YENİ 3: ÇALAN SABİT BÜFE TELEFONU =================
+  el.landlineRingBtn.addEventListener("click", () => {
+    const call = curCust().landlineCall;
+    if (!call) return;
+    sfx.tap();
+    state.landlineAnswered = true;
+    el.landlineCallerText.textContent = `📞 Arayan: ${call.caller}`;
+    el.landlineBodyText.textContent = `"${call.text}"`;
+    el.landlineScamChoices.style.display = call.isScam ? "grid" : "none";
+    el.closeLandlineBtn.style.display = call.isScam ? "none" : "block";
+    el.landlineModal.classList.remove("hidden");
+    renderUI();
+  });
+
+  el.scamAcceptBtn.addEventListener("click", () => {
+    sfx.burnFail();
+    persistent.cash = Math.max(0, persistent.cash - 150);
+    saveProgress();
+    el.landlineModal.classList.add("hidden");
+    showToast("😱 Telefon dolandırıcısına 150 ₺ kaptırdın!");
+    renderUI();
+  });
+
+  el.scamRejectBtn.addEventListener("click", () => {
+    sfx.perfectHit();
+    persistent.cash += 65;
+    saveProgress();
+    unlockBadge("scam_buster");
+    el.landlineModal.classList.add("hidden");
+    showToast("☎️ Dolandırıcının yüzüne kapattın! (+65 ₺ Prim)");
+    renderUI();
+  });
+
+  el.closeLandlineBtn.addEventListener("click", () => {
+    sfx.tap();
+    el.landlineModal.classList.add("hidden");
+  });
+
+  // ================= YENİ 4: PARA ÜSTÜ KASASI & VERESİYE DEFTERİ =================
+  function openCashRegister() {
+    const c = curCust();
+    const pay = c.payment;
+    state.selectedChange = 0;
+    const targetChange = Math.max(0, pay.paidWith - pay.billCost);
+
+    el.regPaidWith.textContent = `${pay.paidWith} ₺`;
+    el.regBillCost.textContent = `${pay.billCost} ₺`;
+    el.regTargetChange.textContent = `${targetChange} ₺`;
+    el.regCurrentChange.textContent = "0 ₺";
+    el.autoChangeBtn.style.display = persistent.upgrades.digitalRegister ? "block" : "none";
+    el.writeCreditActionBtn.style.display = pay.asksCredit ? "block" : "none";
+    el.registerModal.classList.remove("hidden");
+  }
+
+  document.querySelectorAll(".money-chip-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      sfx.coinChange();
+      state.selectedChange += Number(btn.dataset.amt);
+      el.regCurrentChange.textContent = `${state.selectedChange} ₺`;
+    });
+  });
+
+  el.resetChangeBtn.addEventListener("click", () => {
+    sfx.tap();
+    state.selectedChange = 0;
+    el.regCurrentChange.textContent = "0 ₺";
+  });
+
+  el.autoChangeBtn.addEventListener("click", () => {
+    const pay = curCust().payment;
+    sfx.coinChange();
+    state.selectedChange = Math.max(0, pay.paidWith - pay.billCost);
+    el.regCurrentChange.textContent = `${state.selectedChange} ₺`;
+  });
+
+  el.confirmSaleBtn.addEventListener("click", () => {
+    const pay = curCust().payment;
+    const target = Math.max(0, pay.paidWith - pay.billCost);
+    if (state.selectedChange !== target) {
+      sfx.burnFail();
+      showToast(`⚠️ Para üstü yanlış! ${target} ₺ seçmelisin (Şu an: ${state.selectedChange} ₺).`);
+      return;
+    }
+    state.tipEarned += 15;
+    el.registerModal.classList.add("hidden");
+    finalizeDecision("serve");
+  });
+
+  function recordCreditAndFinish() {
+    const c = curCust();
+    sfx.ledgerWrite();
+    persistent.ledger.unshift({
+      name: c.name,
+      amount: c.payment.creditAmount || c.payment.billCost,
+      honest: !!c.payment.creditHonest,
+      settled: false,
+      resultText: "⏳ Yarın gece bekleniyor..."
+    });
+    saveProgress();
+    el.registerModal.classList.add("hidden");
+    el.ledgerModal.classList.add("hidden");
+    finalizeDecision("credit");
+  }
+
+  el.writeCreditActionBtn.addEventListener("click", recordCreditAndFinish);
+  el.writeCreditQuickBtn.addEventListener("click", () => {
+    if (!isOrderComplete()) {
+      sfx.burnFail();
+      showToast("Veresiye yazmadan önce müşterinin siparişini hazırla!");
+      return;
+    }
+    recordCreditAndFinish();
+  });
+
+  el.closeRegisterBtn.addEventListener("click", () => el.registerModal.classList.add("hidden"));
+
+  el.openLedgerBtn.addEventListener("click", () => {
+    sfx.tap();
+    const c = curCust();
+    el.writeCreditQuickBtn.style.display = c.payment && c.payment.asksCredit ? "block" : "none";
+    el.ledgerEntriesBox.innerHTML = "";
+    if (persistent.ledger.length === 0) {
+      el.ledgerEntriesBox.innerHTML = `<div style="color:#94a3b8; padding:8px;">Defterde henüz kayıtlı veresiye yok.</div>`;
+    } else {
+      persistent.ledger.slice(0, 8).forEach((item) => {
+        const d = document.createElement("div");
+        d.style.cssText = "background:#1e293b; border:1.5px solid #475569; border-radius:8px; padding:7px 9px;";
+        d.innerHTML = `<strong>${item.name}</strong> — ${item.amount} ₺<br/><span style="font-size:11px; color:#fde68a;">${item.resultText}</span>`;
+        el.ledgerEntriesBox.appendChild(d);
+      });
+    }
+    el.ledgerModal.classList.remove("hidden");
+  });
+
+  el.closeLedgerBtn.addEventListener("click", () => el.ledgerModal.classList.add("hidden"));
+
+  // ================= ŞALTER, KİMLİK, BÜLTEN =================
   function triggerBlackout() {
     state.isBlackout = true;
     state.breakers = persistent.upgrades.upsBattery ? [true, true, true, false] : [false, false, false, false];
@@ -598,7 +918,6 @@
     renderBreakers();
     el.breakerModal.classList.remove("hidden");
   });
-
   el.closeBreakerBtn.addEventListener("click", () => el.breakerModal.classList.add("hidden"));
 
   function checkPowerBeforeAction() {
@@ -606,13 +925,12 @@
       sfx.burnFail();
       renderBreakers();
       el.breakerModal.classList.remove("hidden");
-      showToast("⚡ Elektrik kesik! Önce şalterleri kaldır!");
+      showToast("⚡ Önce şalterleri kaldır!");
       return false;
     }
     return true;
   }
 
-  // ================= KİMLİK VE ARANANLAR BÜLTENİ =================
   el.askIdBtn.addEventListener("click", () => {
     sfx.idCardSlide();
     const id = curCust().idCard;
@@ -624,11 +942,7 @@
     el.idPlateMatch.style.color = id.plateMatch.includes("UYUŞMUYOR") || id.plateMatch.includes("SAHTE") ? "#dc2626" : "#0f172a";
     el.idModal.classList.remove("hidden");
   });
-
-  el.closeIdBtn.addEventListener("click", () => {
-    sfx.tap();
-    el.idModal.classList.add("hidden");
-  });
+  el.closeIdBtn.addEventListener("click", () => el.idModal.classList.add("hidden"));
 
   el.wantedBtn.addEventListener("click", () => {
     sfx.tap();
@@ -637,13 +951,9 @@
     el.wantedDesc.textContent = wp.desc;
     el.wantedModal.classList.remove("hidden");
   });
+  el.closeWantedBtn.addEventListener("click", () => el.wantedModal.classList.add("hidden"));
 
-  el.closeWantedBtn.addEventListener("click", () => {
-    sfx.tap();
-    el.wantedModal.classList.add("hidden");
-  });
-
-  // ================= 1. POMPA 4 (3 YAKIT SEÇENEĞİ + SAYAÇ) =================
+  // ================= POMPA, İÇECEK, TOST, MARKET, MOR IŞIK =================
   document.querySelectorAll(".fuel-type-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       sfx.tap();
@@ -657,15 +967,8 @@
   el.btnFuel.addEventListener("click", () => {
     if (!checkPowerBeforeAction()) return;
     const req = curCust().requests;
-    if (!req.fuel) {
-      sfx.tap();
-      showToast("Müşteri yakıt istemedi.");
-      return;
-    }
-    if (state.fuelDone) {
-      showToast("Yakıt zaten dolduruldu!");
-      return;
-    }
+    if (!req.fuel) return showToast("Müşteri yakıt istemedi.");
+    if (state.fuelDone) return showToast("Yakıt zaten dolduruldu!");
     sfx.tap();
     state.pumpVal = 0;
     el.pumpCurrentVal.textContent = "0";
@@ -677,20 +980,16 @@
     if (e) e.preventDefault();
     if (state.pumpInterval || state.fuelDone) return;
     const req = curCust().requests;
-
     if (state.selectedFuelType !== req.fuelType) {
       sfx.burnFail();
       showToast(`⚠️ Yanlış tabanca! Müşteri ${catalog.fuels[req.fuelType].short} istedi!`);
       return;
     }
-
     state.pumpInterval = setInterval(() => {
       const near = Math.abs(req.fuel - state.pumpVal) <= 55;
-      const step = persistent.upgrades.autoPump && near ? 5 : 10;
-      state.pumpVal += step;
+      state.pumpVal += persistent.upgrades.autoPump && near ? 5 : 10;
       el.pumpCurrentVal.textContent = String(state.pumpVal);
       sfx.pumpTick(260 + Math.min(state.pumpVal, 600) * 0.55);
-
       if (state.pumpVal >= req.fuel + 110) stopPumping();
     }, 65);
   }
@@ -699,19 +998,15 @@
     if (!state.pumpInterval) return;
     clearInterval(state.pumpInterval);
     state.pumpInterval = null;
-
     const target = curCust().requests.fuel;
     const diff = state.pumpVal - target;
     const tol = persistent.upgrades.autoPump ? 35 : 20;
-
     if (state.pumpVal < target - 50) {
       showToast(`Henüz ${state.pumpVal} ₺ oldu, basılı tutmaya devam et!`);
       return;
     }
-
     state.fuelDone = true;
     el.fuelModal.classList.add("hidden");
-
     if (Math.abs(diff) <= tol) {
       sfx.perfectHit();
       state.tipEarned += 25;
@@ -719,7 +1014,7 @@
     } else if (diff > 55) {
       sfx.burnFail();
       persistent.cash = Math.max(0, persistent.cash - 30);
-      showToast(`⚠️ Sayacı taşırdın (${state.pumpVal} ₺)! -30 ₺ zarar.`);
+      showToast(`⚠️ Sayacı taşırdın! -30 ₺ zarar.`);
     } else {
       sfx.cashRegister();
       showToast(`⛽ Yakıt tamam (${state.pumpVal} ₺).`);
@@ -735,19 +1030,11 @@
     el.fuelModal.classList.add("hidden");
   });
 
-  // ================= 2. ÇAY & KAHVE BARI (4 SEÇENEK) =================
   el.btnCoffee.addEventListener("click", () => {
     if (!checkPowerBeforeAction()) return;
     const req = curCust().requests;
-    if (!req.drink) {
-      sfx.tap();
-      showToast("Müşteri sıcak içecek istemedi.");
-      return;
-    }
-    if (state.drinkDone) {
-      showToast("İçecek zaten hazır!");
-      return;
-    }
+    if (!req.drink) return showToast("Müşteri sıcak içecek istemedi.");
+    if (state.drinkDone) return showToast("İçecek zaten hazır!");
     sfx.tap();
     el.coffeeModal.classList.remove("hidden");
   });
@@ -757,49 +1044,36 @@
       const wanted = curCust().requests.drink;
       if (btn.dataset.drink !== wanted) {
         sfx.burnFail();
-        showToast(`Müşteri ${catalog.drinks[wanted].label} istemişti!`);
+        showToast(`Müşteri ${catalog.drinks[wanted].label} istedi!`);
         return;
       }
       sfx.coffeeBrew();
       state.drinkDone = true;
       if (persistent.upgrades.vipEspresso) state.tipEarned += 20;
       el.coffeeModal.classList.add("hidden");
-      showToast(`${catalog.drinks[wanted].label} hazır!`);
       renderUI();
     });
   });
-
   el.closeCoffeeBtn.addEventListener("click", () => el.coffeeModal.classList.add("hidden"));
 
-  // ================= 3. TOST IZGARASI (2 ÇEŞİT + ZAMANLAMA) =================
   el.btnToast.addEventListener("click", () => {
     if (!checkPowerBeforeAction()) return;
     const req = curCust().requests;
-    if (!req.toast) {
-      sfx.tap();
-      showToast("Müşteri tost istemedi.");
-      return;
-    }
-    if (state.toastState === "done") {
-      showToast("Tost zaten hazır!");
-      return;
-    }
+    if (!req.toast) return showToast("Müşteri tost istemedi.");
+    if (state.toastState === "done") return showToast("Tost zaten hazır!");
     if (state.toastState === "idle") {
       sfx.tap();
       el.toastModal.classList.remove("hidden");
       return;
     }
     if (state.toastState === "cooking") {
-      if (state.grillVal < 45) {
-        showToast("Henüz çiğ, çubuk YEŞİL olunca bas!");
-        return;
-      }
+      if (state.grillVal < 45) return showToast("Henüz çiğ, YEŞİL olunca bas!");
       if (state.grillVal <= 88) {
         clearInterval(state.grillInterval);
         state.toastState = "done";
         state.tipEarned += 15;
         sfx.toastReady();
-        showToast("🥪 Çıtır tost hazır! (+15 ₺ Bahşiş)");
+        showToast("🥪 Çıtır tost hazır! (+15 ₺)");
         renderUI();
       }
     }
@@ -822,50 +1096,36 @@
       state.grillInterval = setInterval(() => {
         state.grillVal += 4;
         el.grillBarFill.style.width = `${Math.min(state.grillVal, 100)}%`;
-
-        if (state.grillVal < 45) {
-          el.grillBarFill.style.background = "#38bdf8";
-        } else if (state.grillVal <= 86) {
+        if (state.grillVal < 45) el.grillBarFill.style.background = "#38bdf8";
+        else if (state.grillVal <= 86) {
           el.grillBarFill.style.background = "#22c55e";
           if (persistent.upgrades.smartGrill && state.grillVal >= 64) {
             clearInterval(state.grillInterval);
             state.toastState = "done";
             state.tipEarned += 20;
             sfx.toastReady();
-            showToast("🥪 Termostat Izgara: Tost Hazır! (+20 ₺)");
             renderUI();
             return;
           }
-        } else {
-          el.grillBarFill.style.background = "#ef4444";
-        }
+        } else el.grillBarFill.style.background = "#ef4444";
 
         if (state.grillVal >= 100) {
           clearInterval(state.grillInterval);
           state.toastState = "idle";
           state.grillVal = 0;
           sfx.burnFail();
-          showToast("🔥 Tost yandı! Tekrar seçip pişir.");
+          showToast("🔥 Tost yandı! Tekrar pişir.");
           renderUI();
         }
       }, 95);
     });
   });
-
   el.closeToastBtn.addEventListener("click", () => el.toastModal.classList.add("hidden"));
 
-  // ================= 4. MARKET RAFI (4 ÜRÜN) =================
   el.btnMarket.addEventListener("click", () => {
     const req = curCust().requests;
-    if (!req.market) {
-      sfx.tap();
-      showToast("Müşteri market ürünü istemedi.");
-      return;
-    }
-    if (state.marketDone) {
-      showToast("Market ürünü zaten verildi!");
-      return;
-    }
+    if (!req.market) return showToast("Müşteri market ürünü istemedi.");
+    if (state.marketDone) return showToast("Ürün zaten verildi!");
     sfx.tap();
     el.marketModal.classList.remove("hidden");
   });
@@ -875,20 +1135,17 @@
       const wanted = curCust().requests.market;
       if (btn.dataset.market !== wanted) {
         sfx.burnFail();
-        showToast(`Müşteri ${catalog.market[wanted].label} istemişti!`);
+        showToast(`Müşteri ${catalog.market[wanted].label} istedi!`);
         return;
       }
       sfx.shelfGrab();
       state.marketDone = true;
       el.marketModal.classList.add("hidden");
-      showToast(`${catalog.market[wanted].label} tezgâha kondu!`);
       renderUI();
     });
   });
-
   el.closeMarketBtn.addEventListener("click", () => el.marketModal.classList.add("hidden"));
 
-  // ================= 5. MOR IŞIK =================
   el.btnUv.addEventListener("click", () => {
     const bill = curCust().cashBill;
     sfx.tap();
@@ -908,10 +1165,9 @@
     el.banknoteCard.classList.toggle("uv-active", state.uvLightOn);
     renderUI();
   });
-
   el.closeUvBtn.addEventListener("click", () => el.uvModal.classList.add("hidden"));
 
-  // ================= 6. GÖRSEL ÇİFT GÜVENLİK KAMERASI =================
+  // ================= ÇİFT KAMERA =================
   function switchCameraTab(camNum) {
     const c = curCust();
     el.tabCam1.classList.toggle("active", camNum === 1);
@@ -925,13 +1181,12 @@
     el.cctvNote.textContent = c.car.pumpNote;
 
     el.cam2SvgBox.innerHTML = window.renderCctvDepotSVG(c.depotIntruder, state.intruderScared);
-
     if (c.depotIntruder && !state.intruderScared) {
       el.depotNoteBox.textContent = c.depotNote;
       el.depotNoteBox.style.borderLeftColor = "#ef4444";
       el.triggerAlarmBtn.style.display = "block";
     } else if (c.depotIntruder && state.intruderScared) {
-      el.depotNoteBox.textContent = "✓ Spot ışığı ve siren açıldı! Maskeli şahıs panikle kaçtı.";
+      el.depotNoteBox.textContent = "✓ Spot ışığı ve siren açıldı! Maskeli şahıs kaçtı.";
       el.depotNoteBox.style.borderLeftColor = "#4ade80";
       el.triggerAlarmBtn.style.display = "none";
     } else {
@@ -944,34 +1199,23 @@
   el.cctvBtn.addEventListener("click", () => {
     if (!checkPowerBeforeAction()) return;
     sfx.cameraClick();
-    const startTab = curCust().depotIntruder && !state.intruderScared && persistent.upgrades.depotAlarm ? 2 : 1;
+    const startTab = curCust().depotIntruder && !state.intruderScared && (persistent.upgrades.depotAlarm || state.dumanFed) ? 2 : 1;
     switchCameraTab(startTab);
     el.cctvModal.classList.remove("hidden");
   });
-
-  el.tabCam1.addEventListener("click", () => {
-    sfx.cameraClick();
-    switchCameraTab(1);
-  });
-
-  el.tabCam2.addEventListener("click", () => {
-    sfx.cameraClick();
-    switchCameraTab(2);
-  });
-
+  el.tabCam1.addEventListener("click", () => switchCameraTab(1));
+  el.tabCam2.addEventListener("click", () => switchCameraTab(2));
   el.triggerAlarmBtn.addEventListener("click", () => {
     sfx.alarmBlast();
     state.intruderScared = true;
     persistent.cash += 45;
-    unlockBadge("depot_guard");
     showToast("🔔 Depo hırsızı püskürtüldü! (+45 ₺ Prim)");
     switchCameraTab(2);
     renderUI();
   });
-
   el.closeCctvBtn.addEventListener("click", () => el.cctvModal.classList.add("hidden"));
 
-  // ================= 7. TELEFON ŞİFRESİ VE ŞÜPHE BARI =================
+  // ================= TELEFON + YENİ 5: FOTOĞRAF GALERİSİ =================
   function buildPinKeypad() {
     el.pinPad.innerHTML = "";
     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "Sil", "0", "Aç"].forEach((k) => {
@@ -994,8 +1238,8 @@
       state.phoneState = "snatched";
       sfx.burnFail();
       setCustomerMood("angry");
-      el.speechText.textContent = `"Hey! Sen benim telefonumu mu kurcalıyorsun?! Ver şunu geri!"`;
-      showToast("😠 Müşteri şüphelendi ve telefonunu geri çekti!");
+      el.speechText.textContent = `"Hey! Sen benim telefonumu mu karıştırıyorsun?! Ver şunu geri!"`;
+      showToast("😠 Müşteri şüphelendi ve telefonunu geri aldı!");
       renderUI();
     }
   }
@@ -1003,9 +1247,9 @@
   function startPhoneSuspicion() {
     stopPhoneSuspicion();
     state.suspicionInterval = setInterval(() => {
-      state.suspicion += 2.5;
+      state.suspicion += 2.3;
       updateSuspicionUI();
-    }, 650);
+    }, 680);
   }
 
   function stopPhoneSuspicion() {
@@ -1030,10 +1274,7 @@
       renderPinDots();
       return;
     }
-    if (k === "Aç") {
-      verifyPin();
-      return;
-    }
+    if (k === "Aç") return verifyPin();
     if (state.pinInput.length < 4) {
       sfx.keypadBeep(Number(k));
       state.pinInput += k;
@@ -1048,7 +1289,7 @@
       sfx.pinUnlock();
       state.phoneUnlocked = true;
       unlockBadge("code_breaker");
-      showToast("🔓 Şifre çözüldü!");
+      showToast("🔓 Şifre çözüldü! Mesajlar ve Galeri açıldı!");
       openPhoneModal();
     } else {
       sfx.burnFail();
@@ -1068,6 +1309,23 @@
     }
   });
 
+  function switchPhoneInnerTab(tab) {
+    state.phoneTab = tab;
+    el.phoneTabMsgs.classList.toggle("active", tab === "msgs");
+    el.phoneTabGallery.classList.toggle("active", tab === "gallery");
+    el.notifList.style.display = tab === "msgs" ? "block" : "none";
+    el.galleryList.style.display = tab === "gallery" ? "block" : "none";
+  }
+
+  el.phoneTabMsgs.addEventListener("click", () => {
+    sfx.tap();
+    switchPhoneInnerTab("msgs");
+  });
+  el.phoneTabGallery.addEventListener("click", () => {
+    sfx.tap();
+    switchPhoneInnerTab("gallery");
+  });
+
   function openPhoneModal() {
     const c = curCust();
     const pd = c.phoneData;
@@ -1079,38 +1337,33 @@
 
     if (pd.locked && !state.phoneUnlocked) {
       el.pinLockSection.style.display = "block";
-      el.notifList.style.display = "none";
+      el.unlockedPhoneContent.style.display = "none";
       el.pinHintText.textContent = `🔒 ${pd.pinHint}`;
       state.pinInput = "";
       renderPinDots();
     } else {
       el.pinLockSection.style.display = "none";
-      el.notifList.style.display = "block";
+      el.unlockedPhoneContent.style.display = "block";
+
       el.notifList.innerHTML = "";
       pd.notifications.forEach((n) => {
         const d = document.createElement("div");
         d.className = "notif-card";
-        d.innerHTML = `
-          <div class="notif-meta">${n.app}</div>
-          <div class="notif-sender">${n.sender}</div>
-          <div class="notif-body">${n.body}</div>
-        `;
+        d.innerHTML = `<div class="notif-meta">${n.app}</div><div class="notif-sender">${n.sender}</div><div class="notif-body">${n.body}</div>`;
         el.notifList.appendChild(d);
       });
+
+      const photos = pd.gallery || [];
+      el.phoneTabGallery.textContent = `🖼️ Galeri (${photos.length})`;
+      el.galleryList.innerHTML = photos.map((p) => window.renderPhonePhotoSVG(p)).join("");
+      switchPhoneInnerTab(state.phoneTab);
     }
     el.phoneModal.classList.remove("hidden");
   }
 
   el.btnPhone.addEventListener("click", () => {
-    if (state.phoneState === "none") {
-      sfx.tap();
-      showToast("Müşteri şarja telefon bırakmadı.");
-      return;
-    }
-    if (state.phoneState === "snatched") {
-      showToast("Müşteri şüphelendiği için telefonunu geri aldı!");
-      return;
-    }
+    if (state.phoneState === "none") return showToast("Müşteri şarja telefon bırakmadı.");
+    if (state.phoneState === "snatched") return showToast("Müşteri telefonunu geri aldı!");
     if (state.phoneState === "waiting_plug") {
       sfx.tap();
       state.phoneState = "charging";
@@ -1119,15 +1372,12 @@
       state.phoneTimer = setTimeout(() => {
         state.phoneState = "ringing";
         sfx.phoneBuzz();
-        showToast("📲 Şarjdaki telefona gizli bildirim düştü!");
+        showToast("📲 Telefona gizli bildirim düştü!");
         renderUI();
-      }, 1100);
+      }, 1050);
       return;
     }
-    if (state.phoneState === "charging") {
-      showToast("Telefon açılıyor, 1 saniye bekle...");
-      return;
-    }
+    if (state.phoneState === "charging") return showToast("Telefon açılıyor, 1 saniye bekle...");
     sfx.tap();
     state.phoneState = "read";
     openPhoneModal();
@@ -1135,12 +1385,11 @@
   });
 
   el.closePhoneBtn.addEventListener("click", () => {
-    sfx.tap();
     stopPhoneSuspicion();
     el.phoneModal.classList.add("hidden");
   });
 
-  // ================= 8. ROZETLER VE KANIT PANOSU =================
+  // ================= ROZETLER & KANIT PANOSU =================
   el.cluesBtn.addEventListener("click", () => {
     sfx.tap();
     el.badgesListContainer.innerHTML = "";
@@ -1151,9 +1400,9 @@
         "background:#1e293b; border:1.8px solid " +
         (got ? "#22c55e" : "#334155") +
         "; border-radius:9px; padding:7px; opacity:" +
-        (got ? "1" : "0.55");
-      div.innerHTML = `<div style="font-size:12px; font-weight:900;">${b.icon} ${b.name}</div>
-                       <div style="font-size:10px; color:#cbd5e1; margin-top:2px;">${b.desc}</div>`;
+        (got ? "1" : "0.52");
+      div.innerHTML = `<div style="font-size:11.5px; font-weight:900;">${b.icon} ${b.name}</div>
+                       <div style="font-size:9.8px; color:#cbd5e1; margin-top:2px;">${b.desc}</div>`;
       el.badgesListContainer.appendChild(div);
     });
 
@@ -1162,10 +1411,7 @@
       const info = clueDb[k];
       const unlocked = !!persistent.clues[k];
       const item = document.createElement("div");
-      item.style.cssText =
-        "background:#1e293b; border:1.8px solid " +
-        (unlocked ? "#f59e0b" : "#334155") +
-        "; border-radius:9px; padding:8px;";
+      item.style.cssText = "background:#1e293b; border:1.8px solid " + (unlocked ? "#f59e0b" : "#334155") + "; border-radius:9px; padding:8px;";
       item.innerHTML = unlocked
         ? `<div style="font-size:9.5px; color:#fde68a; font-weight:800;">📌 ${info.night}</div>
            <div style="font-size:12px; font-weight:900;">${info.title}</div>
@@ -1173,44 +1419,55 @@
         : `<div style="font-size:11px; color:#64748b; font-weight:800;">🔒 Gizli Kanıt (${info.night})</div>`;
       el.cluesListContainer.appendChild(item);
     });
-
     el.cluesModal.classList.remove("hidden");
   });
-
   el.closeCluesBtn.addEventListener("click", () => el.cluesModal.classList.add("hidden"));
 
-  // ================= 9. 4 SEÇENEKLİ KARAR MEKANİZMASI =================
-  function handleDecision(choice) {
-    const c = curCust();
-
-    if (choice === "serve") {
-      if (!checkPowerBeforeAction()) return;
-      if (!isOrderComplete()) {
-        sfx.tap();
-        showToast("Satışı tamamlamak için önce fişteki istekleri hazırla!");
-        return;
-      }
+  // ================= KARAR VE GECE SONU =================
+  el.btnServe.addEventListener("click", () => {
+    if (!checkPowerBeforeAction()) return;
+    if (!isOrderComplete()) {
+      sfx.tap();
+      showToast("Önce fişteki tüm siparişleri hazırla!");
+      return;
     }
+    sfx.tap();
+    openCashRegister();
+  });
+
+  el.btnHide.addEventListener("click", () => finalizeDecision("hide"));
+  el.btnLock.addEventListener("click", () => finalizeDecision("lock"));
+  el.btnPolice.addEventListener("click", () => finalizeDecision("police"));
+
+  function finalizeDecision(choice) {
+    const c = curCust();
 
     clearTimeout(state.phoneTimer);
     clearTimeout(state.outageTimer);
+    clearTimeout(state.landlineTimer);
     clearInterval(state.grillInterval);
     clearInterval(state.pumpInterval);
     stopPhoneSuspicion();
     state.isBlackout = false;
+    state.landlineActive = false;
 
     const res = c.outcomes[choice] || c.outcomes.lock;
     let extraNote = "";
 
     if (c.depotIntruder && !state.intruderScared && choice !== "police") {
-      persistent.cash = Math.max(0, persistent.cash - 90);
-      extraNote = " ⚠️ (Arka depo kamerasına bakmadığın için -90 ₺ malzeme çalındı!)";
+      const loss = state.dumanFed ? 40 : 90;
+      persistent.cash = Math.max(0, persistent.cash - loss);
+      extraNote = state.dumanFed
+        ? ` ⚠️ (Arka depoya sızan hırsızı Duman kovaladı, zarar azaldı: -${loss} ₺)`
+        : ` ⚠️ (Arka depo kamerasına bakmadığın için -${loss} ₺ malzeme çalındı!)`;
     }
 
     if (choice === "serve") {
       sfx.cashRegister();
       if (res.correct) persistent.cash += c.reward + state.tipEarned;
       else persistent.cash = Math.max(0, persistent.cash - (res.penalty || 0));
+    } else if (choice === "credit") {
+      // Veresiye ertesi gece tahsil edilecek
     } else if (choice === "hide") {
       sfx.safeRoom();
       if (res.bonus) persistent.cash += res.bonus;
@@ -1244,11 +1501,6 @@
     el.outcomeModal.classList.remove("hidden");
   }
 
-  el.btnServe.addEventListener("click", () => handleDecision("serve"));
-  el.btnHide.addEventListener("click", () => handleDecision("hide"));
-  el.btnLock.addEventListener("click", () => handleDecision("lock"));
-  el.btnPolice.addEventListener("click", () => handleDecision("police"));
-
   el.nextCustomerBtn.addEventListener("click", () => {
     sfx.tap();
     el.outcomeModal.classList.add("hidden");
@@ -1268,8 +1520,8 @@
       row.className = "shop-item";
       row.innerHTML = `
         <div>
-          <div style="font-size:12px; font-weight:900;">${item.name}</div>
-          <div style="font-size:10.5px; color:#cbd5e1; line-height:1.28;">${item.desc}</div>
+          <div style="font-size:11.5px; font-weight:900;">${item.name}</div>
+          <div style="font-size:10px; color:#cbd5e1; line-height:1.25;">${item.desc}</div>
         </div>
       `;
       const btn = document.createElement("button");
@@ -1305,17 +1557,17 @@
     if (n.isEndless) {
       el.paperHeadline.textContent = `SONSUZ VARDİYA #${n.nightNumber} BİTTİ (${state.correctInNight}/5 DOĞRU)!`;
       el.paperSummary.textContent =
-        "Sabaha sağ salim çıktın! Sıradaki vardiyada bambaşka 5 yeni müşteri, yeni aranan plaka ve yeni olaylar üretilecek.";
+        "Sabaha sağ salim çıktın! Yazdığın veresiyeler yeni vardiyanın başında sonuçlanacak.";
       el.nextNightBtn.textContent = `♾️ YENİ RASTGELE VARDİYAYA GEÇ (#${n.nightNumber + 1}) ➔`;
     } else if (state.nightIdx < storyNights.length - 1) {
       el.paperHeadline.textContent = `${n.nightNumber}. GECE TAMAMLANDI (${state.correctInNight}/5 DOĞRU)!`;
-      el.paperSummary.textContent = `Vardiyayı başarıyla bitirdin! ${n.nightNumber + 1}. Gecede daha önce hiç görmediğin 5 yepyeni müşteri istasyona gelecek.`;
+      el.paperSummary.textContent = `Vardiyayı tamamladın! ${n.nightNumber + 1}. Gecede bambaşka 5 yeni müşteri ve önceki veresiyelerin dönüşü seni bekliyor.`;
       el.nextNightBtn.textContent = `🌙 ${n.nightNumber + 1}. GECEYE GEÇ (5 YENİ MÜŞTERİ) ➔`;
     } else {
       unlockBadge("story_master");
       el.paperHeadline.textContent = `5 GECE / 25 MÜŞTERİ TAMAMLANDI! SON İSTASYON EFSANESİ!`;
       el.paperSummary.textContent =
-        "Ana hikayeyi bitirdin! Şimdi hiç tekrar etmeyen müşterilerle 'Sonsuz Rastgele Vardiya' moduna geçebilirsin!";
+        "Ana hikayeyi bitirdin! Şimdi tüm v4.0 özellikleriyle 'Sonsuz Rastgele Vardiya' moduna geçebilirsin!";
       el.nextNightBtn.textContent = "♾️ SONSUZ RASTGELE VARDİYAYA BAŞLA ➔";
     }
 
@@ -1326,24 +1578,22 @@
   el.nextNightBtn.addEventListener("click", () => {
     sfx.tap();
     el.nightEndModal.classList.add("hidden");
+    state.dumanFed = false;
 
     if (state.mode === "endless") {
       persistent.endlessShift += 1;
       saveProgress();
       state.activeNightObj = window.generateEndlessNight(persistent.endlessShift);
-      state.correctInNight = 0;
-      loadCustomer(0);
     } else if (state.nightIdx < storyNights.length - 1) {
       state.nightIdx += 1;
       state.activeNightObj = storyNights[state.nightIdx];
-      state.correctInNight = 0;
-      loadCustomer(0);
     } else {
       state.mode = "endless";
       state.activeNightObj = window.generateEndlessNight(persistent.endlessShift);
-      state.correctInNight = 0;
-      loadCustomer(0);
     }
+    state.correctInNight = 0;
+    settlePreviousLedger();
+    loadCustomer(0);
   });
 
   el.muteBtn.addEventListener("click", () => {
@@ -1354,6 +1604,7 @@
   el.startShiftBtn.addEventListener("click", () => {
     sfx.startRainAmbience();
     sfx.tap();
+    state.dumanFed = false;
     if (state.mode === "endless") {
       state.activeNightObj = window.generateEndlessNight(persistent.endlessShift);
     } else {
@@ -1361,6 +1612,7 @@
     }
     state.correctInNight = 0;
     el.startScreen.classList.add("hidden");
+    settlePreviousLedger();
     loadCustomer(0);
   });
 })();

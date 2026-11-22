@@ -1,4 +1,4 @@
-// Son İstasyon v3.0 — Gelişmiş Ses ve Efekt Motoru (Web Audio API)
+// Son İstasyon v4.0 — Ses ve Titreşim Motoru (Web Audio API)
 class SoundEngine {
   constructor() {
     this.ctx = null;
@@ -20,7 +20,7 @@ class SoundEngine {
   toggleMute() {
     this.muted = !this.muted;
     if (this.rainGain && this.ctx) {
-      this.rainGain.gain.setTargetAtTime(this.muted ? 0 : 0.028, this.ctx.currentTime, 0.1);
+      this.rainGain.gain.setTargetAtTime(this.muted ? 0 : 0.026, this.ctx.currentTime, 0.1);
     }
     return this.muted;
   }
@@ -49,7 +49,7 @@ class SoundEngine {
     filter.Q.value = 0.75;
 
     this.rainGain = this.ctx.createGain();
-    this.rainGain.gain.value = this.muted ? 0 : 0.028;
+    this.rainGain.gain.value = this.muted ? 0 : 0.026;
 
     whiteNoise.connect(filter);
     filter.connect(this.rainGain);
@@ -76,8 +76,50 @@ class SoundEngine {
   }
 
   doorBell() {
-    this.tone(659.25, 0.2, "triangle", 0.13, 0);
-    this.tone(523.25, 0.32, "triangle", 0.13, 0.15);
+    this.tone(659.25, 0.2, "triangle", 0.12, 0);
+    this.tone(523.25, 0.3, "triangle", 0.12, 0.15);
+  }
+
+  dogBark() {
+    // Sevimli havlama: Hav! Hav!
+    this.tone(360, 0.09, "triangle", 0.14, 0);
+    this.tone(240, 0.11, "sawtooth", 0.1, 0.05);
+    this.tone(390, 0.09, "triangle", 0.14, 0.2);
+    this.tone(260, 0.12, "sawtooth", 0.1, 0.25);
+  }
+
+  dogGrowl() {
+    // Tehlike hırlaması: Grrrr...
+    this.vibrate([30, 20, 40]);
+    this.tone(88, 0.32, "sawtooth", 0.11, 0);
+    this.tone(76, 0.35, "sawtooth", 0.12, 0.18);
+  }
+
+  landlineRing() {
+    // Eski kablolu büfe telefonu zili: Zırrr-Zırrr!
+    this.vibrate([50, 40, 50]);
+    for (let i = 0; i < 5; i++) {
+      this.tone(i % 2 === 0 ? 920 : 1120, 0.055, "square", 0.09, i * 0.06);
+    }
+    for (let i = 0; i < 5; i++) {
+      this.tone(i % 2 === 0 ? 920 : 1120, 0.055, "square", 0.09, 0.42 + i * 0.06);
+    }
+  }
+
+  flashlightClick() {
+    this.tone(950, 0.04, "square", 0.07, 0);
+    this.tone(1320, 0.05, "sine", 0.06, 0.035);
+  }
+
+  coinChange() {
+    this.tone(1046.5, 0.08, "triangle", 0.11, 0);
+    this.tone(1396.9, 0.1, "sine", 0.1, 0.05);
+  }
+
+  ledgerWrite() {
+    this.tone(440, 0.06, "triangle", 0.09, 0);
+    this.tone(554.37, 0.08, "triangle", 0.09, 0.07);
+    this.tone(659.25, 0.14, "triangle", 0.1, 0.14);
   }
 
   pumpTick(pitch = 320) {
