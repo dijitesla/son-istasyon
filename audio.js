@@ -1,10 +1,14 @@
-// Son İstasyon v4.0 — Ses ve Titreşim Motoru (Web Audio API)
+// Son İstasyon v5.0 — Gelişmiş Ses, Lo-Fi Gece Radyosu Müziği ve Cam Silme Motoru
 class SoundEngine {
   constructor() {
     this.ctx = null;
     this.muted = false;
+    this.musicOn = true;
     this.rainNode = null;
     this.rainGain = null;
+    this.musicTimer = null;
+    this.chordStep = 0;
+    this.lastWipeSound = 0;
   }
 
   init() {
@@ -20,9 +24,20 @@ class SoundEngine {
   toggleMute() {
     this.muted = !this.muted;
     if (this.rainGain && this.ctx) {
-      this.rainGain.gain.setTargetAtTime(this.muted ? 0 : 0.026, this.ctx.currentTime, 0.1);
+      this.rainGain.gain.setTargetAtTime(this.muted ? 0 : 0.024, this.ctx.currentTime, 0.1);
     }
     return this.muted;
+  }
+
+  toggleMusic() {
+    this.musicOn = !this.musicOn;
+    if (this.musicOn) {
+      this.startLoFiMusic();
+    } else if (this.musicTimer) {
+      clearInterval(this.musicTimer);
+      this.musicTimer = null;
+    }
+    return this.musicOn;
   }
 
   vibrate(ms = 25) {
@@ -33,29 +48,77 @@ class SoundEngine {
 
   startRainAmbience() {
     this.init();
-    if (!this.ctx || this.rainNode) return;
-    const bufferSize = 2 * this.ctx.sampleRate;
-    const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-    const out = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) out[i] = Math.random() * 2 - 1;
+    if (!this.ctx) return;
+    if (!this.rainNode) {
+      const bufferSize = 2 * this.ctx.sampleRate;
+      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const out = noiseBuffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) out[i] = Math.random() * 2 - 1;
 
-    const whiteNoise = this.ctx.createBufferSource();
-    whiteNoise.buffer = noiseBuffer;
-    whiteNoise.loop = true;
+      const whiteNoise = this.ctx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
 
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.value = 880;
-    filter.Q.value = 0.75;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.value = 860;
+      filter.Q.value = 0.75;
 
-    this.rainGain = this.ctx.createGain();
-    this.rainGain.gain.value = this.muted ? 0 : 0.026;
+      this.rainGain = this.ctx.createGain();
+      this.rainGain.gain.value = this.muted ? 0 : 0.024;
 
-    whiteNoise.connect(filter);
-    filter.connect(this.rainGain);
-    this.rainGain.connect(this.ctx.destination);
-    whiteNoise.start(0);
-    this.rainNode = whiteNoise;
+      whiteNoise.connect(filter);
+      filter.connect(this.rainGain);
+      this.rainGain.connect(this.ctx.destination);
+      whiteNoise.start(0);
+      this.rainNode = whiteNoise;
+    }
+    if (this.musicOn) this.startLoFiMusic();
+  }
+
+  startLoFiMusic() {
+    this.init();
+    if (!this.ctx || this.musicTimer || !this.musicOn) return;
+
+    // Sıcak gece radyosu akor dizisi: Am7 -> Fmaj7 -> Dm7 -> E7
+    const chords = [
+      [220.0, 261.63, 329.63, 392.0],
+      [174.61, 220.0, 261.63, 329.63],
+      [146.83, 174.61, 220.0, 261.63],
+      [164.81, 207.65, 246.94, 293.66]
+    ];
+
+    const playChord = () => {
+      if (this.muted || !this.musicOn || !this.ctx) return;
+      const notes = chords[this.chordStep % chords.length];
+      this.chordStep += 1;
+      const now = this.ctx.currentTime;
+
+      notes.forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(680, now);
+
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.06);
+        gain.gain.linearRampToValueAtTime(0.02, now + idx * 0.06 + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.0008, now + 2.5);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + idx * 0.06);
+        osc.stop(now + 2.6);
+      });
+    };
+
+    playChord();
+    this.musicTimer = setInterval(playChord, 2700);
   }
 
   tone(freq, duration = 0.12, type = "sine", vol = 0.11, delay = 0) {
@@ -75,13 +138,24 @@ class SoundEngine {
     osc.stop(now + duration);
   }
 
+  glassWipe() {
+    const nowMs = Date.now();
+    if (nowMs - this.lastWipeSound < 130) return;
+    this.lastWipeSound = nowMs;
+    this.tone(1250 + Math.random() * 250, 0.055, "sine", 0.035, 0);
+  }
+
+  thunder() {
+    this.tone(68, 0.45, "sawtooth", 0.09, 0);
+    this.tone(52, 0.65, "triangle", 0.11, 0.12);
+  }
+
   doorBell() {
     this.tone(659.25, 0.2, "triangle", 0.12, 0);
     this.tone(523.25, 0.3, "triangle", 0.12, 0.15);
   }
 
   dogBark() {
-    // Sevimli havlama: Hav! Hav!
     this.tone(360, 0.09, "triangle", 0.14, 0);
     this.tone(240, 0.11, "sawtooth", 0.1, 0.05);
     this.tone(390, 0.09, "triangle", 0.14, 0.2);
@@ -89,14 +163,12 @@ class SoundEngine {
   }
 
   dogGrowl() {
-    // Tehlike hırlaması: Grrrr...
     this.vibrate([30, 20, 40]);
     this.tone(88, 0.32, "sawtooth", 0.11, 0);
     this.tone(76, 0.35, "sawtooth", 0.12, 0.18);
   }
 
   landlineRing() {
-    // Eski kablolu büfe telefonu zili: Zırrr-Zırrr!
     this.vibrate([50, 40, 50]);
     for (let i = 0; i < 5; i++) {
       this.tone(i % 2 === 0 ? 920 : 1120, 0.055, "square", 0.09, i * 0.06);

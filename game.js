@@ -1,19 +1,25 @@
-// Son İstasyon v4.0 — Ana Oyun Motoru
-// (El Fenerli Bagaj, Köpek Duman, Çalan Sabit Telefon, Para Üstü & Veresiye Defteri, Fotoğraf Galerisi)
+// Son İstasyon v5.0 Master Sürüm — Ana Oyun Motoru
+// (Çizgi Roman İllüstrasyon, Gece Müziği, Kar/Sis & Buğulu Cam Silme, Dekorasyon, TR/EN Dil ve 9:16 Karne Paylaşımı)
 
 (function () {
   const storyNights = window.GAME_NIGHTS;
   const catalog = window.CATALOG;
   const shopItems = window.SHOP_UPGRADES;
+  const decorItems = window.DECOR_ITEMS;
   const badgesList = window.BADGES_LIST;
   const clueDb = window.CLUE_DATABASE;
+  const i18n = window.I18N;
   const sfx = window.sfx;
 
-  const SAVE_KEY = "son_istasyon_v4_save";
+  const SAVE_KEY = "son_istasyon_v5_save";
 
   let persistent = {
-    cash: 260,
+    cash: 280,
+    lang: "tr",
     upgrades: {},
+    decorOwned: {},
+    activeSignTheme: "default", // default | neon_cyber | neon_gold
+    activeCounterTheme: "default", // default | counter_marble
     clues: {},
     badges: {},
     ledger: [],
@@ -21,11 +27,15 @@
   };
 
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = localStorage.getItem(SAVE_KEY) || localStorage.getItem("son_istasyon_v4_save");
     if (raw) {
       const p = JSON.parse(raw);
       if (typeof p.cash === "number") persistent.cash = p.cash;
+      if (p.lang) persistent.lang = p.lang;
       if (p.upgrades) persistent.upgrades = p.upgrades;
+      if (p.decorOwned) persistent.decorOwned = p.decorOwned;
+      if (p.activeSignTheme) persistent.activeSignTheme = p.activeSignTheme;
+      if (p.activeCounterTheme) persistent.activeCounterTheme = p.activeCounterTheme;
       if (p.clues) persistent.clues = p.clues;
       if (p.badges) persistent.badges = p.badges;
       if (Array.isArray(p.ledger)) persistent.ledger = p.ledger;
@@ -39,14 +49,17 @@
     } catch (_) {}
   }
 
+  function t(key) {
+    const dict = i18n[persistent.lang] || i18n.tr;
+    return dict[key] || i18n.tr[key] || key;
+  }
+
   function unlockBadge(badgeId) {
     if (!badgeId || persistent.badges[badgeId]) return;
     persistent.badges[badgeId] = true;
     saveProgress();
     const b = badgesList.find((x) => x.id === badgeId);
-    if (b) {
-      setTimeout(() => showToast(`🏅 Yeni Rozet: ${b.icon} ${b.name}!`), 550);
-    }
+    if (b) setTimeout(() => showToast(`🏅 ${b.icon} ${b.name}!`), 550);
   }
 
   let state = {
@@ -57,6 +70,10 @@
     correctInNight: 0,
     tipEarned: 0,
 
+    weather: "rain", // rain | snow | storm
+    frostStrokes: 0,
+    frostActive: false,
+
     dumanFed: false,
     trunkInspected: false,
 
@@ -65,7 +82,6 @@
     landlineTimer: null,
 
     selectedChange: 0,
-
     selectedFuelType: "benzin",
     fuelDone: false,
     drinkDone: false,
@@ -83,7 +99,7 @@
 
     phoneState: "none",
     phoneUnlocked: false,
-    phoneTab: "msgs", // msgs | gallery
+    phoneTab: "msgs",
     pinInput: "",
     suspicion: 0,
     suspicionInterval: null,
@@ -97,6 +113,10 @@
   const el = {
     phoneStage: document.getElementById("phoneStage"),
     startScreen: document.getElementById("startScreen"),
+    langTrBtn: document.getElementById("langTrBtn"),
+    langEnBtn: document.getElementById("langEnBtn"),
+    mainLogoTitle: document.getElementById("mainLogoTitle"),
+    mainSubtitle: document.getElementById("mainSubtitle"),
     startNightTitle: document.getElementById("startNightTitle"),
     bossNoteText: document.getElementById("bossNoteText"),
     endlessSelectBtn: document.getElementById("endlessSelectBtn"),
@@ -107,15 +127,19 @@
     clockText: document.getElementById("clockText"),
     customerCounter: document.getElementById("customerCounter"),
     cashText: document.getElementById("cashText"),
+    musicBtn: document.getElementById("musicBtn"),
     muteBtn: document.getElementById("muteBtn"),
     radioText: document.getElementById("radioText"),
 
+    frostCanvas: document.getElementById("frostCanvas"),
     cctvBtn: document.getElementById("cctvBtn"),
     cctvBtnLabel: document.getElementById("cctvBtnLabel"),
     wantedBtn: document.getElementById("wantedBtn"),
+    decorBtn: document.getElementById("decorBtn"),
     cluesBtn: document.getElementById("cluesBtn"),
     clueCountText: document.getElementById("clueCountText"),
     dumanPill: document.getElementById("dumanPill"),
+    canopySignText: document.getElementById("canopySignText"),
 
     pumpCarWrap: document.getElementById("pumpCarWrap"),
     outsideCarSvgHolder: document.getElementById("outsideCarSvgHolder"),
@@ -130,32 +154,50 @@
     openLedgerBtn: document.getElementById("openLedgerBtn"),
     landlineRingBtn: document.getElementById("landlineRingBtn"),
     breakerAlertBtn: document.getElementById("breakerAlertBtn"),
+    lblOrderTicket: document.getElementById("lblOrderTicket"),
     ticketBadges: document.getElementById("ticketBadges"),
 
     btnFuel: document.getElementById("btnFuel"),
+    lblPumpTitle: document.getElementById("lblPumpTitle"),
     subFuel: document.getElementById("subFuel"),
     btnCoffee: document.getElementById("btnCoffee"),
+    lblDrinkTitle: document.getElementById("lblDrinkTitle"),
     subCoffee: document.getElementById("subCoffee"),
     btnToast: document.getElementById("btnToast"),
+    lblGrillTitle: document.getElementById("lblGrillTitle"),
     subToast: document.getElementById("subToast"),
     grillBarWrap: document.getElementById("grillBarWrap"),
     grillBarFill: document.getElementById("grillBarFill"),
     btnMarket: document.getElementById("btnMarket"),
+    lblMarketTitle: document.getElementById("lblMarketTitle"),
     subMarket: document.getElementById("subMarket"),
     btnUv: document.getElementById("btnUv"),
+    lblUvTitle: document.getElementById("lblUvTitle"),
     subUv: document.getElementById("subUv"),
     btnPhone: document.getElementById("btnPhone"),
     phoneBadge: document.getElementById("phoneBadge"),
     phoneEmoji: document.getElementById("phoneEmoji"),
+    lblPhoneTitle: document.getElementById("lblPhoneTitle"),
     subPhone: document.getElementById("subPhone"),
 
     btnServe: document.getElementById("btnServe"),
+    lblServeBtn: document.getElementById("lblServeBtn"),
     serveSubText: document.getElementById("serveSubText"),
     btnHide: document.getElementById("btnHide"),
+    lblHideBtn: document.getElementById("lblHideBtn"),
+    lblHideSub: document.getElementById("lblHideSub"),
     btnLock: document.getElementById("btnLock"),
+    lblLockBtn: document.getElementById("lblLockBtn"),
+    lblLockSub: document.getElementById("lblLockSub"),
     btnPolice: document.getElementById("btnPolice"),
+    lblPoliceBtn: document.getElementById("lblPoliceBtn"),
+    lblPoliceSub: document.getElementById("lblPoliceSub"),
 
-    // Yeni v4 Modallar
+    decorModal: document.getElementById("decorModal"),
+    decorCashText: document.getElementById("decorCashText"),
+    decorListContainer: document.getElementById("decorListContainer"),
+    closeDecorBtn: document.getElementById("closeDecorBtn"),
+
     trunkModal: document.getElementById("trunkModal"),
     trunkViewport: document.getElementById("trunkViewport"),
     trunkSvgHolder: document.getElementById("trunkSvgHolder"),
@@ -193,7 +235,6 @@
     writeCreditQuickBtn: document.getElementById("writeCreditQuickBtn"),
     closeLedgerBtn: document.getElementById("closeLedgerBtn"),
 
-    // Mevcut Modallar
     fuelModal: document.getElementById("fuelModal"),
     pumpCurrentVal: document.getElementById("pumpCurrentVal"),
     pumpTargetVal: document.getElementById("pumpTargetVal"),
@@ -277,48 +318,169 @@
     nightEndModal: document.getElementById("nightEndModal"),
     paperHeadline: document.getElementById("paperHeadline"),
     paperSummary: document.getElementById("paperSummary"),
+    shareCardBtn: document.getElementById("shareCardBtn"),
     shopCashText: document.getElementById("shopCashText"),
     shopListContainer: document.getElementById("shopListContainer"),
     nextNightBtn: document.getElementById("nextNightBtn")
   };
 
-  // Yağmur
+  // ================= DİL VE DEKOR UYGULAMA =================
+  function applyLanguageUI() {
+    el.langTrBtn.classList.toggle("active", persistent.lang === "tr");
+    el.langEnBtn.classList.toggle("active", persistent.lang === "en");
+    el.mainLogoTitle.textContent = t("gameTitle");
+    el.mainSubtitle.textContent = t("subtitle");
+    el.startShiftBtn.textContent = t("startBtn");
+    el.endlessSelectBtn.textContent = t("endlessBtn");
+    el.canopySignText.textContent = persistent.lang === "en" ? "LAST STATION • PUMP 04" : "SON İSTASYON • POMPA 04";
+    el.wantedBtn.textContent = t("wanted");
+    el.decorBtn.textContent = t("decor");
+    el.askIdBtn.textContent = t("askId");
+    el.trunkSearchBtn.textContent = t("trunk");
+    el.lblOrderTicket.textContent = t("ticket");
+    el.lblPumpTitle.textContent = t("pump");
+    el.lblDrinkTitle.textContent = t("drinks");
+    el.lblGrillTitle.textContent = t("grill");
+    el.lblMarketTitle.textContent = t("market");
+    el.lblUvTitle.textContent = t("uv");
+    el.lblPhoneTitle.textContent = t("charger");
+    el.lblServeBtn.textContent = t("serve");
+    el.lblHideBtn.textContent = t("hide");
+    el.lblHideSub.textContent = t("hideSub");
+    el.lblLockBtn.textContent = t("lock");
+    el.lblLockSub.textContent = t("lockSub");
+    el.lblPoliceBtn.textContent = t("police");
+    el.lblPoliceSub.textContent = t("policeSub");
+    el.shareCardBtn.textContent = t("shareBtn");
+  }
+
+  function applyDecorThemes() {
+    el.phoneStage.classList.remove("theme-cyber", "theme-gold", "counter-marble");
+    if (persistent.activeSignTheme === "neon_cyber") el.phoneStage.classList.add("theme-cyber");
+    if (persistent.activeSignTheme === "neon_gold") el.phoneStage.classList.add("theme-gold");
+    if (persistent.activeCounterTheme === "counter_marble") el.phoneStage.classList.add("counter-marble");
+  }
+
+  el.langTrBtn.addEventListener("click", () => {
+    sfx.tap();
+    persistent.lang = "tr";
+    saveProgress();
+    applyLanguageUI();
+  });
+
+  el.langEnBtn.addEventListener("click", () => {
+    sfx.tap();
+    persistent.lang = "en";
+    saveProgress();
+    applyLanguageUI();
+  });
+
+  applyLanguageUI();
+  applyDecorThemes();
+
+  // ================= DİNAMİK HAVA DURUMU (YAĞMUR / KAR / ŞİMŞEK) =================
   const canvas = document.getElementById("rainCanvas");
   const ctx = canvas.getContext("2d");
-  let drops = [];
+  let particles = [];
 
-  function resizeRain() {
+  function resizeWeather() {
     canvas.width = canvas.clientWidth || 400;
     canvas.height = canvas.clientHeight || 205;
-    drops = Array.from({ length: 48 }, () => ({
+    particles = Array.from({ length: 50 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      len: 10 + Math.random() * 12,
-      speed: 4.6 + Math.random() * 4
+      len: 9 + Math.random() * 12,
+      r: 1.6 + Math.random() * 2.4,
+      speed: 1.8 + Math.random() * 3.5,
+      drift: (Math.random() - 0.5) * 1.2
     }));
   }
 
-  function drawRain() {
+  function drawWeather() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "rgba(148, 197, 255, 0.26)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    for (const d of drops) {
-      ctx.moveTo(d.x, d.y);
-      ctx.lineTo(d.x - 2.3, d.y + d.len);
-      d.y += d.speed;
-      d.x -= 0.5;
-      if (d.y > canvas.height) {
-        d.y = -14;
-        d.x = Math.random() * (canvas.width + 25);
+
+    if (state.weather === "snow") {
+      ctx.fillStyle = "rgba(241, 245, 249, 0.72)";
+      for (const p of particles) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+        p.y += p.speed * 0.48;
+        p.x += Math.sin(p.y * 0.03) * 0.65;
+        if (p.y > canvas.height) {
+          p.y = -6;
+          p.x = Math.random() * canvas.width;
+        }
       }
+    } else {
+      ctx.strokeStyle = state.weather === "storm" ? "rgba(186, 230, 253, 0.36)" : "rgba(148, 197, 255, 0.25)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (const p of particles) {
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - 2.5, p.y + p.len);
+        p.y += p.speed * 1.65;
+        p.x -= 0.55;
+        if (p.y > canvas.height) {
+          p.y = -14;
+          p.x = Math.random() * (canvas.width + 25);
+        }
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
-    requestAnimationFrame(drawRain);
+    requestAnimationFrame(drawWeather);
   }
-  window.addEventListener("resize", resizeRain);
-  resizeRain();
-  drawRain();
+  window.addEventListener("resize", resizeWeather);
+  resizeWeather();
+  drawWeather();
+
+  // ================= BUĞULU CAM SİLME MEKANİĞİ (#frostCanvas) =================
+  const fCtx = el.frostCanvas.getContext("2d");
+
+  function triggerFrostedGlass() {
+    el.frostCanvas.width = el.frostCanvas.clientWidth || 400;
+    el.frostCanvas.height = el.frostCanvas.clientHeight || 205;
+    state.frostStrokes = 0;
+    state.frostActive = true;
+    el.frostCanvas.classList.remove("cleared");
+
+    fCtx.globalCompositeOperation = "source-over";
+    const grd = fCtx.createLinearGradient(0, 0, 0, el.frostCanvas.height);
+    grd.addColorStop(0, "rgba(203, 225, 245, 0.88)");
+    grd.addColorStop(1, "rgba(148, 182, 218, 0.85)");
+    fCtx.fillStyle = grd;
+    fCtx.fillRect(0, 0, el.frostCanvas.width, el.frostCanvas.height);
+
+    fCtx.fillStyle = "#0f172a";
+    fCtx.font = "900 13px sans-serif";
+    fCtx.textAlign = "center";
+    fCtx.fillText(t("wipeHint"), el.frostCanvas.width / 2, el.frostCanvas.height / 2 + 12);
+  }
+
+  function wipeFrostAt(e) {
+    if (!state.frostActive) return;
+    const rect = el.frostCanvas.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    const cy = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+    fCtx.globalCompositeOperation = "destination-out";
+    fCtx.beginPath();
+    fCtx.arc(cx, cy, 36, 0, Math.PI * 2);
+    fCtx.fill();
+
+    sfx.glassWipe();
+    state.frostStrokes += 1;
+    if (state.frostStrokes >= 14) {
+      state.frostActive = false;
+      el.frostCanvas.classList.add("cleared");
+      showToast("✨ Cam tertemiz oldu!");
+    }
+  }
+
+  el.frostCanvas.addEventListener("pointerdown", wipeFrostAt);
+  el.frostCanvas.addEventListener("pointermove", (e) => {
+    if (e.buttons > 0 || e.pointerType === "touch") wipeFrostAt(e);
+  });
 
   let toastTimer = null;
   function showToast(msg) {
@@ -392,7 +554,6 @@
     return true;
   }
 
-  // Vardiya başında önceki geceden kalan veresiyeleri tahsil et!
   function settlePreviousLedger() {
     let gained = 0;
     let scammed = 0;
@@ -427,6 +588,7 @@
   function updateDumanUI() {
     const c = curCust();
     el.dumanPill.classList.remove("happy", "growling");
+    const hasHouse = !!persistent.decorOwned.duman_house;
     if (!state.dumanFed) {
       el.dumanPill.textContent = "🐕 Duman: Aç 🦴";
       return;
@@ -436,7 +598,7 @@
       el.dumanPill.textContent = "🐕 Hırlıyor! 💢";
     } else {
       el.dumanPill.classList.add("happy");
-      el.dumanPill.textContent = "🐕 Dost 🐾";
+      el.dumanPill.textContent = hasHouse ? "🏠 Duman: Dost 🐾" : "🐕 Duman: Dost 🐾";
     }
   }
 
@@ -449,11 +611,8 @@
     el.phoneStage.classList.toggle("blackout", state.isBlackout);
     el.breakerAlertBtn.style.display = state.isBlackout ? "flex" : "none";
     el.landlineRingBtn.style.display = state.landlineActive && !state.landlineAnswered ? "flex" : "none";
+    el.openLedgerBtn.textContent = c.payment && c.payment.asksCredit ? "📓 Veresiye!" : t("ledger");
 
-    // Veresiye isteyen müşteride buton parlasın
-    el.openLedgerBtn.textContent = c.payment && c.payment.asksCredit ? "📓 Veresiye!" : "📓 Defter";
-
-    // İstek Fişi
     el.ticketBadges.innerHTML = "";
     const addChip = (label, done) => {
       const sp = document.createElement("span");
@@ -468,22 +627,17 @@
     if (req.market) addChip(catalog.market[req.market].label, state.marketDone);
     if (c.wantsCharger) addChip("🔌 Şarj", state.phoneState !== "waiting_plug");
 
-    // İstasyon Kartları
     el.btnFuel.classList.remove("needed", "prepared");
     if (req.fuel > 0) {
       el.btnFuel.classList.add(state.fuelDone ? "prepared" : "needed");
       el.subFuel.textContent = state.fuelDone ? "Dolu ✓" : `${req.fuel}₺ ${catalog.fuels[req.fuelType].short}`;
-    } else {
-      el.subFuel.textContent = "İstenmedi";
-    }
+    } else el.subFuel.textContent = "-";
 
     el.btnCoffee.classList.remove("needed", "prepared");
     if (req.drink) {
       el.btnCoffee.classList.add(state.drinkDone ? "prepared" : "needed");
       el.subCoffee.textContent = state.drinkDone ? "Hazır ✓" : catalog.drinks[req.drink].short;
-    } else {
-      el.subCoffee.textContent = "İstenmedi";
-    }
+    } else el.subCoffee.textContent = "-";
 
     el.btnToast.classList.remove("needed", "prepared");
     if (req.toast) {
@@ -501,7 +655,7 @@
         el.grillBarWrap.classList.remove("active");
       }
     } else {
-      el.subToast.textContent = "İstenmedi";
+      el.subToast.textContent = "-";
       el.grillBarWrap.classList.remove("active");
     }
 
@@ -509,20 +663,16 @@
     if (req.market) {
       el.btnMarket.classList.add(state.marketDone ? "prepared" : "needed");
       el.subMarket.textContent = state.marketDone ? "Verildi ✓" : catalog.market[req.market].short;
-    } else {
-      el.subMarket.textContent = "İstenmedi";
-    }
+    } else el.subMarket.textContent = "-";
 
     el.btnUv.classList.remove("prepared", "uv-suspect");
     if (state.uvChecked) {
       el.btnUv.classList.add(c.cashBill.fake ? "uv-suspect" : "prepared");
-      el.subUv.textContent = c.cashBill.fake ? "⚠️ SAHTE!" : `${c.cashBill.denom}₺ Gerçek ✓`;
+      el.subUv.textContent = c.cashBill.fake ? "⚠️ SAHTE!" : `${c.cashBill.denom}₺ ✓`;
     } else if (persistent.upgrades.proUv && c.cashBill.fake) {
       el.btnUv.classList.add("uv-suspect");
       el.subUv.textContent = "⚠️ Şüpheli!";
-    } else {
-      el.subUv.textContent = `${c.cashBill.denom}₺ İncele`;
-    }
+    } else el.subUv.textContent = `${c.cashBill.denom}₺ Bak`;
 
     el.btnPhone.classList.remove("needed", "prepared", "phone-ringing");
     el.phoneBadge.style.display = "none";
@@ -556,7 +706,7 @@
       el.cctvBtnLabel.textContent = "🚨 DEPO!";
     } else {
       el.cctvBtn.classList.remove("danger-blink");
-      el.cctvBtnLabel.textContent = "KAMERA (2)";
+      el.cctvBtnLabel.textContent = t("camera");
     }
 
     if (isOrderComplete() && !state.isBlackout) {
@@ -565,6 +715,19 @@
     } else {
       el.btnServe.classList.add("locked-serve");
       el.serveSubText.textContent = state.isBlackout ? "Şalter Kapalı!" : "İsteği Hazırla";
+    }
+  }
+
+  function configureNightWeather() {
+    const n = curNight().nightNumber;
+    if (curNight().isEndless) {
+      state.weather = ["rain", "snow", "storm"][n % 3];
+    } else if (n === 3) {
+      state.weather = "snow";
+    } else if (n >= 4) {
+      state.weather = "storm";
+    } else {
+      state.weather = "rain";
     }
   }
 
@@ -606,6 +769,23 @@
     el.customerCounter.textContent = `${idx + 1}/${n.customers.length}`;
     el.radioText.textContent = c.radioTicker;
 
+    // Karlı gecede veya 2. müşteride buğulu cam sürprizi!
+    if ((state.weather === "snow" && (idx === 1 || idx === 3)) || (idx === 1 && n.nightNumber >= 2)) {
+      triggerFrostedGlass();
+    } else {
+      state.frostActive = false;
+      el.frostCanvas.classList.add("cleared");
+    }
+
+    // Fırtınalı gecede şimşek çakması efekti!
+    if (state.weather === "storm" && idx % 2 === 1) {
+      setTimeout(() => {
+        el.phoneStage.classList.add("lightning-flash");
+        sfx.thunder();
+        setTimeout(() => el.phoneStage.classList.remove("lightning-flash"), 220);
+      }, 900);
+    }
+
     el.pumpCarWrap.classList.add("offscreen");
     el.avatarHolder.classList.add("entering");
 
@@ -621,7 +801,6 @@
       el.avatarHolder.classList.remove("entering");
       sfx.doorBell();
 
-      // Köpek Duman tehlike sezgisi!
       if (state.dumanFed && c.isThreat) {
         setTimeout(() => {
           sfx.dogGrowl();
@@ -630,11 +809,8 @@
       }
     }, 170);
 
-    if (c.powerOutage) {
-      state.outageTimer = setTimeout(triggerBlackout, 1300);
-    }
+    if (c.powerOutage) state.outageTimer = setTimeout(triggerBlackout, 1300);
 
-    // Sabit büfe telefonu çalma sürprizi!
     if (c.landlineCall) {
       state.landlineTimer = setTimeout(() => {
         state.landlineActive = true;
@@ -665,7 +841,83 @@
     renderUI();
   }
 
-  // ================= YENİ 1: EL FENERİYLE BAGAJ ARAMA =================
+  // ================= İSTASYON DEKORASYON MODALI =================
+  function renderDecorModal() {
+    el.decorCashText.textContent = String(persistent.cash);
+    el.decorListContainer.innerHTML = "";
+    decorItems.forEach((d) => {
+      const owned = !!persistent.decorOwned[d.id];
+      const isEquipped =
+        (d.type === "sign" && persistent.activeSignTheme === d.id) ||
+        (d.type === "counter" && persistent.activeCounterTheme === d.id) ||
+        (d.type === "dog" && owned);
+
+      const row = document.createElement("div");
+      row.className = "shop-item";
+      row.innerHTML = `
+        <div>
+          <div style="font-size:12px; font-weight:900;">${persistent.lang === "en" ? d.nameEn : d.name}</div>
+          <div style="font-size:10.2px; color:#cbd5e1; line-height:1.25;">${d.desc}</div>
+        </div>
+      `;
+      const btn = document.createElement("button");
+      btn.className = "shop-buy-btn";
+
+      if (owned) {
+        if (d.type === "dog") {
+          btn.disabled = true;
+          btn.textContent = "AKTİF ✓";
+        } else {
+          btn.textContent = isEquipped ? "KULLANIMDA ✓" : "Kullan";
+          btn.style.background = isEquipped ? "#22c55e" : "#38bdf8";
+          btn.addEventListener("click", () => {
+            sfx.tap();
+            if (d.type === "sign") {
+              persistent.activeSignTheme = isEquipped ? "default" : d.id;
+            } else if (d.type === "counter") {
+              persistent.activeCounterTheme = isEquipped ? "default" : d.id;
+            }
+            saveProgress();
+            applyDecorThemes();
+            renderDecorModal();
+          });
+        }
+      } else {
+        btn.textContent = `${d.cost} ₺ Al`;
+        btn.addEventListener("click", () => {
+          if (persistent.cash < d.cost) {
+            sfx.burnFail();
+            showToast("Kasada yeterli para yok!");
+            return;
+          }
+          sfx.cashRegister();
+          persistent.cash -= d.cost;
+          persistent.decorOwned[d.id] = true;
+          if (d.type === "sign") persistent.activeSignTheme = d.id;
+          if (d.type === "counter") persistent.activeCounterTheme = d.id;
+          if (d.id === "duman_house") {
+            state.dumanFed = true;
+            unlockBadge("dog_friend");
+          }
+          saveProgress();
+          applyDecorThemes();
+          renderDecorModal();
+          renderUI();
+        });
+      }
+      row.appendChild(btn);
+      el.decorListContainer.appendChild(row);
+    });
+  }
+
+  el.decorBtn.addEventListener("click", () => {
+    sfx.tap();
+    renderDecorModal();
+    el.decorModal.classList.remove("hidden");
+  });
+  el.closeDecorBtn.addEventListener("click", () => el.decorModal.classList.add("hidden"));
+
+  // ================= EL FENERİYLE BAGAJ ARAMA =================
   function moveFlashlight(e) {
     const rect = el.trunkViewport.getBoundingClientRect();
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -684,19 +936,13 @@
       if (td.suspicious) {
         sfx.alarmBlast();
         unlockBadge("trunk_detective");
-      } else {
-        sfx.tap();
-      }
+      } else sfx.tap();
     }
   }
 
   el.trunkSearchBtn.addEventListener("click", () => {
     const c = curCust();
-    if (!c.trunkData) {
-      sfx.tap();
-      showToast("Bu müşteride aranacak araç bagajı yok!");
-      return;
-    }
+    if (!c.trunkData) return showToast("Bu müşteride aranacak araç bagajı yok!");
     sfx.flashlightClick();
     el.trunkSvgHolder.innerHTML = window.renderTrunkInteriorSVG(c.trunkData.type, c.trunkData.label);
     el.flashlightMask.style.setProperty("--fx", "14%");
@@ -706,17 +952,16 @@
       : "🔍 Parmağını karanlık bagajın ortasına doğru gezdir...";
     el.trunkModal.classList.remove("hidden");
   });
-
   el.trunkViewport.addEventListener("pointerdown", moveFlashlight);
   el.trunkViewport.addEventListener("pointermove", moveFlashlight);
   el.closeTrunkBtn.addEventListener("click", () => el.trunkModal.classList.add("hidden"));
 
-  // ================= YENİ 2: İSTASYON KÖPEĞİ DUMAN =================
+  // ================= KÖPEK DUMAN =================
   el.dumanPill.addEventListener("click", () => {
     sfx.tap();
     el.dumanStatusDesc.textContent = state.dumanFed
-      ? "Duman bu gece karnını doyurdu, gözü kulağı kapıda! Tehlikeli veya yalancı müşteri geldiğinde hırlayarak seni uyarır ve arka depoyu kollar."
-      : "Sadık dostun Duman şu an aç ve kulübesinde uyukluyor. 20 ₺ karşılığında mama ve su verirsen sabaha kadar tehlikeli müşterilere hırlayarak seni önceden uyarır!";
+      ? "Duman bu gece tok ve nöbette! Tehlikeli veya sahtekâr müşteri geldiğinde hırlayarak seni önceden uyarır."
+      : "Sadık dostun Duman şu an aç. 20 ₺ karşılığında mama ve su verirsen sabaha kadar tehlikeli müşterilere hırlayarak seni uyarır! (Dekor menüsünden kalıcı kulübe de alabilirsin.)";
     el.feedDumanBtn.disabled = state.dumanFed;
     el.feedDumanBtn.textContent = state.dumanFed ? "🍖 Karnı Tok ✓" : "🍖 Mama & Su Ver (20 ₺)";
     el.dumanModal.classList.remove("hidden");
@@ -724,29 +969,24 @@
 
   el.feedDumanBtn.addEventListener("click", () => {
     if (state.dumanFed) return;
-    if (persistent.cash < 20) {
-      sfx.burnFail();
-      showToast("Mama için 20 ₺ gerekli!");
-      return;
-    }
+    if (persistent.cash < 20) return showToast("Mama için 20 ₺ gerekli!");
     persistent.cash -= 20;
     state.dumanFed = true;
     saveProgress();
     sfx.dogBark();
     unlockBadge("dog_friend");
     el.dumanModal.classList.add("hidden");
-    showToast("🐕 Duman doydu! Artık tehlikeli müşterilere hırlayacak!");
+    showToast("🐕 Duman doydu! Artık tehlikeye hırlayacak!");
     renderUI();
   });
 
   el.petDumanBtn.addEventListener("click", () => {
     sfx.dogBark();
-    showToast("🐕 Duman keyifle kuyruk salladı!");
+    showToast("🐕 Duman neşeyle kuyruk salladı!");
   });
-
   el.closeDumanBtn.addEventListener("click", () => el.dumanModal.classList.add("hidden"));
 
-  // ================= YENİ 3: ÇALAN SABİT BÜFE TELEFONU =================
+  // ================= SABİT BÜFE TELEFONU =================
   el.landlineRingBtn.addEventListener("click", () => {
     const call = curCust().landlineCall;
     if (!call) return;
@@ -778,16 +1018,11 @@
     showToast("☎️ Dolandırıcının yüzüne kapattın! (+65 ₺ Prim)");
     renderUI();
   });
+  el.closeLandlineBtn.addEventListener("click", () => el.landlineModal.classList.add("hidden"));
 
-  el.closeLandlineBtn.addEventListener("click", () => {
-    sfx.tap();
-    el.landlineModal.classList.add("hidden");
-  });
-
-  // ================= YENİ 4: PARA ÜSTÜ KASASI & VERESİYE DEFTERİ =================
+  // ================= YAZAR KASA & VERESİYE =================
   function openCashRegister() {
-    const c = curCust();
-    const pay = c.payment;
+    const pay = curCust().payment;
     state.selectedChange = 0;
     const targetChange = Math.max(0, pay.paidWith - pay.billCost);
 
@@ -826,7 +1061,7 @@
     const target = Math.max(0, pay.paidWith - pay.billCost);
     if (state.selectedChange !== target) {
       sfx.burnFail();
-      showToast(`⚠️ Para üstü yanlış! ${target} ₺ seçmelisin (Şu an: ${state.selectedChange} ₺).`);
+      showToast(`⚠️ Para üstü ${target} ₺ olmalı! (Şu an: ${state.selectedChange} ₺)`);
       return;
     }
     state.tipEarned += 15;
@@ -852,14 +1087,9 @@
 
   el.writeCreditActionBtn.addEventListener("click", recordCreditAndFinish);
   el.writeCreditQuickBtn.addEventListener("click", () => {
-    if (!isOrderComplete()) {
-      sfx.burnFail();
-      showToast("Veresiye yazmadan önce müşterinin siparişini hazırla!");
-      return;
-    }
+    if (!isOrderComplete()) return showToast("Önce müşterinin siparişini hazırla!");
     recordCreditAndFinish();
   });
-
   el.closeRegisterBtn.addEventListener("click", () => el.registerModal.classList.add("hidden"));
 
   el.openLedgerBtn.addEventListener("click", () => {
@@ -879,7 +1109,6 @@
     }
     el.ledgerModal.classList.remove("hidden");
   });
-
   el.closeLedgerBtn.addEventListener("click", () => el.ledgerModal.classList.add("hidden"));
 
   // ================= ŞALTER, KİMLİK, BÜLTEN =================
@@ -953,7 +1182,7 @@
   });
   el.closeWantedBtn.addEventListener("click", () => el.wantedModal.classList.add("hidden"));
 
-  // ================= POMPA, İÇECEK, TOST, MARKET, MOR IŞIK =================
+  // ================= İSTASYON ÜRÜNLERİ =================
   document.querySelectorAll(".fuel-type-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       sfx.tap();
@@ -1001,10 +1230,8 @@
     const target = curCust().requests.fuel;
     const diff = state.pumpVal - target;
     const tol = persistent.upgrades.autoPump ? 35 : 20;
-    if (state.pumpVal < target - 50) {
-      showToast(`Henüz ${state.pumpVal} ₺ oldu, basılı tutmaya devam et!`);
-      return;
-    }
+    if (state.pumpVal < target - 50) return showToast(`Henüz ${state.pumpVal} ₺ oldu, basılı tut!`);
+
     state.fuelDone = true;
     el.fuelModal.classList.add("hidden");
     if (Math.abs(diff) <= tol) {
@@ -1014,7 +1241,7 @@
     } else if (diff > 55) {
       sfx.burnFail();
       persistent.cash = Math.max(0, persistent.cash - 30);
-      showToast(`⚠️ Sayacı taşırdın! -30 ₺ zarar.`);
+      showToast("⚠️ Sayacı taşırdın! -30 ₺ zarar.");
     } else {
       sfx.cashRegister();
       showToast(`⛽ Yakıt tamam (${state.pumpVal} ₺).`);
@@ -1033,7 +1260,7 @@
   el.btnCoffee.addEventListener("click", () => {
     if (!checkPowerBeforeAction()) return;
     const req = curCust().requests;
-    if (!req.drink) return showToast("Müşteri sıcak içecek istemedi.");
+    if (!req.drink) return showToast("Müşteri içecek istemedi.");
     if (state.drinkDone) return showToast("İçecek zaten hazır!");
     sfx.tap();
     el.coffeeModal.classList.remove("hidden");
@@ -1042,11 +1269,7 @@
   document.querySelectorAll(".drink-pick-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const wanted = curCust().requests.drink;
-      if (btn.dataset.drink !== wanted) {
-        sfx.burnFail();
-        showToast(`Müşteri ${catalog.drinks[wanted].label} istedi!`);
-        return;
-      }
+      if (btn.dataset.drink !== wanted) return showToast(`Müşteri ${catalog.drinks[wanted].label} istedi!`);
       sfx.coffeeBrew();
       state.drinkDone = true;
       if (persistent.upgrades.vipEspresso) state.tipEarned += 20;
@@ -1082,11 +1305,7 @@
   document.querySelectorAll(".toast-pick-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const wanted = curCust().requests.toast;
-      if (btn.dataset.toast !== wanted) {
-        sfx.burnFail();
-        showToast(`Müşteri ${catalog.toasts[wanted].label} istedi!`);
-        return;
-      }
+      if (btn.dataset.toast !== wanted) return showToast(`Müşteri ${catalog.toasts[wanted].label} istedi!`);
       el.toastModal.classList.add("hidden");
       sfx.toastStart();
       state.toastState = "cooking";
@@ -1133,11 +1352,7 @@
   document.querySelectorAll(".market-pick-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const wanted = curCust().requests.market;
-      if (btn.dataset.market !== wanted) {
-        sfx.burnFail();
-        showToast(`Müşteri ${catalog.market[wanted].label} istedi!`);
-        return;
-      }
+      if (btn.dataset.market !== wanted) return showToast(`Müşteri ${catalog.market[wanted].label} istedi!`);
       sfx.shelfGrab();
       state.marketDone = true;
       el.marketModal.classList.add("hidden");
@@ -1157,7 +1372,6 @@
     el.uvSecretStrip.className = "uv-secret-strip " + (bill.fake ? "uv-fake" : "uv-real");
     el.uvModal.classList.remove("hidden");
   });
-
   el.toggleUvBeamBtn.addEventListener("click", () => {
     sfx.uvToggle();
     state.uvLightOn = !state.uvLightOn;
@@ -1215,7 +1429,7 @@
   });
   el.closeCctvBtn.addEventListener("click", () => el.cctvModal.classList.add("hidden"));
 
-  // ================= TELEFON + YENİ 5: FOTOĞRAF GALERİSİ =================
+  // ================= ŞARJDAKİ TELEFON & GALERİ =================
   function buildPinKeypad() {
     el.pinPad.innerHTML = "";
     ["1", "2", "3", "4", "5", "6", "7", "8", "9", "Sil", "0", "Aç"].forEach((k) => {
@@ -1247,9 +1461,9 @@
   function startPhoneSuspicion() {
     stopPhoneSuspicion();
     state.suspicionInterval = setInterval(() => {
-      state.suspicion += 2.3;
+      state.suspicion += 2.2;
       updateSuspicionUI();
-    }, 680);
+    }, 700);
   }
 
   function stopPhoneSuspicion() {
@@ -1289,7 +1503,7 @@
       sfx.pinUnlock();
       state.phoneUnlocked = true;
       unlockBadge("code_breaker");
-      showToast("🔓 Şifre çözüldü! Mesajlar ve Galeri açıldı!");
+      showToast("🔓 Şifre çözüldü!");
       openPhoneModal();
     } else {
       sfx.burnFail();
@@ -1317,14 +1531,8 @@
     el.galleryList.style.display = tab === "gallery" ? "block" : "none";
   }
 
-  el.phoneTabMsgs.addEventListener("click", () => {
-    sfx.tap();
-    switchPhoneInnerTab("msgs");
-  });
-  el.phoneTabGallery.addEventListener("click", () => {
-    sfx.tap();
-    switchPhoneInnerTab("gallery");
-  });
+  el.phoneTabMsgs.addEventListener("click", () => switchPhoneInnerTab("msgs"));
+  el.phoneTabGallery.addEventListener("click", () => switchPhoneInnerTab("gallery"));
 
   function openPhoneModal() {
     const c = curCust();
@@ -1344,7 +1552,6 @@
     } else {
       el.pinLockSection.style.display = "none";
       el.unlockedPhoneContent.style.display = "block";
-
       el.notifList.innerHTML = "";
       pd.notifications.forEach((n) => {
         const d = document.createElement("div");
@@ -1352,7 +1559,6 @@
         d.innerHTML = `<div class="notif-meta">${n.app}</div><div class="notif-sender">${n.sender}</div><div class="notif-body">${n.body}</div>`;
         el.notifList.appendChild(d);
       });
-
       const photos = pd.gallery || [];
       el.phoneTabGallery.textContent = `🖼️ Galeri (${photos.length})`;
       el.galleryList.innerHTML = photos.map((p) => window.renderPhonePhotoSVG(p)).join("");
@@ -1377,13 +1583,12 @@
       }, 1050);
       return;
     }
-    if (state.phoneState === "charging") return showToast("Telefon açılıyor, 1 saniye bekle...");
+    if (state.phoneState === "charging") return showToast("Telefon açılıyor...");
     sfx.tap();
     state.phoneState = "read";
     openPhoneModal();
     renderUI();
   });
-
   el.closePhoneBtn.addEventListener("click", () => {
     stopPhoneSuspicion();
     el.phoneModal.classList.add("hidden");
@@ -1423,25 +1628,19 @@
   });
   el.closeCluesBtn.addEventListener("click", () => el.cluesModal.classList.add("hidden"));
 
-  // ================= KARAR VE GECE SONU =================
+  // ================= KARARLAR, PAYLAŞIM KARTI & GECE SONU =================
   el.btnServe.addEventListener("click", () => {
     if (!checkPowerBeforeAction()) return;
-    if (!isOrderComplete()) {
-      sfx.tap();
-      showToast("Önce fişteki tüm siparişleri hazırla!");
-      return;
-    }
+    if (!isOrderComplete()) return showToast("Önce fişteki tüm siparişleri hazırla!");
     sfx.tap();
     openCashRegister();
   });
-
   el.btnHide.addEventListener("click", () => finalizeDecision("hide"));
   el.btnLock.addEventListener("click", () => finalizeDecision("lock"));
   el.btnPolice.addEventListener("click", () => finalizeDecision("police"));
 
   function finalizeDecision(choice) {
     const c = curCust();
-
     clearTimeout(state.phoneTimer);
     clearTimeout(state.outageTimer);
     clearTimeout(state.landlineTimer);
@@ -1458,16 +1657,14 @@
       const loss = state.dumanFed ? 40 : 90;
       persistent.cash = Math.max(0, persistent.cash - loss);
       extraNote = state.dumanFed
-        ? ` ⚠️ (Arka depoya sızan hırsızı Duman kovaladı, zarar azaldı: -${loss} ₺)`
-        : ` ⚠️ (Arka depo kamerasına bakmadığın için -${loss} ₺ malzeme çalındı!)`;
+        ? ` ⚠️ (Duman hırsızı kovaladı, zarar azaldı: -${loss} ₺)`
+        : ` ⚠️ (Arka depo kamerasına bakmadığın için -${loss} ₺ çalındı!)`;
     }
 
     if (choice === "serve") {
       sfx.cashRegister();
       if (res.correct) persistent.cash += c.reward + state.tipEarned;
       else persistent.cash = Math.max(0, persistent.cash - (res.penalty || 0));
-    } else if (choice === "credit") {
-      // Veresiye ertesi gece tahsil edilecek
     } else if (choice === "hide") {
       sfx.safeRoom();
       if (res.bonus) persistent.cash += res.bonus;
@@ -1495,7 +1692,7 @@
 
     const isLast = state.custIdx >= curNight().customers.length - 1;
     el.nextCustomerBtn.textContent = isLast
-      ? "☀️ SABAH GAZETESİ VE DÜKKÂN ➔"
+      ? "☀️ SABAH GAZETESİ VE KARNE ➔"
       : `SIRADAKİ MÜŞTERİ (${state.custIdx + 2}/5) ➔`;
 
     el.outcomeModal.classList.remove("hidden");
@@ -1504,11 +1701,30 @@
   el.nextCustomerBtn.addEventListener("click", () => {
     sfx.tap();
     el.outcomeModal.classList.add("hidden");
-    if (state.custIdx < curNight().customers.length - 1) {
-      loadCustomer(state.custIdx + 1);
-    } else {
-      openNightEndHub();
-    }
+    if (state.custIdx < curNight().customers.length - 1) loadCustomer(state.custIdx + 1);
+    else openNightEndHub();
+  });
+
+  // 9:16 Reels Vardiya Karnesi İndir / Paylaş
+  el.shareCardBtn.addEventListener("click", async () => {
+    sfx.cameraClick();
+    const rank =
+      state.correctInNight === 5
+        ? "UNVAN: KESKİN GECE DEDEKTİFİ ⭐"
+        : state.correctInNight >= 3
+        ? "UNVAN: USTA VARDİYACI"
+        : "UNVAN: ÇAYLAK KASIYER";
+
+    await window.shareOrDownloadShiftCard({
+      lang: persistent.lang,
+      nightTitle: curNight().title,
+      correct: state.correctInNight,
+      cash: persistent.cash,
+      badgeCount: Object.keys(persistent.badges).length,
+      dumanFed: state.dumanFed,
+      rankText: rank
+    });
+    showToast("📸 9:16 Vardiya Karnesi hazırlandı!");
   });
 
   function renderShop() {
@@ -1532,11 +1748,7 @@
       } else {
         btn.textContent = `${item.cost} ₺ Al`;
         btn.addEventListener("click", () => {
-          if (persistent.cash < item.cost) {
-            sfx.burnFail();
-            showToast("Kasada yeterli para yok!");
-            return;
-          }
+          if (persistent.cash < item.cost) return showToast("Kasada yeterli para yok!");
           sfx.cashRegister();
           persistent.cash -= item.cost;
           persistent.upgrades[item.id] = true;
@@ -1556,21 +1768,18 @@
 
     if (n.isEndless) {
       el.paperHeadline.textContent = `SONSUZ VARDİYA #${n.nightNumber} BİTTİ (${state.correctInNight}/5 DOĞRU)!`;
-      el.paperSummary.textContent =
-        "Sabaha sağ salim çıktın! Yazdığın veresiyeler yeni vardiyanın başında sonuçlanacak.";
-      el.nextNightBtn.textContent = `♾️ YENİ RASTGELE VARDİYAYA GEÇ (#${n.nightNumber + 1}) ➔`;
+      el.paperSummary.textContent = "Sabaha sağ çıktın! Vardiya karneni paylaşabilir veya yeni rastgele geceye geçebilirsin.";
+      el.nextNightBtn.textContent = `♾️ YENİ RASTGELE VARDİYA (#${n.nightNumber + 1}) ➔`;
     } else if (state.nightIdx < storyNights.length - 1) {
       el.paperHeadline.textContent = `${n.nightNumber}. GECE TAMAMLANDI (${state.correctInNight}/5 DOĞRU)!`;
-      el.paperSummary.textContent = `Vardiyayı tamamladın! ${n.nightNumber + 1}. Gecede bambaşka 5 yeni müşteri ve önceki veresiyelerin dönüşü seni bekliyor.`;
-      el.nextNightBtn.textContent = `🌙 ${n.nightNumber + 1}. GECEYE GEÇ (5 YENİ MÜŞTERİ) ➔`;
+      el.paperSummary.textContent = `${n.nightNumber + 1}. Gecede farklı hava durumu ve 5 yepyeni müşteri seni bekliyor.`;
+      el.nextNightBtn.textContent = `🌙 ${n.nightNumber + 1}. GECEYE GEÇ ➔`;
     } else {
       unlockBadge("story_master");
       el.paperHeadline.textContent = `5 GECE / 25 MÜŞTERİ TAMAMLANDI! SON İSTASYON EFSANESİ!`;
-      el.paperSummary.textContent =
-        "Ana hikayeyi bitirdin! Şimdi tüm v4.0 özellikleriyle 'Sonsuz Rastgele Vardiya' moduna geçebilirsin!";
-      el.nextNightBtn.textContent = "♾️ SONSUZ RASTGELE VARDİYAYA BAŞLA ➔";
+      el.paperSummary.textContent = "Ana hikayeyi bitirdin! Artık Sonsuz Vardiya modunda rekor kırabilirsin!";
+      el.nextNightBtn.textContent = "♾️ SONSUZ VARDİYAYA BAŞLA ➔";
     }
-
     renderShop();
     el.nightEndModal.classList.remove("hidden");
   }
@@ -1578,7 +1787,7 @@
   el.nextNightBtn.addEventListener("click", () => {
     sfx.tap();
     el.nightEndModal.classList.add("hidden");
-    state.dumanFed = false;
+    state.dumanFed = !!persistent.decorOwned.duman_house;
 
     if (state.mode === "endless") {
       persistent.endlessShift += 1;
@@ -1592,8 +1801,15 @@
       state.activeNightObj = window.generateEndlessNight(persistent.endlessShift);
     }
     state.correctInNight = 0;
+    configureNightWeather();
     settlePreviousLedger();
     loadCustomer(0);
+  });
+
+  el.musicBtn.addEventListener("click", () => {
+    const on = sfx.toggleMusic();
+    el.musicBtn.textContent = on ? "🎵" : "🔕";
+    showToast(on ? "🎵 Gece radyosu müziği açıldı" : "🔕 Müzik kapatıldı");
   });
 
   el.muteBtn.addEventListener("click", () => {
@@ -1604,13 +1820,14 @@
   el.startShiftBtn.addEventListener("click", () => {
     sfx.startRainAmbience();
     sfx.tap();
-    state.dumanFed = false;
+    state.dumanFed = !!persistent.decorOwned.duman_house;
     if (state.mode === "endless") {
       state.activeNightObj = window.generateEndlessNight(persistent.endlessShift);
     } else {
       state.activeNightObj = storyNights[state.nightIdx];
     }
     state.correctInNight = 0;
+    configureNightWeather();
     el.startScreen.classList.add("hidden");
     settlePreviousLedger();
     loadCustomer(0);

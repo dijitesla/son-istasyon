@@ -1,0 +1,12 @@
+{
+  "appId": "com.dijitesla.sonistasyon",
+  "appName": "Son İstasyon",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "ios": {
+    "contentInset": "always"
+  }
+}

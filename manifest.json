@@ -1,7 +1,7 @@
 {
-  "name": "Son İstasyon — Gece Vardiyası",
+  "name": "Son İstasyon (Last Station)",
   "short_name": "Son İstasyon",
-  "description": "Issız bir 7/24 gece benzinliğinde büfe işlet, şarjdaki telefonların sırlarını yakala ve doğru kararı ver.",
+  "description": "Issız bir 7/24 gece benzinliğinde büfe işlet, bagaj ara, sahte parayı yakala ve sırrı çöz.",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
@@ -10,10 +10,15 @@
   "lang": "tr",
   "icons": [
     {
+      "src": "./assets/app-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
       "src": "./icon.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/svg+xml"
     }
   ]
 }

@@ -1,0 +1,14 @@
+{
+  "name": "son-istasyon",
+  "version": "5.0.0",
+  "description": "Son İstasyon (Last Station) — 7/24 Gece Benzinliği ve Dedektiflik Mobil Oyunu",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "cap:init": "npx @capacitor/cli init 'Son İstasyon' com.dijitesla.sonistasyon --web-dir .",
+    "cap:android": "npm install @capacitor/core @capacitor/cli @capacitor/android && npx cap add android",
+    "cap:ios": "npm install @capacitor/core @capacitor/cli @capacitor/ios && npx cap add ios"
+  },
+  "author": "Dijitesla",
+  "license": "Proprietary"
+}
