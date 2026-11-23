@@ -1,4 +1,4 @@
-// Son İstasyon v6.0 — Canlı İstasyon Haritasına Gelen Özel Hikaye & Gizem Müşterileri
+// Son İstasyon v7.0 — Canlı İstasyon Haritasına Gelen Özel Hikaye & Gizem Müşterileri
 // Tüm diyaloglar büyük punto (18px) ekranda tek bakışta okunacak netlikte yazılmıştır.
 
 window.STORY_EVENTS = [
@@ -262,3 +262,160 @@ window.STORY_EVENTS = [
     failMsg: "Kuzgun zırhlı cipiyle elini kolunu sallayarak kaçtı (-300 ₺)!"
   }
 ];
+
+
+// ============================================================================
+// v7.0 EKONOMİ DENGESİ & SINIRSIZ ÖZEL MÜŞTERİ ÜRETİCİSİ
+// (İşçi alınsa da, 10 ana hikaye bitse de Özel Müşteriler ASLA bitmez!)
+// ============================================================================
+(function setupEndlessSpecialEvents() {
+  // Ana hikaye ödüllerini yeni zorlu ekonomiye göre dengele
+  const balancedRewards = [75, 95, 90, 110, 150, 100, 130, 125, 160, 280];
+  window.STORY_EVENTS.forEach((ev, i) => {
+    ev.reward = balancedRewards[i] || 110;
+    ev.failMsg = ev.failMsg.replace(/\s*\(-\d+\s*₺\)/g, "");
+  });
+
+  const namesM = ["Kadir", "Sinan", "Orhan", "Tufan", "Zafer", "Yavuz", "Cihan", "Levent", "Furkan", "Soner", "Hakan", "Metin"];
+  const namesF = ["Zeynep", "Derya", "Selin", "Gökçe", "Aylin", "Burcu", "Damla", "Ceren", "Pınar", "Merve"];
+  const surnames = ["Yılmaz", "Kaya", "Demir", "Şahin", "Çelik", "Arslan", "Doğan", "Keskin", "Polat", "Karaca"];
+  const cities = ["06", "16", "34", "35", "41", "52", "55", "61"];
+  const colors = ["#dc2626", "#2563eb", "#7c3aed", "#ea580c", "#0f766e", "#be123c", "#334155", "#ca8a04"];
+
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  window.getNextSpecialEvent = function (storyIndex) {
+    if (storyIndex < window.STORY_EVENTS.length) {
+      return window.STORY_EVENTS[storyIndex];
+    }
+
+    // 10 Ana Hikaye bittikten sonra sınırsız rastgele özel olay üret!
+    const types = ["vip_honest", "counterfeiter", "refugee", "smuggler"];
+    const t = types[storyIndex % types.length];
+    const isFem = t === "refugee" ? Math.random() < 0.7 : Math.random() < 0.4;
+    const fName = isFem ? pick(namesF) : pick(namesM);
+    const fullName = `${fName} ${pick(surnames)}`;
+    const plate = `${pick(cities)} ${pick(["KYP", "GCE", "SRN", "DRK", "VRD"])} ${10 + Math.floor(Math.random() * 89)}`;
+    const look = {
+      style: isFem ? pick(["long", "bun", "curly", "hijab"]) : pick(["short", "trucker", "cap", "beanie", "slick", "hood"]),
+      skin: pick(["#fad2b4", "#f3c6a5", "#eab68c", "#dfb18b"]),
+      outfit: pick(colors),
+      outfit2: "#0f172a",
+      capColor: pick(colors),
+      hairColor: "#1e1b2e",
+      glasses: Math.random() < 0.3,
+      mustache: !isFem && Math.random() < 0.35
+    };
+
+    if (t === "vip_honest") {
+      return {
+        id: `dyn_${storyIndex}`,
+        name: `${fName} (VIP Yolcu)`,
+        role: "Uzun Yol İş İnsanı",
+        carColor: pick(colors),
+        carShape: "suv",
+        plate,
+        look,
+        isThreat: false,
+        speech: "İyi geceler! İstasyonunuzun namını duydum, depoyu fulleyebilir miyiz? Evraklarım ve ödemem hazır, üstü de bahşişiniz olsun!",
+        clues: {
+          idText: `🪪 Ehliyet: ${fullName} — Plaka: ${plate} (TEMİZ ✓)`,
+          trunkText: "🔦 Bagaj: Evrak çantası ve takım elbise kılıfı (TEMİZ ✓)",
+          moneyText: "🟣 200 ₺ Banknot: Orijinal güvenlik şeridi var (GERÇEK ✓)",
+          phoneText: null
+        },
+        questions: [
+          { q: "Yolculuk ne tarafa?", a: "Sabah toplantısına yetişiyorum, hizmetiniz çok kaliteli!", mood: "warm" },
+          { q: "Evraklarınızı kontrol edebilir miyim?", a: "Tabii ki buyurun, her şeyim nizami.", mood: "neutral" }
+        ],
+        correctChoices: ["serve"],
+        reward: 115,
+        successMsg: `${fName} memnun kaldı ve cömert bir VIP bahşişi bıraktı!`,
+        failMsg: "Dürüst VIP müşteriyi boş yere kaçırdın!"
+      };
+    }
+
+    if (t === "counterfeiter") {
+      return {
+        id: `dyn_${storyIndex}`,
+        name: `Şüpheli ${fName}`,
+        role: "Gece Kalpazanı",
+        carColor: "#18181b",
+        carShape: "sedan",
+        plate,
+        look,
+        isThreat: true,
+        speech: "Çabuk depoyu doldur birader, hiç vaktim yok! Parayı peşin verdim işte, ışığa falan tutmadan at kasaya!",
+        clues: {
+          idText: `🪪 Ehliyet: ${fullName} — Geçerlilik: 2020 (SÜRESİ GEÇMİŞ!)`,
+          trunkText: "🔦 Bagaj: 🚨 KESİLMEMİŞ SAHTE BANKNOT KAĞITLARI BULUNDU!",
+          moneyText: "🟣 200 ₺ Banknot: ⚠️ SAHTE KOPYA! Güvenlik şeridi yok!",
+          phoneText: null
+        },
+        questions: [
+          { q: "Bu 200 lira neden fotokopi gibi duruyor?", a: "Ne fotokopisi kardeşim?! İftira atma müşteriye!", mood: "angry" },
+          { q: "Neden bu kadar panik halindesin?", a: "Sana ne birader, işini yap!", mood: "nervous" }
+        ],
+        correctChoices: ["lock", "police"],
+        reward: 135,
+        successMsg: "Sahte parayı yakaladın! Kalpazan kıskıvrak ele geçirildi!",
+        failMsg: "Sahte 200 TL'yi yuttun, kasadan zarar ettin!"
+      };
+    }
+
+    if (t === "refugee") {
+      return {
+        id: `dyn_${storyIndex}`,
+        name: fName,
+        role: "Tehlikedeki Yolcu",
+        carColor: "#e2e8f0",
+        carShape: "sedan",
+        plate,
+        look,
+        isThreat: false,
+        speech: "Ne olur yardım edin! Yolda tehlikeli bir grup aracımı sıkıştırdı, izimi kaybettirmek için beni biraz istasyonunuzda saklar mısınız?!",
+        clues: {
+          idText: `🪪 Kimlik: ${fullName} — Plaka: ${plate} (TEMİZ ✓)`,
+          trunkText: "🔦 Bagaj: Kişisel valiz ve ilk yardım çantası (TEMİZ ✓)",
+          moneyText: "🟣 100 ₺ Banknot: Gerçek para ✓",
+          phoneText: "📱 Mesaj (112 Acil): 'En yakın aydınlık istasyona sığının, devriyemiz yolda!'"
+        },
+        questions: [
+          { q: "Peşindekiler silahlı mıydı?", a: "Bilmiyorum ama çok korktum, ne olur beni 'İstasyonda Sakla'!", mood: "nervous" },
+          { q: "Ailene haber verdin mi?", a: "Evet, birazdan gelip beni alacaklar!", mood: "warm" }
+        ],
+        correctChoices: ["hide", "police"],
+        reward: 130,
+        successMsg: `${fName}'i güvenle istasyonda korudun! Teşekkür ödülü kazandın!`,
+        failMsg: "Yardım isteyen yolcuyu tehlikenin ortasına geri gönderdin!"
+      };
+    }
+
+    // smuggler
+    return {
+      id: `dyn_${storyIndex}`,
+      name: `Kaçakçı ${fName}`,
+      role: "Aranan Gece Kuryesi",
+      carColor: "#1e3a8a",
+      carShape: "van",
+      plate,
+      look,
+      isThreat: true,
+      speech: "Mazotu fulle koçum, kimseye de buradan geçtiğimi söyleme. Bagajdan gelen seslere de kulağını tıka!",
+      clues: {
+        idText: `🪪 Ehliyet: ⚠️ SAHTE KİMLİK! Araç plakası (${plate}) çalıntı listesinde!`,
+        trunkText: "🔦 Bagaj: 🚨 ÇALINTI OTO PARÇALARI VE LEVYE BULUNDU!",
+        moneyText: "🟣 200 ₺ Banknot: Gerçek para ✓",
+        phoneText: "📱 Gizli Mesaj: 'Polis çevirmesine yakalanmadan sınırı geç!'"
+      },
+      questions: [
+        { q: "Plakanız çalıntı araç listesinde görünüyor?", a: "Yanlış görmüşsün sen, başını belaya sokma!", mood: "angry" },
+        { q: "Bagajda ne var?", a: "Seni ilgilendirmez, çabuk doldur!", mood: "angry" }
+      ],
+      correctChoices: ["police"],
+      reward: 165,
+      successMsg: "112 Polis aracı sirenlerle gelip kaçakçıyı suçüstü yakaladı!",
+      failMsg: "Çalıntı araçlı kaçakçıyı elini kolunu sallayarak gönderdin!"
+    };
+  };
+})();

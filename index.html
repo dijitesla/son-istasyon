@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#090e1c" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Son İstasyon v6.0 — Kendi İstasyonunu Yönet!</title>
+  <title>Son İstasyon v7.0 — Gelişmiş İstasyon Yönetimi</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./assets/app-icon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./assets/app-icon.png" />
@@ -20,21 +20,21 @@
     <section id="startScreen" class="start-screen">
       <div>
         <div style="font-size: 13px; font-weight: 900; color: #fde68a; letter-spacing: 1.5px;">
-          BENZİNLİK HARİTASI • ÇALIŞANLAR • GİZEM
+          2.5D CANLI HARİTA • EKİP YÖNETİMİ • GİZEM
         </div>
         <h1 class="neon-logo">SON İSTASYON</h1>
         <p style="font-size: 14px; color: #cbd5e1; margin-top: 4px; font-weight: 700;">
-          v6.0 İstasyon Sahibi Sürümü
+          v7.0 Gelişmiş Grafik &amp; Dengeli Ekonomi
         </p>
       </div>
 
       <div class="intro-card">
         <div style="font-weight: 900; color: #fde68a; font-size: 17px; margin-bottom: 6px;">
-          ⛽ Artık İstasyonun Patronu Sensin!
+          ⛽ Sıfırdan Dev Bir İstasyon Kur!
         </div>
-        <p>• Haritada pompaya yanaşan araçlara <strong>dokunup / basılı tutarak</strong> benzin koy ve kasayı doldur.</p>
-        <p style="margin-top: 6px;">• Kazandığın parayla <strong>yeni pompalar, oto yıkama aç</strong> ve haritada koşturan <strong>pompacı, kasiyer, yıkamacı</strong> işe al!</p>
-        <p style="margin-top: 6px;">• Üzerinde <strong>❗ işareti</strong> çıkan gizemli araçlara dikkat et; kayıp Emre'nin sırrını çöz!</p>
+        <p>• Küçük bir pompadan başlayıp <strong>4 Pompa Adası, 7/24 Market, Oto Yıkama ve Tamirhane</strong> inşa et.</p>
+        <p style="margin-top: 6px;">• <strong>1.200 Litrelik</strong> büyük yakıt deponu yönet, 6 farklı çalışan işe alıp eğit.</p>
+        <p style="margin-top: 6px;">• Her 5 araçta bir gelen <strong>❗ ÖZEL MÜŞTERİ</strong> olaylarını çözerek büyük ödüller kazan!</p>
       </div>
 
       <button id="startGameBtn" class="primary-btn" style="font-size: 18px; padding: 16px;">
@@ -44,8 +44,8 @@
 
     <!-- ÜST BİLGİ ÇUBUĞU -->
     <header class="hud-bar">
-      <div class="hud-box hud-cash">💵 <span id="cashText">300</span> ₺</div>
-      <div class="hud-box hud-fuel">🛢️ <span id="fuelStockText">200/200</span>L</div>
+      <div class="hud-box hud-cash">💵 <span id="cashText">120</span> ₺</div>
+      <div class="hud-box hud-fuel">🛢️ <span id="fuelStockText">1200</span>L</div>
       <div class="hud-box hud-level">⭐ Sv.<span id="stationLvlText">1</span></div>
       <div class="hud-icon-row">
         <button id="musicBtn" class="icon-btn" title="Müzik">🎵</button>
@@ -53,13 +53,13 @@
       </div>
     </header>
 
-    <!-- REHBER / DURUM ŞERİDİ -->
+    <!-- REHBER & ÖZEL MÜŞTERİ SAYACI ŞERİDİ -->
     <div class="hint-strip">
-      <span id="liveHintText">👆 Pompadaki araca basılı tutarak benzin doldur!</span>
-      <span id="storyProgressText" style="color:#38bdf8; white-space:nowrap;">Hikaye: 0/10</span>
+      <span id="liveHintText">👆 Pompadaki araca dokun / basılı tut!</span>
+      <span id="storyProgressText" style="color:#38bdf8; white-space:nowrap;">🕵️ Özel: 0/5</span>
     </div>
 
-    <!-- CANLI KUŞBAKIŞI İSTASYON HARİTASI -->
+    <!-- CANLI 2.5D İSTASYON HARİTASI -->
     <section class="map-wrapper">
       <canvas id="stationCanvas"></canvas>
     </section>
@@ -68,20 +68,20 @@
     <footer class="bottom-dock">
       <button id="btnCallTanker" class="dock-btn">
         <span class="dock-emoji">🚛</span>
-        <span class="dock-title">Tanker Çağır</span>
-        <span id="tankerCostSub" class="dock-sub">Depoyu Fulle (80₺)</span>
+        <span class="dock-title">Tanker İkmal</span>
+        <span id="tankerCostSub" class="dock-sub">Depo Dolu ✓</span>
       </button>
 
       <button id="btnOpenUpgrades" class="dock-btn">
         <span class="dock-emoji">🏗️</span>
-        <span class="dock-title">İstasyonu Büyüt</span>
-        <span class="dock-sub">Pompa &amp; Bina Kur</span>
+        <span class="dock-title">Tesis &amp; Pompa</span>
+        <span class="dock-sub">İnşa Et &amp; Büyüt</span>
       </button>
 
       <button id="btnOpenStaff" class="dock-btn">
         <span class="dock-emoji">👷</span>
         <span class="dock-title">Çalışanlar</span>
-        <span id="staffCountSub" class="dock-sub">0/4 Eleman</span>
+        <span id="staffCountSub" class="dock-sub">0/6 Ekip</span>
       </button>
     </footer>
 
@@ -89,7 +89,7 @@
     <div id="upgradesModal" class="overlay-modal hidden">
       <div class="modal-box">
         <div class="modal-header">
-          <h2>🏗️ İstasyonu Geliştir</h2>
+          <h2>🏗️ Tesis &amp; Geliştirmeler</h2>
           <span style="font-size:16px; font-weight:900; color:#4ade80;"><span id="upCashText">0</span> ₺</span>
         </div>
         <div id="upgradesList"></div>
@@ -97,15 +97,15 @@
       </div>
     </div>
 
-    <!-- MODAL 2: ÇALIŞANLAR (PERSONEL İŞE AL & HIZLANDIR) -->
+    <!-- MODAL 2: ÇALIŞANLAR -->
     <div id="staffModal" class="overlay-modal hidden">
       <div class="modal-box">
         <div class="modal-header">
-          <h2>👷 İstasyon Çalışanları</h2>
+          <h2>👷 İstasyon Ekibi</h2>
           <span style="font-size:16px; font-weight:900; color:#4ade80;"><span id="staffCashText">0</span> ₺</span>
         </div>
-        <p style="font-size:14.5px; color:#cbd5e1; margin-bottom:12px;">
-          İşe aldığın çalışanlar haritada kendi başlarına koşturup benzin doldurur, markete ve yıkamaya bakar!
+        <p style="font-size:14px; color:#cbd5e1; margin-bottom:10px;">
+          Çalışanlar araçlara hızla hizmet verir ve <strong>Özel Müşteri sayacını da doldurur!</strong>
         </p>
         <div id="staffList"></div>
         <button id="closeStaffBtn" class="primary-btn">Haritaya Dön</button>
@@ -124,13 +124,9 @@
           </div>
         </div>
 
-        <!-- DEV VE NET OKUNAKLI KONUŞMA BALONU (18px) -->
         <div id="storySpeech" class="big-speech-bubble"></div>
-
-        <!-- KÖPEK DUMAN UYARISI -->
         <div id="dumanStoryAlert" class="clue-reveal-box" style="display:none; border-color:#ef4444; color:#fecaca;"></div>
 
-        <!-- İNCELEME ARAÇLARI -->
         <div class="inspect-grid">
           <button id="insIdBtn" class="inspect-btn">🪪 Kimliğe Bak</button>
           <button id="insTrunkBtn" class="inspect-btn">🔦 Bagaja Bak</button>
@@ -139,11 +135,8 @@
         </div>
 
         <div id="inspectResultBox" class="clue-reveal-box" style="display:none;"></div>
-
-        <!-- SORU BUTONLARI -->
         <div id="storyQuestionsBox" class="story-q-list"></div>
 
-        <!-- 4 BÜYÜK KARAR BUTONU -->
         <div class="story-actions-grid">
           <button id="actServeBtn" class="big-dec-btn big-serve">✅ YAKIT VER &amp; GÖNDER</button>
           <button id="actHideBtn" class="big-dec-btn big-hide">🤫 İSTASYONDA SAKLA</button>
@@ -153,7 +146,7 @@
       </div>
     </div>
 
-    <!-- MODAL 4: HİKAYE SONUÇ BİLDİRİMİ (BÜYÜK PUNTO) -->
+    <!-- MODAL 4: HİKAYE SONUÇ BİLDİRİMİ -->
     <div id="storyResultModal" class="overlay-modal hidden">
       <div class="modal-box">
         <h2 id="resTitle" style="font-size:22px; font-weight:900; margin-bottom:10px;"></h2>
@@ -165,6 +158,7 @@
 
   <script src="./audio.js"></script>
   <script src="./visuals.js"></script>
+  <script src="./map_renderer.js"></script>
   <script src="./story_events.js"></script>
   <script src="./game.js"></script>
 </body>
