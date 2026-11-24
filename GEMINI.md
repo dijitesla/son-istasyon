@@ -42,6 +42,11 @@
   - **Kasadan mı, Şahsi Cüzdandan mı? (`#payChoiceModal`):** Tüm iş büyütme harcamalarında (tesisler, elemanlar, arsalar, rakip devralma, kredi kapama) oyuncuya **Şirket Kasası**, **Şahsi Cüzdan** veya **Kasa + Cüzdan Birlikte Öde** seçeneği sunulur.
   - **`?kayit=son-durum` Full 10 Arazi Kaydı:** 1'den 10'a kadar tüm araziler tüm yükseltmeleri, katları, dükkanları, 10 tırı, 6 bungalovu ve tam kadrosuyla %100 dolu şekilde açılır.
 
+  - **v16.2 Görsel Cila & Otomasyon Düzeltmesi:**
+    - 4.–10. arazilerdeki araçların otoyol girişinde donmasına sebep olan yol bulma hatası kesin olarak düzeltildi (3 noktalı waypoint + otomatik kayıt & temizlik hızlandırıldı, tüm arazilere v16 özel gün/Genel Merkez çarpanı bağlandı).
+    - 2., 3. ve 4.–10. arazilere özel 3D üstten zemin haritaları eklendi (`assets/land2-ground.jpg`, `assets/land3-ground.jpg`, `assets/extra-ground.jpg`), koyu ince kaydırma çubukları, cam efektli modallar ve gece pencere parıltısı eklendi.
+    - Tek seferlik **+%1000 Borsa Rallisi** (`surge1000Applied` bayrağıyla) eklendi.
+
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (24 Kasım — Windows v16.0)
 - Windows bilgisayarda **v16.0** (`holding_v16.js` + `index.html`, `style.css`, `empire.js`, `game.js` bağlantıları) tamamlandı ve canlı tarayıcıda 0 konsol hatasıyla doğrulandı.
 - **Kullanıcının Önemli Yayın Öncesi Kararı:** Şu an yeni özellik ve arazi geliştirmelerine odaklanıyoruz; mevcut erken aşama para kazanma hızına şimdilik dokunma. Oyun geliştirmesi tamamen bittiğinde yayınlamadan hemen önce:

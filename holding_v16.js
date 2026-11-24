@@ -216,7 +216,8 @@ window.HoldingV16 = (function () {
       vipAssets: { yacht: false, helicopter: false, hq: false },
       dailyStockTrades: 0,
       dailySocialPosts: 0,
-      dailyEventsSolved: 0
+      dailyEventsSolved: 0,
+      surge1000Applied: false
     };
   }
 

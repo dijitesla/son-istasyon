@@ -1115,6 +1115,11 @@
           EMP.renderPhoneModal(data, empireHelpers);
         }
       },
+      onStockSurge() {
+        saveGame();
+        updateHUD();
+        showToast("🚀 BORSA PATLADI! Tüm hisseler anlık +%1000 yükseldi! 📱 Telefon -> Borsa'ya bak!");
+      },
       onLand2Earn() {
         saveGame();
       }
@@ -2870,10 +2875,13 @@
     } else if (land.startsWith("land") && XL) {
       const lDef = XL.getLandDef(land);
       const st = data.empire.extraLands && data.empire.extraLands[land];
+      const isAuto = !!(st && st.staff && (st.staff.manager || (st.staff.clerk && st.staff.cleaner)));
       el.liveHintText.textContent = !st || !st.owned
         ? `🏞️ ${lDef.name}: Tapuyu alıp 6 dev projeden birini seç!`
         : !st.projectKey
         ? `🏗️ ${lDef.num}. Arazi: 6 projeden birini (Grand Otel vb.) seç!`
+        : isAuto
+        ? `🟢 ${lDef.num}. Arazi Tam Otopilot! Müşteri kaydı ve temizlik otomatik dönüyor!`
         : `👆 Önce müşteri/temizlikle sen ilgilen, büyüdükçe eleman al!`;
     } else {
       el.liveHintText.textContent = "👆 Pompadaki araca dokun / basılı tut!";

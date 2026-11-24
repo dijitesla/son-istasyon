@@ -7,7 +7,7 @@ window.Land3System = (function () {
   const baseImg = new Image();
   let baseReady = false;
   baseImg.onload = () => (baseReady = true);
-  baseImg.src = "./assets/station-ground.jpg";
+  baseImg.src = "./assets/land3-ground.jpg";
 
   const LAND3_COST = 18000;
   const THEME_UNLOCK_COST = 5500;
@@ -166,6 +166,14 @@ window.Land3System = (function () {
 
     if (!l3.owned) return;
 
+    const v16Mult = (() => {
+      const v16 = data.empire && data.empire.v16;
+      if (!window.HoldingV16 || !v16) return 1.0;
+      const sd = window.HoldingV16.getSpecialDay(v16);
+      const hq = v16.vipAssets && v16.vipAssets.hq ? 1.15 : 1.0;
+      return (sd.incomeMult || 1.0) * hq;
+    })();
+
     // 1. Go-Kart Pisti & Dönme Dolap
     if (l3.themeUnlocked) {
       wheelAngle += dt * 0.55;
@@ -180,7 +188,7 @@ window.Land3System = (function () {
       themeProgress += dt / 7.0;
       if (themeProgress >= 1) {
         themeProgress -= 1;
-        const inc = getThemeCycleIncome(l3);
+        const inc = Math.round(getThemeCycleIncome(l3) * v16Mult);
         data.cash += inc;
         if (data.daily) {
           data.daily.land3ThemeIncome = (data.daily.land3ThemeIncome || 0) + inc;
@@ -252,7 +260,7 @@ window.Land3System = (function () {
                 { x: 345, y: 282, speed: 80 }
               ];
             } else {
-              const tripPay = getTruckTripIncome(l3) + l3.fleetCount * 18;
+              const tripPay = Math.round((getTruckTripIncome(l3) + l3.fleetCount * 18) * v16Mult);
               data.cash += tripPay;
               if (data.daily) {
                 data.daily.land3FleetIncome = (data.daily.land3FleetIncome || 0) + tripPay;
@@ -276,7 +284,7 @@ window.Land3System = (function () {
 
     // 4. Havuzlu Bungalov & Termal Tatil Köyü Kiraları
     if (l3.resortUnlocked) {
-      const totalRent = getResortTotalRent(l3);
+      const totalRent = Math.round(getResortTotalRent(l3) * v16Mult);
       if (totalRent > 0) {
         resortProgress += dt / 8.0;
         if (resortProgress >= 1) {

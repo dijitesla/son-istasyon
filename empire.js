@@ -2,11 +2,11 @@
 // Lojistik & Plaza Kulesi, Çok Kaynaklı Şahsi Maaş Sistemi (İstasyon + Otopark + Yan Arazi/AVM), Şehir & Akıllı Telefon OS!
 
 window.EmpireSystem = (function () {
-  // Temiz 3D ağaçlı ve otoyollu zemin (üzerine çizilen otopark çizgileri ve AVM ile %100 uyumlu, çakışmasız!)
+  // 2. Araziye Özel 3D Ticari Meydan & Peyzaj Zemini!
   const baseLotImg = new Image();
   let baseLotReady = false;
   baseLotImg.onload = () => (baseLotReady = true);
-  baseLotImg.src = "./assets/station-ground.jpg";
+  baseLotImg.src = "./assets/land2-ground.jpg";
 
   const LAND2_COST = 6500;
   const PARKING_UNLOCK_COST = 2200;
@@ -553,6 +553,32 @@ window.EmpireSystem = (function () {
       emp.pendingRefund = 0;
     }
 
+    // 🚀 TEK SEFERLİK ANLIK +%1000 BORSA BOĞA RALLİSİ!
+    if (emp.v16 && !emp.v16.surge1000Applied) {
+      emp.v16.surge1000Applied = true;
+      INITIAL_STOCKS.forEach((s) => {
+        const st = emp.stocks[s.sym];
+        if (st) {
+          st.prev = st.price;
+          st.price = Math.round(st.price * 11); // +%1000 artış!
+        }
+      });
+      if (emp.v16.ipoLaunched && emp.v16.ipoStockPrice > 0) {
+        emp.v16.ipoPrevPrice = emp.v16.ipoStockPrice;
+        emp.v16.ipoStockPrice = Math.round(emp.v16.ipoStockPrice * 11);
+      }
+      emp.stockNews = "🚀 TARİHİ BOĞA RALLİSİ! Borsadaki tüm hisseler anlık +%1000 fırladı!";
+      if (callbacks.onStockSurge) callbacks.onStockSurge();
+      if (callbacks.onStockTick) callbacks.onStockTick();
+    }
+
+    const v16Mult = (() => {
+      if (!window.HoldingV16 || !emp.v16) return 1.0;
+      const sd = window.HoldingV16.getSpecialDay(emp.v16);
+      const hq = emp.v16.vipAssets && emp.v16.vipAssets.hq ? 1.15 : 1.0;
+      return (sd.incomeMult || 1.0) * hq;
+    })();
+
     if (socialCooldown > 0) socialCooldown = Math.max(0, socialCooldown - dt);
     if (entryGateTimer > 0) entryGateTimer = Math.max(0, entryGateTimer - dt);
     if (exitGateTimer > 0) exitGateTimer = Math.max(0, exitGateTimer - dt);
@@ -647,7 +673,7 @@ window.EmpireSystem = (function () {
             car.waitingAtBooth = false;
             car.paid = true;
             exitGateTimer = 0.95;
-            const fee = getParkingFee(emp);
+            const fee = Math.round(getParkingFee(emp) * v16Mult);
             data.cash += fee;
             if (data.daily) {
               data.daily.parkingIncome = (data.daily.parkingIncome || 0) + fee;
@@ -712,7 +738,7 @@ window.EmpireSystem = (function () {
         }
       }
 
-      const totalRent = getMallTotalCycleRent(emp);
+      const totalRent = Math.round(getMallTotalCycleRent(emp) * v16Mult);
       if (totalRent > 0) {
         const cleanMult = mallNeedsCleaning ? 0.45 : 1.0;
         mallRentProgress += (dt / 7.5) * cleanMult;
@@ -754,7 +780,7 @@ window.EmpireSystem = (function () {
         sideProgress[tw.key] += dt / tw.cycleSec;
         if (sideProgress[tw.key] >= 1) {
           sideProgress[tw.key] -= 1;
-          const inc = calcSideTowerIncome(tw, lvl);
+          const inc = Math.round(calcSideTowerIncome(tw, lvl) * v16Mult);
           data.cash += inc;
           if (data.daily) {
             data.daily.land2Income = (data.daily.land2Income || 0) + inc;

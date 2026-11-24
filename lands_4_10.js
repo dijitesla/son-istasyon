@@ -6,7 +6,7 @@ window.ExtraLandsSystem = (function () {
   const baseImg = new Image();
   let baseReady = false;
   baseImg.onload = () => (baseReady = true);
-  baseImg.src = "./assets/station-ground.jpg";
+  baseImg.src = "./assets/extra-ground.jpg";
 
   // 4. ARAZİDEN 10. ARAZİYE KADAR 7 YENİ YATIRIM ARSASI (Pahalı ve Prestijli Para Eritme Hedefleri!)
   const EXTRA_LANDS = [
@@ -309,11 +309,13 @@ window.ExtraLandsSystem = (function () {
       return false;
     }
 
-    const car = rt.waitingCars.shift();
-    rt.occupiedTimers.push(6.5 + Math.random() * 3.5);
+    const carIdx = isAuto ? rt.waitingCars.findIndex((c) => c.arrived) : 0;
+    if (carIdx < 0) return false;
+    const car = rt.waitingCars.splice(carIdx, 1)[0];
+    rt.occupiedTimers.push(6.0 + Math.random() * 3.2);
     rt.walkers.push({
       x: car.x,
-      y: 196,
+      y: Math.max(176, car.y + 10),
       tx: 240 + (Math.random() - 0.5) * 40,
       ty: 256,
       col: car.color,
@@ -325,16 +327,25 @@ window.ExtraLandsSystem = (function () {
     return true;
   }
 
-  function doCleanOne(landId, data, isAuto = false) {
+  function doCleanOne(landId, data, isAuto = false, count = 1) {
     const st = data.empire.extraLands[landId];
     const rt = runtime[landId];
     if (!st || !st.projectKey || rt.dirtyCount <= 0) return false;
-    rt.dirtyCount = Math.max(0, rt.dirtyCount - (isAuto ? 1 : 2)); // Patron basınca 2 odayı birden hızlıca hazırlar!
+    const cleanAmt = isAuto ? count : 2;
+    rt.dirtyCount = Math.max(0, rt.dirtyCount - cleanAmt);
     if (!isAuto && cachedHelpers) {
       cachedHelpers.sfx.tap();
       rt.floats.push({ x: 240, y: 340, text: "✨ Hazırlandı!", color: "#38bdf8", life: 1.1 });
     }
     return true;
+  }
+
+  function getV16Mult(data) {
+    const v16 = data.empire && data.empire.v16;
+    if (!window.HoldingV16 || !v16) return 1.0;
+    const sd = window.HoldingV16.getSpecialDay(v16);
+    const hq = v16.vipAssets && v16.vipAssets.hq ? 1.15 : 1.0;
+    return (sd.incomeMult || 1.0) * hq;
   }
 
   // =========================================================================
@@ -343,6 +354,7 @@ window.ExtraLandsSystem = (function () {
   function updateExtraLands(dt, data, onEarn) {
     if (!data.empire.extraLands) data.empire.extraLands = createDefaultExtraLands();
     const colors = ["#ef4444", "#2563eb", "#f59e0b", "#10b981", "#e2e8f0", "#8b5cf6", "#ec4899"];
+    const v16Mult = getV16Mult(data);
 
     EXTRA_LANDS.forEach((lDef) => {
       const st = data.empire.extraLands[lDef.id];
@@ -357,48 +369,72 @@ window.ExtraLandsSystem = (function () {
       if (!st.owned || !st.projectKey) return;
       const proj = getProjectDef(st.projectKey);
 
-      // 1. Otoyoldan Tesise Müşteri Aracı Gelişi
+      // 1. Otoyoldan Tesise Müşteri Aracı Gelişi (Kesintisiz Waypoint Motoru!)
       rt.spawnTimer -= dt;
       if (rt.spawnTimer <= 0 && rt.waitingCars.length < 5) {
-        rt.spawnTimer = Math.max(1.4, 3.8 - st.floorsLvl * 0.35 - (st.heliUpgrade ? 0.5 : 0));
+        rt.spawnTimer = Math.max(1.15, 3.4 - st.floorsLvl * 0.35 - (st.heliUpgrade ? 0.55 : 0));
         const slotIdx = rt.waitingCars.length;
+        const slotX = 145 + slotIdx * 48;
         rt.waitingCars.push({
           x: -40,
           y: 58,
-          targetX: 145 + slotIdx * 48,
+          targetX: slotX,
           targetY: 178,
           angle: Math.PI / 2,
           color: colors[Math.floor(Math.random() * colors.length)],
           shape: st.vipUpgrade && Math.random() < 0.5 ? "sport" : "suv",
-          arrived: false
+          arrived: false,
+          waypoints: [
+            { x: 98, y: 58, speed: 132 },
+            { x: 98, y: 178, speed: 112 },
+            { x: slotX, y: 178, speed: 108, finalAngle: Math.PI / 2 }
+          ]
         });
       }
 
       rt.waitingCars.forEach((c, idx) => {
-        c.targetX = 145 + idx * 48;
-        if (!c.arrived) {
-          const tx = c.y < 170 && c.x < 96 ? 98 : c.targetX;
-          const ty = c.x < 96 ? 58 : 178;
-          const dx = tx - c.x;
-          const dy = ty - c.y;
+        const desiredX = 145 + idx * 48;
+        c.targetX = desiredX;
+        if (c.waypoints && c.waypoints.length > 0) {
+          c.waypoints[c.waypoints.length - 1].x = desiredX;
+          const wp = c.waypoints[0];
+          const dx = wp.x - c.x;
+          const dy = wp.y - c.y;
           const d = Math.hypot(dx, dy);
-          if (d > 3) {
+          const spd = wp.speed || 115;
+          if (d <= spd * dt + 1.5) {
+            c.x = wp.x;
+            c.y = wp.y;
+            if (wp.finalAngle !== undefined) c.angle = wp.finalAngle;
+            c.waypoints.shift();
+            if (c.waypoints.length === 0) {
+              c.angle = Math.PI / 2;
+              c.arrived = true;
+            }
+          } else {
             c.angle = Math.atan2(dx, -dy);
-            c.x += (dx / d) * 115 * dt;
-            c.y += (dy / d) * 115 * dt;
-          } else if (Math.hypot(c.targetX - c.x, 178 - c.y) <= 5) {
-            c.x = c.targetX;
-            c.y = 178;
-            c.angle = Math.PI / 2;
-            c.arrived = true;
+            c.x += (dx / d) * spd * dt;
+            c.y += (dy / d) * spd * dt;
           }
+        } else {
+          // Sıradaki boşluğa kay
+          const dx = desiredX - c.x;
+          if (Math.abs(dx) > 2) {
+            c.x += Math.sign(dx) * Math.min(Math.abs(dx), 95 * dt);
+          } else {
+            c.x = desiredX;
+          }
+          c.y = 178;
+          c.angle = Math.PI / 2;
+          c.arrived = true;
         }
       });
 
       // 2. Eleman Varsa (Resepsiyonist veya Genel Müdür) Otomatik Kayıt Açar! Yoksa Patronu Bekler!
       if ((st.staff.clerk || st.staff.manager) && rt.waitingCars.some((c) => c.arrived)) {
         rt.clerkTimer += dt;
-        if (rt.clerkTimer >= (st.staff.manager ? 0.9 : 1.5)) {
+        const clerkRate = st.staff.manager && st.staff.clerk ? 0.65 : st.staff.manager ? 0.85 : 1.25;
+        if (rt.clerkTimer >= clerkRate) {
           rt.clerkTimer = 0;
           doCheckInOne(lDef.id, data, true);
         }
@@ -410,7 +446,7 @@ window.ExtraLandsSystem = (function () {
         if (rt.occupiedTimers[i] <= 0) {
           rt.occupiedTimers.splice(i, 1);
           rt.dirtyCount += 1;
-          const pay = getUnitPayout(lDef, proj, st);
+          const pay = Math.round(getUnitPayout(lDef, proj, st) * v16Mult);
           data.cash += pay;
           if (data.daily) {
             if (!data.daily.extraLandIncomes) data.daily.extraLandIncomes = {};
@@ -433,9 +469,11 @@ window.ExtraLandsSystem = (function () {
       // 4. Kat Hizmetleri / Bakım Ekibi veya Müdür Varsa Kirli Odaları Otomatik Hazırlar!
       if ((st.staff.cleaner || st.staff.manager) && rt.dirtyCount > 0) {
         rt.cleanTimer += dt;
-        if (rt.cleanTimer >= (st.staff.manager ? 0.85 : 1.45)) {
+        const bothClean = st.staff.cleaner && st.staff.manager;
+        const cleanRate = bothClean ? 0.65 : st.staff.manager ? 0.85 : 1.25;
+        if (rt.cleanTimer >= cleanRate) {
           rt.cleanTimer = 0;
-          doCleanOne(lDef.id, data, true);
+          doCleanOne(lDef.id, data, true, bothClean ? 2 : 1);
         }
       }
 
@@ -584,28 +622,32 @@ window.ExtraLandsSystem = (function () {
     ctx.fillText(`${proj.emoji} ${proj.name.toUpperCase()} ★ KAT ${st.floorsLvl}/5`, W / 2, by + 24);
 
     // Çatı Özellikleri: Çatı Sonsuzluk Havuzu (vipUpgrade) & Helikopter Pisti (heliUpgrade)
+    const shimmer = 0.5 + 0.5 * Math.sin(Date.now() * 0.004);
     if (st.vipUpgrade) {
-      MR.rr(ctx, bx + 16, by + 48, 148, 48, 9, "#f8fafc", "#fde047", 1.5);
-      MR.rr(ctx, bx + 20, by + 52, 140, 40, 7, "#0ea5e9", null);
+      MR.rr(ctx, bx + 14, by + 48, 146, 48, 9, "#f8fafc", "#fde047", 1.5);
+      MR.rr(ctx, bx + 18, by + 52, 138, 40, 7, "#0ea5e9", null);
+      ctx.fillStyle = `rgba(186, 230, 253, ${0.22 + shimmer * 0.22})`;
+      ctx.fillRect(bx + 24, by + 57, 126, 5);
+      ctx.fillRect(bx + 34, by + 81, 106, 4);
       ctx.fillStyle = "#ffffff";
-      ctx.font = "900 8.5px sans-serif";
-      ctx.fillText(proj.key === "hotel" ? "🏊 ÇATI HAVUZU & KRAL DAİRESİ" : "🌟 VIP ÜNİTE AKTİF", bx + 90, by + 75);
+      ctx.font = "900 8.2px sans-serif";
+      ctx.fillText(proj.key === "hotel" ? "🏊 ÇATI HAVUZU & VIP" : "🌟 VIP ÜNİTE AKTİF", bx + 87, by + 75);
     }
     if (st.heliUpgrade) {
-      const hx = bx + bw - 54;
+      const hx = bx + bw - 50;
       const hy = by + 72;
-      MR.rr(ctx, hx - 34, hy - 24, 68, 48, 9, "#1e293b", "#facc15", 1.6);
+      MR.rr(ctx, hx - 32, hy - 24, 64, 48, 9, "#1e293b", "#facc15", 1.6);
       ctx.strokeStyle = "#facc15";
       ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.arc(hx, hy, 16, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 15, 0, Math.PI * 2);
       ctx.stroke();
       ctx.fillStyle = "#facc15";
       ctx.font = "900 12px sans-serif";
       ctx.fillText("H", hx, hy + 4.5);
     }
 
-    // 3. Kat Kat Gerçekçi Oda / Birim Pencereleri (Dolu: Altın Işık, Kirli: Turuncu, Hazır: Parlak Mavi!)
+    // 3. Kat Kat Gerçekçi Oda / Birim Pencereleri (Gece Sıcak Işık Parlamalı!)
     const cols = 6;
     const rows = st.floorsLvl; // 1..5 kat!
     const winW = 48;
@@ -620,6 +662,13 @@ window.ExtraLandsSystem = (function () {
         const wy = startY + r * 34;
         const isOcc = idx < occU;
         const isDirty = !isOcc && idx < occU + dirtyU;
+
+        if (isOcc && phase.night > 0.25) {
+          ctx.save();
+          ctx.fillStyle = `rgba(250, 204, 21, ${0.18 * phase.night})`;
+          ctx.fillRect(wx - 3, wy - 3, winW + 6, winH + 6);
+          ctx.restore();
+        }
 
         const wFill = isOcc ? "#fde047" : isDirty ? "#9a3412" : "#1e293b";
         const wBrd = isOcc ? "#ca8a04" : isDirty ? "#fb923c" : proj.accent;
@@ -643,15 +692,15 @@ window.ExtraLandsSystem = (function () {
       170,
       48,
       10,
-      needManualCheckin ? "#16a34a" : "#0f172a",
-      needManualCheckin ? "#fef08a" : "#334155",
+      needManualCheckin ? "#16a34a" : st.staff.clerk || st.staff.manager ? "#064e3b" : "#0f172a",
+      needManualCheckin ? "#fef08a" : st.staff.clerk || st.staff.manager ? "#22c55e" : "#334155",
       2
     );
     ctx.fillStyle = "#ffffff";
     ctx.font = "900 10px sans-serif";
     ctx.fillText(
       st.staff.clerk || st.staff.manager
-        ? `✅ Otomatik Kayıt Aktif (${occU}/${maxU})`
+        ? `🟢 OTO KAYIT (${occU}/${maxU} Dolu)`
         : waitingReady > 0
         ? `${proj.checkinLabel} (${waitingReady})!`
         : `Müşteri Bekleniyor (${occU}/${maxU})`,
@@ -668,14 +717,14 @@ window.ExtraLandsSystem = (function () {
       170,
       48,
       10,
-      needManualClean ? "#ea580c" : "#0f172a",
-      needManualClean ? "#fef08a" : "#334155",
+      needManualClean ? "#ea580c" : st.staff.cleaner || st.staff.manager ? "#0c4a6e" : "#0f172a",
+      needManualClean ? "#fef08a" : st.staff.cleaner || st.staff.manager ? "#38bdf8" : "#334155",
       2
     );
     ctx.fillStyle = "#ffffff";
     ctx.fillText(
       st.staff.cleaner || st.staff.manager
-        ? `✅ Otomatik Temizlik Aktif`
+        ? `🟢 OTO TEMİZLİK (${dirtyU} Kirli)`
         : dirtyU > 0
         ? `${proj.prepLabel} (${dirtyU})!`
         : `✨ Tüm ${proj.unitName}lar Temiz`,
@@ -683,11 +732,11 @@ window.ExtraLandsSystem = (function () {
       by + bh - 34
     );
 
-    // Üst Sağ "Yönet & Eleman Al" Rozeti
-    MR.rr(ctx, bx + 105, by + 56, bw - 210, 34, 9, "#0284c7", "#fef08a", 1.8);
+    // Orta Üst "Yönet & Ekip" Rozeti (Havuz ve Helikopter Pisti ile Çakışmaz!)
+    MR.rr(ctx, bx + 166, by + 54, 130, 36, 9, "#0284c7", "#fef08a", 1.8);
     ctx.fillStyle = "#ffffff";
-    ctx.font = "900 10.5px sans-serif";
-    ctx.fillText("🏗️ KAT ÇIK & 👷 ELEMAN AL (DOKUN)", W / 2, by + 77);
+    ctx.font = "900 10px sans-serif";
+    ctx.fillText("🏗️ YÖNET & EKİP", bx + 231, by + 76);
 
     // Uçan Kazanç Yazıları
     rt.floats.forEach((f) => {
