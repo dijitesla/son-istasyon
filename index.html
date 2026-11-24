@@ -6,104 +6,151 @@
   <meta name="theme-color" content="#090e1c" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Son İstasyon v16.0 — Holding Ligi, Görevler, Banka &amp; Helikopter</title>
+  <title>Son İstasyon v17.0 — Otoyol Holding İmparatorluğu</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./assets/app-icon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./assets/app-icon.png" />
-  <link rel="stylesheet" href="./style.css?v=16.2" />
+  <link rel="stylesheet" href="./style.css?v=17.0" />
 </head>
 <body>
   <main class="phone-stage">
     <div id="toastBanner" class="toast-banner hidden">Bilgi</div>
 
-    <!-- AÇILIŞ EKRANI -->
+    <!-- YENİ NESİL SİNEMATİK AÇILIŞ EKRANI (v17.0) -->
     <section id="startScreen" class="start-screen">
-      <div>
-        <div style="font-size: 11.5px; font-weight: 900; color: #fde68a; letter-spacing: 1px;">
-          İSTASYON • ÜCRETLİ OTOPARK • OTOYOL AVM • BORSA &amp; MAAŞ
-        </div>
-        <h1 class="neon-logo">SON İSTASYON</h1>
-        <p style="font-size: 14px; color: #cbd5e1; margin-top: 4px; font-weight: 700;">
-          v16.0 Holding Ligi, Görevler, Banka/IPO &amp; Helikopter Sürümü
-        </p>
+      <div class="splash-top">
+        <div class="splash-eyebrow">✦ OTOYOL HOLDİNG İMPARATORLUĞU ✦</div>
+        <h1 class="splash-logo">SON İSTASYON</h1>
+        <p class="splash-tagline">10 Arazi • Holding Ligi • Borsa &amp; Helikopter</p>
       </div>
 
-      <div class="intro-card">
-        <div style="font-weight: 900; color: #fde68a; font-size: 16.5px; margin-bottom: 6px;">
-          ⛽ İstasyondan AVM &amp; Otopark Patronluğuna!
-        </div>
-        <p>• <strong>1. Arazi (İstasyon):</strong> 9 Pompa, EV Şarj, Motel, Kantar, Restoran &amp; Market kur; başına sakin ve temkinli <strong>👔 Müdür Kemal</strong>'i ata!</p>
-        <p style="margin-top: 6px;">• <strong>2. Arazi (Otopark &amp; AVM):</strong> 20 araçlık <strong>🅿️ Ücretli Otopark</strong> kurup büyüt, <strong>🏬 Otoyol AVM</strong> inşa et ve içindeki 8 dükkanı tek tek satın alıp markalara kiraya ver!</p>
-        <p style="margin-top: 6px;">• <strong>Çoklu Şahsi Maaş &amp; Telefon:</strong> İstasyon, Otopark ve AVM'den ayrı ayrı şahsi maaş bağla; Borsa, Emlak ve Oto Galeri ile servetini katla!</p>
-      </div>
+      <div class="splash-spacer"></div>
 
-      <div style="display: grid; gap: 8px;">
-        <button id="startGameBtn" class="primary-btn" style="font-size: 18px; padding: 15px;">
-          🚀 SIFIRDAN BAŞLAT
+      <div class="splash-bottom">
+        <div class="splash-chips">
+          <span class="splash-chip">⛽ 10 Arazi</span>
+          <span class="splash-chip">🏆 15 Rakip Şirket</span>
+          <span class="splash-chip">🚁 VIP &amp; Borsa</span>
+        </div>
+
+        <button id="startGameBtn" class="splash-cta-primary">
+          ▶ OYUNA BAŞLA
         </button>
-        <button id="loadPresetBtn" class="primary-btn" style="background: linear-gradient(180deg, #0284c7, #0369a1); font-size: 15px; padding: 13px;">
-          ⏩ 10 ARAZİ FULL KAYDIMDAN BAŞLAT (v16.0 Holding)
+
+        <button id="loadPresetBtn" class="splash-cta-secondary">
+          ⏩ 10 Arazi Full Kayıttan Aç
         </button>
+
+        <div class="splash-meta">v17.0 • Dijitesla Studio</div>
       </div>
     </section>
 
-    <!-- ÜST BİLGİ ÇUBUĞU -->
+    <!-- YENİ SADE YÜZEN ÜST ÇUBUK (2 ANA PARA + GÜN + HIZLI AYARLAR) -->
     <header class="hud-bar">
-      <div class="hud-box hud-cash" title="Şirket Kasası">💵 <span id="cashText">120</span>₺</div>
-      <div class="hud-box hud-fuel" title="Ana Yakıt Deposu">🛢️ <span id="fuelStockText">1200</span>L</div>
-      <div class="hud-box hud-rep" title="İtibar">⭐ <span id="repText">50</span></div>
-      <div class="hud-box hud-sec" title="Güvenlik">🛡️ <span id="secText">65</span></div>
-      <div class="hud-icon-row">
-        <button id="holdingHubBtn" class="icon-btn" title="Holding Ligi, Görevler, Banka &amp; VIP">🏆</button>
-        <button id="reportBtn" class="icon-btn" title="Günlük Kâr/Zarar Raporu">📊</button>
-        <button id="musicBtn" class="icon-btn" title="Sakin Müzik">🔕</button>
-        <button id="muteBtn" class="icon-btn" title="Ses Efektleri">🔊</button>
+      <div class="hud-currencies">
+        <button id="cashPillBtn" class="hud-pill hud-cash" title="Şirket Kasası (Rapor için dokun)">
+          <span class="hp-ico">💵</span>
+          <span class="hp-val"><span id="cashText">120</span>₺</span>
+        </button>
+        <button id="personalPillBtn" class="hud-pill hud-personal" title="Şahsi Cüzdanın (Şehir için dokun)">
+          <span class="hp-ico">💳</span>
+          <span class="hp-val"><span id="personalCashTop">0</span>₺</span>
+        </button>
+      </div>
+
+      <div class="hud-right-cluster">
+        <span id="shiftBadgeText" class="shift-pill">🌙 G1</span>
+        <button id="settingsToggleBtn" class="icon-btn settings-btn" title="İstasyon Durumu &amp; Ses Ayarları">⚙️</button>
       </div>
     </header>
 
-    <!-- BÖLGE GEÇİŞİ & 10 ARAZİ SEÇİCİ ŞERİDİ -->
-    <nav class="world-tabs">
-      <button id="tabStationBtn" class="wtab-btn active">⛽ 1.İst.</button>
-      <button id="tabLand2Btn" class="wtab-btn">🛍️ 2.AVM</button>
-      <button id="tabLand3Btn" class="wtab-btn">🎡 3.Park</button>
-      <button id="openLandsDirBtn" class="wtab-btn lands-pill">🗺️ 10 Arazi</button>
-      <button id="openCityBtn" class="wtab-btn city-pill">🏙️ <span id="personalCashTop">0</span>₺</button>
-      <button id="openPhoneBtn" class="wtab-btn phone-pill">📱 Tel</button>
+    <!-- HIZLI DURUM & SES AÇILIR PANELİ (EKRANI KALABALIKLAŞTIRMAZ!) -->
+    <div id="quickSettingsPopover" class="quick-popover hidden">
+      <div class="qp-metrics">
+        <div class="qp-stat"><span>🛢️ Yakıt</span><strong><span id="fuelStockText">1200</span>L</strong></div>
+        <div class="qp-stat"><span>⭐ İtibar</span><strong><span id="repText">50</span></strong></div>
+        <div class="qp-stat"><span>🛡️ Güvenlik</span><strong><span id="secText">65</span></strong></div>
+      </div>
+      <div class="qp-actions">
+        <button id="musicBtn" class="qp-btn" title="Sakin Müzik">🔕 Müzik</button>
+        <button id="muteBtn" class="qp-btn" title="Ses Efektleri">🔊 Sesler</button>
+        <button id="backToSplashBtn" class="qp-btn" title="Açılış Ekranı">🏠 Kapak</button>
+      </div>
+    </div>
+
+    <!-- TEK DOKUNUŞLU 10 ARAZİ GEÇİŞ ŞERİDİ (◀ 1..10 ▶ 🗺️) -->
+    <nav class="land-ribbon" aria-label="10 Arazi Hızlı Geçiş">
+      <button id="btnPrevLand" class="ribbon-arrow" title="Önceki Arazi">◀</button>
+      <div id="landRibbonTrack" class="land-ribbon-track">
+        <button id="tabStationBtn" class="land-chip active" data-land="station">⛽ 1</button>
+        <button id="tabLand2Btn" class="land-chip" data-land="land2">🏬 2</button>
+        <button id="tabLand3Btn" class="land-chip" data-land="land3">🎡 3</button>
+        <button class="land-chip extra-land-chip" data-land="land4">🏨 4</button>
+        <button class="land-chip extra-land-chip" data-land="land5">🏥 5</button>
+        <button class="land-chip extra-land-chip" data-land="land6">🚗 6</button>
+        <button class="land-chip extra-land-chip" data-land="land7">🏟️ 7</button>
+        <button class="land-chip extra-land-chip" data-land="land8">💻 8</button>
+        <button class="land-chip extra-land-chip" data-land="land9">👑 9</button>
+        <button class="land-chip extra-land-chip" data-land="land10">🌟 10</button>
+      </div>
+      <button id="btnNextLand" class="ribbon-arrow" title="Sonraki Arazi">▶</button>
+      <button id="openLandsDirBtn" class="ribbon-map-btn" title="10 Arazi Genel Haritası">🗺️</button>
     </nav>
 
-    <!-- MÜDÜR ACİL ÇAĞRI BANDI -->
-    <button id="managerAlertBar" class="manager-alert-bar hidden"></button>
-
-    <!-- VARDİYA & CANLI REHBER ŞERİDİ -->
-    <div class="hint-strip">
-      <span id="liveHintText">👆 Pompadaki araca dokun / basılı tut!</span>
-      <span id="shiftBadgeText" class="shift-pill">🌙 G1 Gece</span>
-    </div>
-    <div id="activeEffectBar" class="effect-strip hidden"></div>
-
-    <!-- CANLI 3D HARİTA ALANI (İSTASYON VEYA 2. ARAZİ) -->
+    <!-- GENİŞ CANLI 3D HARİTA ALANI + YÜZEN CAM AKSİYON BUTONLARI -->
     <section class="map-wrapper">
       <canvas id="stationCanvas"></canvas>
+
+      <!-- Harita Üstü Yüzen Özel Gün Rozeti -->
+      <div id="activeEffectBar" class="floating-effect-pill hidden"></div>
+
+      <!-- Müdür Acil Çağrı Bandı (Yalnızca Acil Krizde Yüzer) -->
+      <button id="managerAlertBar" class="manager-alert-bar hidden"></button>
+
+      <!-- Sağ Kenar Yüzen Modern Aksiyon Menüsü (Başparmak Erişimi!) -->
+      <div class="map-fab-stack">
+        <button id="holdingHubBtn" class="fab-btn fab-gold" title="Holding Ligi, Görevler, Banka &amp; VIP">
+          <span class="fab-ico">🏆</span>
+          <span class="fab-lbl">Holding</span>
+        </button>
+        <button id="openPhoneBtn" class="fab-btn fab-cyan" title="Patron Telefonu (Borsa &amp; YolGram)">
+          <span class="fab-ico">📱</span>
+          <span class="fab-lbl">Telefon</span>
+        </button>
+        <button id="openCityBtn" class="fab-btn fab-green" title="Şehir, Maaş, Emlak &amp; Galeri">
+          <span class="fab-ico">🏙️</span>
+          <span class="fab-lbl">Şehir</span>
+        </button>
+        <button id="reportBtn" class="fab-btn fab-slate" title="Günlük Kâr/Zarar Raporu">
+          <span class="fab-ico">📊</span>
+          <span class="fab-lbl">Rapor</span>
+        </button>
+      </div>
+
+      <!-- Harita Altı Tek Satır Yüzen Durum İpucu -->
+      <div class="floating-hint-pill">
+        <span id="liveHintText">👆 Pompadaki araca dokun!</span>
+      </div>
     </section>
 
-    <!-- ALT YÖNETİM PANELİ -->
+    <!-- MODERN YÜZEN ALT KONTROL KAPSÜLÜ -->
     <footer class="bottom-dock">
       <button id="btnCallTanker" class="dock-btn">
         <span class="dock-emoji">🚛</span>
-        <span class="dock-title">Tanker İkmal</span>
+        <span class="dock-title">Tanker</span>
         <span id="tankerCostSub" class="dock-sub">Depo Dolu ✓</span>
       </button>
 
       <button id="btnOpenUpgrades" class="dock-btn">
         <span class="dock-emoji">🏗️</span>
-        <span class="dock-title">Tesis &amp; Pompa</span>
-        <span id="stationLvlSub" class="dock-sub">İstasyon Sv.1</span>
+        <span class="dock-title">İstasyon</span>
+        <span id="stationLvlSub" class="dock-sub">Sv.1</span>
       </button>
 
       <button id="btnOpenStaff" class="dock-btn">
         <span class="dock-emoji">👷</span>
         <span class="dock-title">Ekip &amp; Müdür</span>
-        <span id="staffCountSub" class="dock-sub">0/12 Ekip</span>
+        <span id="staffCountSub" class="dock-sub">0/12</span>
       </button>
     </footer>
 
@@ -305,14 +352,14 @@
     </div>
   </main>
 
-  <script src="./audio.js?v=16.2"></script>
-  <script src="./visuals.js?v=16.2"></script>
-  <script src="./map_renderer.js?v=16.2"></script>
-  <script src="./story_events.js?v=16.2"></script>
-  <script src="./land3.js?v=16.2"></script>
-  <script src="./lands_4_10.js?v=16.2"></script>
-  <script src="./holding_v16.js?v=16.2"></script>
-  <script src="./empire.js?v=16.2"></script>
-  <script src="./game.js?v=16.2"></script>
+  <script src="./audio.js?v=17.0"></script>
+  <script src="./visuals.js?v=17.0"></script>
+  <script src="./map_renderer.js?v=17.0"></script>
+  <script src="./story_events.js?v=17.0"></script>
+  <script src="./land3.js?v=17.0"></script>
+  <script src="./lands_4_10.js?v=17.0"></script>
+  <script src="./holding_v16.js?v=17.0"></script>
+  <script src="./empire.js?v=17.0"></script>
+  <script src="./game.js?v=17.0"></script>
 </body>
 </html>

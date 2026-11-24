@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v16.0 — Holding Ligi, Görevler, Banka/IPO & Patron Helikopteri)
+## Proje Özeti: Son İstasyon (v17.0 — Yeni Nesil Sinematik Kapak, Yüzen Cam Arayüz & Tek Dokunuşlu 10 Arazi)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -46,6 +46,10 @@
     - 4.–10. arazilerdeki araçların otoyol girişinde donmasına sebep olan yol bulma hatası kesin olarak düzeltildi (3 noktalı waypoint + otomatik kayıt & temizlik hızlandırıldı, tüm arazilere v16 özel gün/Genel Merkez çarpanı bağlandı).
     - 2., 3. ve 4.–10. arazilere özel 3D üstten zemin haritaları eklendi (`assets/land2-ground.jpg`, `assets/land3-ground.jpg`, `assets/extra-ground.jpg`), koyu ince kaydırma çubukları, cam efektli modallar ve gece pencere parıltısı eklendi.
     - Tek seferlik **+%1000 Borsa Rallisi** (`surge1000Applied` bayrağıyla) eklendi.
+
+  - **v17.0 Büyük Arayüz & Giriş Ekranı Yenilemesi:**
+    - Tam ekran sinematik 3D açılış kapağı (`assets/cover-v17.jpg`), yazı kalabalığından tamamen arındırılmış minimalist altın tipografi ve tek dokunuşla `▶ KALDIĞIN YERDEN DEVAM ET` / `▶ OYUNA BAŞLA`.
+    - 4 sıkışık üst bar yerine **tek temiz yüzen üst çubuk** (2 ana para birimi kısaltmalı + gün + `⚙️` açılır hızlı durum/ses paneli), **tek dokunuşlu kaydırmalı 10 arazi şeridi (`◀ 1..10 ▶ 🗺️`)** ve haritanın sağ kenarında **yüzen cam aksiyon butonları (`🏆 Holding`, `📱 Telefon`, `🏙️ Şehir`, `📊 Rapor`)** kuruldu.
 
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (24 Kasım — Windows v16.0)
 - Windows bilgisayarda **v16.0** (`holding_v16.js` + `index.html`, `style.css`, `empire.js`, `game.js` bağlantıları) tamamlandı ve canlı tarayıcıda 0 konsol hatasıyla doğrulandı.

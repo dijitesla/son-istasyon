@@ -278,6 +278,14 @@
     reportBtn: document.getElementById("reportBtn"),
     musicBtn: document.getElementById("musicBtn"),
     muteBtn: document.getElementById("muteBtn"),
+    cashPillBtn: document.getElementById("cashPillBtn"),
+    personalPillBtn: document.getElementById("personalPillBtn"),
+    settingsToggleBtn: document.getElementById("settingsToggleBtn"),
+    quickSettingsPopover: document.getElementById("quickSettingsPopover"),
+    backToSplashBtn: document.getElementById("backToSplashBtn"),
+    btnPrevLand: document.getElementById("btnPrevLand"),
+    btnNextLand: document.getElementById("btnNextLand"),
+    landRibbonTrack: document.getElementById("landRibbonTrack"),
     liveHintText: document.getElementById("liveHintText"),
     shiftBadgeText: document.getElementById("shiftBadgeText"),
     activeEffectBar: document.getElementById("activeEffectBar"),
@@ -492,18 +500,28 @@
     return cost;
   }
 
+  const LAND_ORDER = ["station", "land2", "land3", "land4", "land5", "land6", "land7", "land8", "land9", "land10"];
+
+  function formatCompactMoney(val) {
+    const n = Math.round(val || 0);
+    if (n >= 1000000000) return `${(n / 1000000000).toFixed(2).replace(".", ",")}Mr`;
+    if (n >= 1000000) return `${(n / 1000000).toFixed(2).replace(".", ",")}M`;
+    if (n >= 100000) return `${Math.round(n / 1000)}B`;
+    return n.toLocaleString("tr-TR");
+  }
+
   function updateHUD() {
-    el.cashText.textContent = Math.round(data.cash);
+    el.cashText.textContent = formatCompactMoney(data.cash);
     el.fuelStockText.textContent = `${Math.round(data.fuelStock)}`;
     el.repText.textContent = `${Math.round(data.reputation)}`;
     el.secText.textContent = `${Math.round(data.security)}`;
-    el.stationLvlSub.textContent = `İstasyon Sv.${stationLevel()}`;
+    el.stationLvlSub.textContent = `Sv.${stationLevel()}`;
 
-    el.repText.parentElement.classList.toggle("low", data.reputation < 30);
-    el.secText.parentElement.classList.toggle("low", data.security < 35);
+    if (el.repText.parentElement) el.repText.parentElement.classList.toggle("low", data.reputation < 30);
+    if (el.secText.parentElement) el.secText.parentElement.classList.toggle("low", data.security < 35);
 
     const ph = getShiftPhase();
-    el.shiftBadgeText.textContent = `${ph.icon} G${data.dayNumber} ${ph.name}`;
+    el.shiftBadgeText.textContent = `${ph.icon} G${data.dayNumber}`;
 
     const activeMsgs = [];
     let isDanger = false;
@@ -511,23 +529,23 @@
       const sd = H16.getSpecialDay(data.empire.v16);
       if (sd && sd.key !== "normal") {
         const bonusPct = Math.round(((sd.incomeMult || 1) - 1) * 100);
-        activeMsgs.push(`${sd.badge} (+%${bonusPct} Gelir)`);
+        activeMsgs.push(`${sd.badge} +%${bonusPct}`);
       }
     }
     if (powerOutage) {
-      activeMsgs.push("⚡ ELEKTRİK KESİK! Marketten Sigortayı Aç!");
+      activeMsgs.push("⚡ ELEKTRİK KESİK!");
       isDanger = true;
     }
-    if (vipRushTimer > 0) activeMsgs.push(`🌟 VIP Akını (+%40 Bahşiş • ${Math.ceil(vipRushTimer)}sn)`);
-    if (policePatrolTimer > 0) activeMsgs.push(`🚔 Polis Devriyesi (${Math.ceil(policePatrolTimer)}sn)`);
-    if (data.tankerDiscount) activeMsgs.push("⛽ Tanker %40 İndirimli");
+    if (vipRushTimer > 0) activeMsgs.push(`🌟 VIP ${Math.ceil(vipRushTimer)}sn`);
+    if (policePatrolTimer > 0) activeMsgs.push(`🚔 Polis ${Math.ceil(policePatrolTimer)}sn`);
+    if (data.tankerDiscount) activeMsgs.push("⛽ Tanker -%40");
     if (slowTrafficTimer > 0) {
-      activeMsgs.push(`📉 Trafik Yavaş (${Math.ceil(slowTrafficTimer)}sn)`);
+      activeMsgs.push(`📉 Yavaş ${Math.ceil(slowTrafficTimer)}sn`);
       isDanger = true;
     }
 
     if (activeMsgs.length > 0) {
-      el.activeEffectBar.textContent = activeMsgs.join("  •  ");
+      el.activeEffectBar.textContent = activeMsgs.join(" • ");
       el.activeEffectBar.classList.remove("hidden");
       el.activeEffectBar.classList.toggle("danger", isDanger);
     } else {
@@ -540,7 +558,7 @@
       missingFuel < 80
         ? "Depo Dolu ✓"
         : hasFreeRefinery()
-        ? "Doldur (0₺ Rafineri!)"
+        ? "0₺ Rafineri!"
         : `Doldur (${tCost}₺)`;
     el.btnCallTanker.classList.toggle("fuel-low", data.fuelStock < maxFuelCapacity() * 0.18);
 
@@ -551,22 +569,45 @@
       (data.empire.managerHired ? 1 : 0);
     el.staffCountSub.textContent = `${hiredCount}/12 Ekip`;
 
-    el.personalCashTop.textContent = Math.round(data.empire.personalCash || 0);
-    el.tabStationBtn.classList.toggle("active", activeLand === "station");
-    el.tabLand2Btn.classList.toggle("active", activeLand === "land2");
-    if (el.tabLand3Btn) {
-      el.tabLand3Btn.classList.toggle("active", activeLand === "land3");
-      const l3Owned = !!(data.empire.land3 && data.empire.land3.owned);
-      el.tabLand3Btn.textContent = l3Owned ? "🎡 3.Park" : "🏗️ 3.Arsa";
+    el.personalCashTop.textContent = formatCompactMoney(data.empire.personalCash || 0);
+
+    // 10 Arazi Kaydırmalı Şerit Güncellemesi (Tek Dokunuşlu Geçiş!)
+    if (el.landRibbonTrack) {
+      el.landRibbonTrack.querySelectorAll(".land-chip").forEach((chip) => {
+        const lid = chip.dataset.land;
+        const isActive = activeLand === lid;
+        chip.classList.toggle("active", isActive);
+        if (lid === "station") {
+          chip.classList.add("owned");
+          chip.classList.remove("locked");
+          chip.textContent = "⛽ 1";
+        } else if (lid === "land2") {
+          const owned = !!data.empire.land2Owned;
+          chip.classList.toggle("owned", owned);
+          chip.classList.toggle("locked", !owned);
+          chip.textContent = owned ? "🏬 2" : "🔒 2";
+        } else if (lid === "land3") {
+          const owned = !!(data.empire.land3 && data.empire.land3.owned);
+          chip.classList.toggle("owned", owned);
+          chip.classList.toggle("locked", !owned);
+          chip.textContent = owned ? "🎡 3" : "🔒 3";
+        } else if (XL && data.empire.extraLands && data.empire.extraLands[lid]) {
+          const st = data.empire.extraLands[lid];
+          const num = lid.replace("land", "");
+          const pDef = st.projectKey ? XL.getProjectDef(st.projectKey) : null;
+          chip.classList.toggle("owned", !!st.owned);
+          chip.classList.toggle("locked", !st.owned);
+          chip.textContent = !st.owned ? `🔒 ${num}` : pDef ? `${pDef.emoji} ${num}` : `🏗️ ${num}`;
+        }
+      });
     }
-    if (el.openLandsDirBtn) {
-      const isExtra = activeLand.startsWith("land") && activeLand !== "land2" && activeLand !== "land3";
-      el.openLandsDirBtn.classList.toggle("active", isExtra);
-      el.openLandsDirBtn.textContent = isExtra ? `📍 ${activeLand.replace("land", "")}.Arazi` : "🗺️ 10 Arazi";
-    }
-    el.tabLand2Btn.textContent = data.empire.land2Owned ? "🛍️ 2.AVM" : "🏗️ 2.Arsa";
+
     el.openPhoneBtn.classList.toggle("locked", !data.empire.electronics.phone);
-    el.openPhoneBtn.textContent = data.empire.electronics.phone ? "📱 Tel" : "🔒 Tel";
+    const phIco = el.openPhoneBtn.querySelector(".fab-ico");
+    const phLbl = el.openPhoneBtn.querySelector(".fab-lbl");
+    if (phIco) phIco.textContent = data.empire.electronics.phone ? "📱" : "🔒";
+    if (phLbl) phLbl.textContent = data.empire.electronics.phone ? "Telefon" : "Kilitli";
+
     if (el.holdingHubBtn && H16) {
       el.holdingHubBtn.classList.toggle("reward-ready", H16.hasClaimableQuest(data));
     }
@@ -2887,11 +2928,76 @@
       el.liveHintText.textContent = "👆 Pompadaki araca dokun / basılı tut!";
     }
     updateHUD();
+    if (el.landRibbonTrack) {
+      const activeChip = el.landRibbonTrack.querySelector(`.land-chip[data-land="${land}"]`);
+      if (activeChip && activeChip.scrollIntoView) {
+        activeChip.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      }
+    }
+    if (el.quickSettingsPopover) el.quickSettingsPopover.classList.add("hidden");
   }
 
-  el.tabStationBtn.addEventListener("click", () => switchLand("station"));
-  el.tabLand2Btn.addEventListener("click", () => switchLand("land2"));
-  if (el.tabLand3Btn) el.tabLand3Btn.addEventListener("click", () => switchLand("land3"));
+  // Tek dokunuşlu 10 Arazi Şeridi & ◀ / ▶ Okları
+  if (el.landRibbonTrack) {
+    el.landRibbonTrack.querySelectorAll(".land-chip").forEach((chip) => {
+      chip.addEventListener("click", () => switchLand(chip.dataset.land));
+    });
+  }
+  if (el.btnPrevLand) {
+    el.btnPrevLand.addEventListener("click", () => {
+      const idx = LAND_ORDER.indexOf(activeLand);
+      const prevIdx = (idx - 1 + LAND_ORDER.length) % LAND_ORDER.length;
+      switchLand(LAND_ORDER[prevIdx]);
+    });
+  }
+  if (el.btnNextLand) {
+    el.btnNextLand.addEventListener("click", () => {
+      const idx = LAND_ORDER.indexOf(activeLand);
+      const nextIdx = (idx + 1) % LAND_ORDER.length;
+      switchLand(LAND_ORDER[nextIdx]);
+    });
+  }
+
+  // Üst Para Rozetleri & Hızlı Ayarlar Paneli
+  if (el.cashPillBtn) {
+    el.cashPillBtn.addEventListener("click", () => {
+      sfx.tap();
+      if (el.quickSettingsPopover) el.quickSettingsPopover.classList.add("hidden");
+      openDayReport(false);
+    });
+  }
+  if (el.personalPillBtn) {
+    el.personalPillBtn.addEventListener("click", () => {
+      sfx.tap();
+      if (el.quickSettingsPopover) el.quickSettingsPopover.classList.add("hidden");
+      EMP.renderCityModal(data, empireHelpers);
+      el.cityModal.classList.remove("hidden");
+    });
+  }
+  if (el.settingsToggleBtn && el.quickSettingsPopover) {
+    el.settingsToggleBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sfx.tap();
+      el.quickSettingsPopover.classList.toggle("hidden");
+    });
+    document.addEventListener("pointerdown", (e) => {
+      if (
+        !el.quickSettingsPopover.classList.contains("hidden") &&
+        !el.quickSettingsPopover.contains(e.target) &&
+        e.target !== el.settingsToggleBtn
+      ) {
+        el.quickSettingsPopover.classList.add("hidden");
+      }
+    });
+  }
+  if (el.backToSplashBtn) {
+    el.backToSplashBtn.addEventListener("click", () => {
+      sfx.tap();
+      if (el.quickSettingsPopover) el.quickSettingsPopover.classList.add("hidden");
+      el.startGameBtn.textContent = "▶ KALDIĞIN YERDEN DEVAM ET";
+      el.startScreen.classList.remove("hidden");
+    });
+  }
 
   if (el.openLandsDirBtn) {
     el.openLandsDirBtn.addEventListener("click", () => {
@@ -3136,11 +3242,11 @@
 
   el.musicBtn.addEventListener("click", () => {
     const on = sfx.toggleMusic();
-    el.musicBtn.textContent = on ? "🎵" : "🔕";
+    el.musicBtn.textContent = on ? "🎵 Müzik" : "🔕 Müzik";
   });
   el.muteBtn.addEventListener("click", () => {
     const m = sfx.toggleMute();
-    el.muteBtn.textContent = m ? "🔇" : "🔊";
+    el.muteBtn.textContent = m ? "🔇 Sessiz" : "🔊 Sesler";
   });
 
   let lastTime = performance.now();
@@ -3327,7 +3433,7 @@
     saveGame();
   }
 
-  // URL parametresi (?kayit=son-durum veya ?kayit=yan-arazi) veya mevcut kayıt varsa doğrudan kaldığı yerden başlat!
+  // URL parametresi (?kayit=son-durum veya ?kayit=yan-arazi) varsa doğrudan aç; normal açılışta yeni v17.0 Sinematik Kapağı göster!
   try {
     const params = new URLSearchParams(window.location.search);
     if (params.get("kayit") === "son-durum") {
@@ -3341,9 +3447,9 @@
       try {
         window.history.replaceState({}, "", window.location.pathname);
       } catch (_) {}
-      launchIntoMap("✅ Son ilerlemen açıldı! Üstten '🛍️ 2.AVM'ye geçip arsayı alabilirsin!");
+      launchIntoMap("✅ Son ilerlemen açıldı! Üstten '🏬 2'ye dokunup arsayı alabilirsin!");
     } else if (data.totalServed > 0 || data.pumpsUnlocked > 1 || data.dayNumber > 1 || (data.empire && data.empire.land2Owned)) {
-      launchIntoMap();
+      el.startGameBtn.textContent = "▶ KALDIĞIN YERDEN DEVAM ET";
     }
   } catch (_) {}
 })();
