@@ -82,11 +82,13 @@ window.MapRenderer = (function () {
     ctx.translate(x, y);
     ctx.rotate(angle);
 
-    const isTruck = shape === "truck" || shape === "tanker";
+    const isBus = shape === "bus";
+    const isTow = shape === "tow";
+    const isTruck = shape === "truck" || shape === "tanker" || isBus || isTow;
     const isVan = shape === "van" || shape === "ambulance";
     const isSport = shape === "sport" || shape === "ev";
-    const w = isTruck ? 25 : isVan ? 23 : 20;
-    const h = isTruck ? 48 : isVan ? 40 : isSport ? 38 : 35;
+    const w = isBus ? 25 : isTruck ? 25 : isVan ? 23 : 20;
+    const h = isBus ? 58 : isTruck ? 48 : isVan ? 40 : isSport ? 38 : 35;
     const night = extra.nightIntensity !== undefined ? extra.nightIntensity : 1;
 
     // 1. Ön Far Hüzmesi
@@ -125,7 +127,68 @@ window.MapRenderer = (function () {
     ctx.fillRect(-w / 2 - 1.8, wy2, 2.3, 6.5);
     ctx.fillRect(w / 2 - 0.5, wy2, 2.3, 6.5);
 
-    if (shape === "tanker") {
+    if (shape === "bus") {
+      // GERÇEKÇİ ŞEHİRLERARASI LÜKS YOLCU OTOBÜSÜ (Travego/Tourismo Stili)
+      const busGrad = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+      busGrad.addColorStop(0, "#cbd5e1");
+      busGrad.addColorStop(0.3, "#f8fafc");
+      busGrad.addColorStop(0.7, "#ffffff");
+      busGrad.addColorStop(1, "#94a3b8");
+      rr(ctx, -w / 2, -h / 2, w, h, 6, busGrad, "#0f172a", 1.5);
+
+      // Yan koyu panoramik yolcu cam şeritleri
+      ctx.fillStyle = "#0f172a";
+      ctx.fillRect(-w / 2 + 1, -h / 2 + 8, 2.2, h - 16);
+      ctx.fillRect(w / 2 - 3.2, -h / 2 + 8, 2.2, h - 16);
+
+      // Geniş Ön Panoramik Cam & Silecekler
+      rr(ctx, -w / 2 + 2.5, -h / 2 + 2.5, w - 5, 7.5, 2.5, "#0c4a6e", "#0f172a", 1);
+      ctx.fillStyle = "rgba(186, 230, 253, 0.65)";
+      ctx.fillRect(-w / 2 + 4, -h / 2 + 3.5, w - 9, 3);
+
+      // Çatı Üstü Çift Klima Ünitesi (Gerçekçi Detay!)
+      rr(ctx, -7.5, -h / 2 + 14, 15, 11, 3, "#e2e8f0", "#475569", 1.1);
+      rr(ctx, -6.5, -h / 2 + 30, 13, 9, 2.5, "#e2e8f0", "#475569", 1.1);
+      ctx.fillStyle = "#64748b";
+      ctx.fillRect(-5, -h / 2 + 17, 10, 2);
+      ctx.fillRect(-5, -h / 2 + 21, 10, 2);
+
+      // Mavi Kurumsal Kuşak & Arka Motor Izgarası
+      ctx.fillStyle = color || "#0284c7";
+      ctx.fillRect(-2, -h / 2 + 11, 4, h - 16);
+      ctx.fillStyle = "#334155";
+      ctx.fillRect(-6, h / 2 - 4.5, 12, 2.2);
+    } else if (shape === "tow") {
+      // GERÇEKÇİ SARI KAYAR KASALI OTO ÇEKİCİ / KURTARICI
+      rr(ctx, -w / 2 + 1, -h / 2, w - 2, 14.5, 4, "#f59e0b", "#0f172a", 1.4);
+      rr(ctx, -w / 2 + 3.2, -h / 2 + 3, w - 6.4, 5.2, 2, "#0f172a", null);
+      ctx.fillStyle = "rgba(186, 230, 253, 0.7)";
+      ctx.fillRect(-w / 2 + 4, -h / 2 + 3.5, w - 9, 3.5);
+
+      // Kupa üstü döner sarı ikaz çakar lambaları!
+      const ambFlash = Math.floor(Date.now() / 130) % 2 === 0;
+      rr(ctx, -7, -h / 2 + 9.2, 6.8, 3.5, 1.2, ambFlash ? "#fde047" : "#92400e", "#090d16", 0.9);
+      rr(ctx, 0.2, -h / 2 + 9.2, 6.8, 3.5, 1.2, ambFlash ? "#92400e" : "#fde047", "#090d16", 0.9);
+
+      // Çelik Kayar Kasa Platformu + Sarı Güvenlik Bordürü + Vinç Makarası
+      rr(ctx, -w / 2, -h / 2 + 15, w, h - 15, 3, "#1e293b", "#eab308", 1.6);
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.28)";
+      ctx.lineWidth = 1;
+      for (let yy = -h / 2 + 20; yy < h / 2 - 3; yy += 5) {
+        ctx.beginPath();
+        ctx.moveTo(-w / 2 + 3, yy);
+        ctx.lineTo(w / 2 - 3, yy);
+        ctx.stroke();
+      }
+      rr(ctx, -4, -h / 2 + 16, 8, 3.5, 1, "#475569", "#090d16", 1);
+
+      // Eğer sırtında arızalı araç taşıyorsa gerçekçi olarak kasanın üstüne çiz!
+      if (extra.towedCarColor) {
+        rr(ctx, -7.5, -h / 2 + 20.5, 15, 24, 4.5, extra.towedCarColor, "#090d16", 1.3);
+        rr(ctx, -5.5, -h / 2 + 24.5, 11, 5.5, 1.8, "#0f172a", null);
+        rr(ctx, -5.5, -h / 2 + 31, 11, 8, 2, "rgba(255,255,255,0.2)", null);
+      }
+    } else if (shape === "tanker") {
       rr(ctx, -w / 2 + 1, -h / 2, w - 2, 14, 4, "#ea580c", "#0f172a", 1.4);
       rr(ctx, -w / 2 + 3.5, -h / 2 + 3, w - 7, 5, 2, "#38bdf8", null);
       const tGrad = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
@@ -214,6 +277,25 @@ window.MapRenderer = (function () {
     ctx.fillStyle = "#ff4458";
     ctx.fillRect(-w / 2 + 2, h / 2 - 2, 3.6, 2);
     ctx.fillRect(w / 2 - 5.6, h / 2 - 2, 3.6, 2);
+
+    // Arızalı araç dörtlü ikaz flaşörleri & kaput dumanı!
+    if (extra.hazardLights) {
+      const hz = Math.floor(Date.now() / 220) % 2 === 0;
+      if (hz) {
+        ctx.fillStyle = "#fb923c";
+        ctx.beginPath();
+        ctx.arc(-w / 2 + 2, -h / 2 + 1, 3, 0, Math.PI * 2);
+        ctx.arc(w / 2 - 2, -h / 2 + 1, 3, 0, Math.PI * 2);
+        ctx.arc(-w / 2 + 2, h / 2 - 1, 3, 0, Math.PI * 2);
+        ctx.arc(w / 2 - 2, h / 2 - 1, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const smk = (Date.now() % 900) / 900;
+      ctx.fillStyle = `rgba(203, 213, 225, ${(1 - smk) * 0.65})`;
+      ctx.beginPath();
+      ctx.arc(0, -h / 2 - 4 - smk * 10, 4 + smk * 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.restore();
   }
@@ -747,6 +829,162 @@ window.MapRenderer = (function () {
     ctx.restore();
   }
 
+  // =========================================================================
+  // v14.0 GERÇEKÇİ YENİ İSTASYON TESİSLERİ: 🔵 LPG ADASI, 🚜 OTO ÇEKİCİ, 🚌 OTOBÜS & TAŞ FIRIN
+  // =========================================================================
+  function drawLpgIsland(ctx, pos, unlocked, lvl, powerOut = false) {
+    const { x, y, carX, carY, tankX, tankY } = pos;
+    if (!unlocked) {
+      ctx.save();
+      ctx.setLineDash([4, 4]);
+      rr(ctx, x - 26, y - 20, 52, 72, 9, "rgba(15, 23, 42, 0.78)", "#38bdf8", 1.6);
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#7dd3fc";
+      ctx.font = "900 7.6px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("🔒 🔵 LPG ADASI", x, y + 3);
+      ctx.fillStyle = "#4ade80";
+      ctx.font = "900 9.6px sans-serif";
+      ctx.fillText(`${pos.unlockCost}₺`, x, y + 18);
+      ctx.fillStyle = "#cbd5e1";
+      ctx.font = "700 7px sans-serif";
+      ctx.fillText("Otogaz + Tank", x, y + 31);
+      ctx.restore();
+      return;
+    }
+
+    // 1. Sol Yan Basınçlı Beyaz-Mavi Çelik LPG Silosu (Gerçekçi Kubbeli Silindir!)
+    rr(ctx, tankX - 15, tankY - 30, 30, 62, 7, "#172033", "#38bdf8", 1.4);
+    const lpgGrad = ctx.createLinearGradient(tankX - 11, 0, tankX + 11, 0);
+    lpgGrad.addColorStop(0, "#94a3b8");
+    lpgGrad.addColorStop(0.45, "#ffffff");
+    lpgGrad.addColorStop(1, "#64748b");
+    rr(ctx, tankX - 11, tankY - 24, 22, 46, 11, lpgGrad, "#0f172a", 1.4);
+    // Mavi LPG kuşağı ve basınç manometresi
+    ctx.fillStyle = "#0284c7";
+    ctx.fillRect(tankX - 10, tankY - 5, 20, 9);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 6.2px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("LPG", tankX, tankY + 1.8);
+    // Yeraltı boru bağlantısı
+    ctx.strokeStyle = "#facc15";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(tankX + 11, tankY);
+    ctx.lineTo(x - 22, y - 6);
+    ctx.stroke();
+
+    // 2. Mavi Neon Zemin Yansıması & Park Çizgisi
+    if (!powerOut) {
+      const glow = ctx.createRadialGradient(x, y + 16, 4, x, y + 16, 34);
+      glow.addColorStop(0, "rgba(14, 165, 233, 0.28)");
+      glow.addColorStop(1, "rgba(14, 165, 233, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, y + 16, 34, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = "rgba(56, 189, 248, 0.6)";
+    ctx.lineWidth = 1.4;
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(carX - 15, carY - 21, 30, 42);
+    ctx.setLineDash([]);
+
+    // 3. Otogaz Pompa Adası & Kobalt Mavi Kanopi
+    rr(ctx, x - 23, y - 8, 46, 10, 4, "#94a3b8", "#0f172a", 1.3);
+    rr(ctx, x - 9, y - 22, 18, 14, 3, "#0284c7", "#0f172a", 1.4);
+    rr(ctx, x - 6, y - 19, 12, 5.5, 1.5, "#e0f2fe", null);
+
+    const roofG = ctx.createLinearGradient(x, y - 38, x, y - 25);
+    roofG.addColorStop(0, "#0284c7");
+    roofG.addColorStop(1, "#0c4a6e");
+    rr(ctx, x - 26, y - 38, 52, 12, 4, roofG, powerOut ? "#475569" : "#38bdf8", 1.6);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "900 7.4px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`🔵 LPG ★${lvl}`, x, y - 29.5);
+  }
+
+  function drawTowTruckBay(ctx, box, unlocked, lvl, towOutOnMission) {
+    const { x, y, w, h } = box;
+    if (!unlocked) {
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      rr(ctx, x, y, w, h, 9, "rgba(15, 23, 42, 0.78)", "#f59e0b", 1.8);
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#fde68a";
+      ctx.font = "900 7.5px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("🔒 🚜 ÇEKİCİ", x + w / 2, y + 34);
+      ctx.fillStyle = "#4ade80";
+      ctx.font = "900 10.5px sans-serif";
+      ctx.fillText(`${box.unlockCost} ₺`, x + w / 2, y + 50);
+      ctx.fillStyle = "#cbd5e1";
+      ctx.font = "700 7px sans-serif";
+      ctx.fillText("7/24 Kurtarıcı", x + w / 2, y + 64);
+      ctx.fillText("(Dokun Kur)", x + w / 2, y + 76);
+      ctx.restore();
+      return;
+    }
+
+    rr(ctx, x + 3, y + 4, w, h, 9, "rgba(0,0,0,0.45)", null);
+    rr(ctx, x, y, w, h, 9, "#291d09", "#f59e0b", 2);
+    rr(ctx, x + 3.5, y + 4, w - 7, 17, 4.5, "#d97706", null);
+    ctx.fillStyle = "#090d1a";
+    ctx.font = "900 7.3px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(`🚜 ÇEKİCİ ★${lvl}`, x + w / 2, y + 15);
+
+    // Sarı-siyah kurtarıcı rampa zemini
+    rr(ctx, x + 9, y + 25, w - 18, h - 32, 6, "#18181b", "#f59e0b", 1.2);
+    if (towOutOnMission) {
+      ctx.fillStyle = "#fde047";
+      ctx.font = "900 7.2px sans-serif";
+      ctx.fillText("🚨 GÖREVDE", x + w / 2, y + 60);
+    } else {
+      drawDetailedVehicle(ctx, x + w / 2, y + 58, "#f59e0b", "tow", 0, { nightIntensity: 0.25 });
+    }
+  }
+
+  function drawBusBakeryStation(ctx, box, unlocked, lvl) {
+    const { x, y, w, h } = box;
+    if (!unlocked) {
+      ctx.save();
+      ctx.setLineDash([5, 4]);
+      rr(ctx, x, y, w, h, 7, "rgba(15, 23, 42, 0.78)", "#fb923c", 1.5);
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#fed7aa";
+      ctx.font = "900 8px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`🔒 🚌 OTOBÜS PERONU & 🥖 TAŞ FIRIN — ${box.unlockCost} ₺ (Dokun Kur)`, x + w / 2, y + 16);
+      ctx.restore();
+      return;
+    }
+
+    // 1. Otobüs Cep Peronu Asfaltı & Sarı Testere Çizgisi
+    rr(ctx, x, y, w - 68, h, 6, "rgba(15, 23, 42, 0.85)", "#facc15", 1.4);
+    ctx.fillStyle = "rgba(250, 204, 21, 0.48)";
+    ctx.font = "900 8px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🚌 OTOBÜS MOLA PERONU", x + (w - 68) / 2, y + 16);
+
+    // 2. Sağ Yanda Sıcak Tuğla Taş Fırın & Yöresel Simit Büfesi!
+    const bx = x + w - 64;
+    rr(ctx, bx, y - 2, 64, h + 4, 6, "#7c2d12", "#fde047", 1.6);
+    // Odun ateşi kemeri
+    rr(ctx, bx + 6, y + 5, 16, 13, 6, "#1c1917", "#fb923c", 1);
+    ctx.fillStyle = "#f97316";
+    ctx.beginPath();
+    ctx.arc(bx + 14, y + 13, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#fef3c7";
+    ctx.font = "900 7.3px sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText(`🥖 FIRIN ★${lvl}`, bx + 24, y + 14.5);
+  }
+
   return {
     rr,
     drawGround,
@@ -755,6 +993,9 @@ window.MapRenderer = (function () {
     drawDetailedVehicle,
     drawPumpIsland,
     drawFuelDepot,
+    drawLpgIsland,
+    drawTowTruckBay,
+    drawBusBakeryStation,
     drawEvChargerBay,
     drawTruckScaleBay,
     drawMotelBuilding,

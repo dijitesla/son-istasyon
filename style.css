@@ -215,9 +215,9 @@ html, body {
 /* BÖLGE SEKMELERİ, ŞEHİR & AKILLI TELEFON ARAYÜZÜ (v12.0) */
 .world-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr 1.25fr 0.95fr;
-  gap: 5px;
-  padding: 5px 8px;
+  grid-template-columns: 1.05fr 1fr 1fr 1.05fr 0.78fr;
+  gap: 4px;
+  padding: 5px 6px;
   background: #0a1020;
   border-bottom: 1.5px solid #1e293b;
   z-index: 12;
@@ -228,8 +228,8 @@ html, body {
   color: #cbd5e1;
   border: 1.5px solid #334155;
   border-radius: 9px;
-  padding: 5px 4px;
-  font-size: 11.5px;
+  padding: 5px 3px;
+  font-size: 11px;
   font-weight: 900;
   cursor: pointer;
   white-space: nowrap;

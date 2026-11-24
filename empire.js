@@ -227,6 +227,9 @@ window.EmpireSystem = (function () {
       // Sağ Kanat Lojistik & Plaza
       sideLevels: { logistics: 0, office: 0 },
 
+      // 3. Arazi Mega Holding Kompleksi
+      land3: window.Land3System ? window.Land3System.createDefaultLand3() : null,
+
       // Çok Kaynaklı Şahsi Maaş Sistemi!
       personalCash: 0,
       dailySalary: 200, // 1. İstasyon Maaşım
@@ -280,6 +283,9 @@ window.EmpireSystem = (function () {
     out.dailySalary = Number.isFinite(out.dailySalary) ? out.dailySalary : 200;
     out.parkingSalary = Number.isFinite(out.parkingSalary) ? out.parkingSalary : 0;
     out.land2Salary = Number.isFinite(out.land2Salary) ? out.land2Salary : 0;
+    if (window.Land3System) {
+      out.land3 = window.Land3System.mergeLand3(saved.land3);
+    }
 
     out.electronics = Object.assign({}, saved.electronics || {});
     out.properties = Object.assign({}, saved.properties || {});
@@ -355,17 +361,20 @@ window.EmpireSystem = (function () {
     return Math.round(tower.baseIncome * (1 + (lvl - 1) * 0.45));
   }
 
-  // Çok Kaynaklı Şahsi Maaş Hesabı (İstasyon + Otopark + Yan Arazi/AVM)
+  // Çok Kaynaklı Şahsi Maaş Hesabı (1. İstasyon + Otopark + 2. Arazi/AVM + 3. Arazi)
   function calcSalaryBreakdown(emp) {
     const stationSal = Math.max(0, emp.dailySalary || 0);
     const parkingSal = emp.parkingUnlocked ? Math.max(0, emp.parkingSalary || 0) : 0;
     const hasLand2Biz = emp.land2Owned && (emp.mallUnlocked || (emp.sideLevels.logistics || 0) > 0 || (emp.sideLevels.office || 0) > 0);
     const land2Sal = hasLand2Biz ? Math.max(0, emp.land2Salary || 0) : 0;
+    const hasLand3Biz = window.Land3System && window.Land3System.hasAnyLand3Business(emp.land3);
+    const land3Sal = hasLand3Biz ? Math.max(0, (emp.land3 && emp.land3.land3Salary) || 0) : 0;
     return {
       stationSal,
       parkingSal,
       land2Sal,
-      total: stationSal + parkingSal + land2Sal
+      land3Sal,
+      total: stationSal + parkingSal + land2Sal + land3Sal
     };
   }
 
@@ -533,6 +542,9 @@ window.EmpireSystem = (function () {
     }
 
     // Otoyol üst şerit arka plan trafiği (Yan Arazi)
+    if (window.Land3System) {
+      window.Land3System.updateLand3(dt, data, callbacks.onLand2Earn);
+    }
     if (Math.random() < dt * 0.8 && lotBgHighwayCars.length < 4) {
       lotBgHighwayCars.push({
         x: 520,
@@ -596,7 +608,10 @@ window.EmpireSystem = (function () {
             exitGateTimer = 0.95;
             const fee = getParkingFee(emp);
             data.cash += fee;
-            if (data.daily) data.daily.parkingIncome = (data.daily.parkingIncome || 0) + fee;
+            if (data.daily) {
+              data.daily.parkingIncome = (data.daily.parkingIncome || 0) + fee;
+              data.daily.parkingCount = (data.daily.parkingCount || 0) + 1;
+            }
 
             // Otoparktan Şahsi Maaş seçiliyse canlı maaş avansı da şahsi cüzdana damlar!
             let personalCut = 0;
@@ -633,6 +648,11 @@ window.EmpireSystem = (function () {
           if (data.daily) {
             data.daily.mallIncome = (data.daily.mallIncome || 0) + totalRent;
             data.daily.land2Income = (data.daily.land2Income || 0) + totalRent;
+            if (!data.daily.mallShopIncomes) data.daily.mallShopIncomes = {};
+            MALL_SHOPS.forEach((sh) => {
+              const r = getShopCycleRent(sh, emp.mallShops[sh.key], emp);
+              if (r > 0) data.daily.mallShopIncomes[sh.key] = (data.daily.mallShopIncomes[sh.key] || 0) + r;
+            });
           }
 
           let personalBonus = 0;
@@ -662,7 +682,11 @@ window.EmpireSystem = (function () {
           sideProgress[tw.key] -= 1;
           const inc = calcSideTowerIncome(tw, lvl);
           data.cash += inc;
-          if (data.daily) data.daily.land2Income = (data.daily.land2Income || 0) + inc;
+          if (data.daily) {
+            data.daily.land2Income = (data.daily.land2Income || 0) + inc;
+            if (tw.key === "logistics") data.daily.logisticsIncome = (data.daily.logisticsIncome || 0) + inc;
+            if (tw.key === "office") data.daily.officeIncome = (data.daily.officeIncome || 0) + inc;
+          }
           land2Floats.push({
             x: tw.x + tw.w / 2,
             y: tw.y + 24,
@@ -1534,8 +1558,11 @@ window.EmpireSystem = (function () {
       const stationPresets = [0, 150, 300, 600, 1000, 1500, 2000];
       const parkingPresets = [0, 100, 250, 500, 900, 1500];
       const land2Presets = [0, 200, 500, 1000, 2000, 3500, 5000];
+      const land3Presets = [0, 300, 750, 1500, 3000, 5000, 8000];
 
       const hasLand2Biz = emp.land2Owned && (emp.mallUnlocked || (emp.sideLevels.logistics || 0) > 0 || (emp.sideLevels.office || 0) > 0);
+      const hasLand3Biz = window.Land3System && window.Land3System.hasAnyLand3Business(emp.land3);
+      const curL3Sal = (emp.land3 && emp.land3.land3Salary) || 0;
 
       body.innerHTML = `
         <div class="rep-section" style="margin-bottom:10px; border-color:#22c55e;">
@@ -1580,7 +1607,7 @@ window.EmpireSystem = (function () {
           <!-- 3. Yan Arazi & AVM Maaşı -->
           <div class="sal-source-box ${hasLand2Biz ? "" : "locked"}">
             <div class="sal-source-head">
-              <span style="color:#f472b6;">🏬 Yan Arazi &amp; AVM Kira Maaşım</span>
+              <span style="color:#f472b6;">🏬 2. Arazi &amp; AVM Kira Maaşım</span>
               <span style="color:#4ade80;">${hasLand2Biz ? `+${sal.land2Sal} ₺/gün` : "🔒 Önce AVM / Tesis Kur"}</span>
             </div>
             ${
@@ -1590,7 +1617,24 @@ window.EmpireSystem = (function () {
                       .map((amt) => `<button class="sal-btn" data-src="land2" data-amt="${amt}" ${emp.land2Salary === amt ? 'style="background:#db2777;border-color:#fbcfe8;color:#fff;"' : ""}>${amt} ₺</button>`)
                       .join("")}
                   </div>`
-                : `<div style="font-size:11.5px; color:#94a3b8;">Yan Arazi'de Otoyol AVM veya Kule açtığında buradan yüksek patron maaşı bağlayabilirsin.</div>`
+                : `<div style="font-size:11.5px; color:#94a3b8;">2. Arazi'de Otoyol AVM veya Kule açtığında buradan yüksek patron maaşı bağlayabilirsin.</div>`
+            }
+          </div>
+
+          <!-- 4. 3. Arazi (Go-Kart, Filo & Tatil Köyü) Maaşı -->
+          <div class="sal-source-box ${hasLand3Biz ? "" : "locked"}">
+            <div class="sal-source-head">
+              <span style="color:#c084fc;">🎡 3. Arazi (Filo &amp; Tatil Köyü) Maaşım</span>
+              <span style="color:#4ade80;">${hasLand3Biz ? `+${sal.land3Sal} ₺/gün` : "🔒 Önce 3. Arazi Tesisi Kur"}</span>
+            </div>
+            ${
+              hasLand3Biz
+                ? `<div style="display:flex; flex-wrap:wrap; gap:5px;">
+                    ${land3Presets
+                      .map((amt) => `<button class="sal-btn" data-src="land3" data-amt="${amt}" ${curL3Sal === amt ? 'style="background:#7c3aed;border-color:#ddd6fe;color:#fff;"' : ""}>${amt} ₺</button>`)
+                      .join("")}
+                  </div>`
+                : `<div style="font-size:11.5px; color:#94a3b8;">3. Arazi'de Go-Kart, Tır Filosu veya Tatil Köyü kurduğunda dev holding maaşı bağlayabilirsin.</div>`
             }
           </div>
         </div>
@@ -1615,6 +1659,7 @@ window.EmpireSystem = (function () {
           if (src === "station") emp.dailySalary = amt;
           if (src === "parking") emp.parkingSalary = amt;
           if (src === "land2") emp.land2Salary = amt;
+          if (src === "land3" && emp.land3) emp.land3.land3Salary = amt;
           helpers.sfx.tap();
           helpers.saveGame();
           const updated = calcSalaryBreakdown(emp);
@@ -1828,7 +1873,8 @@ window.EmpireSystem = (function () {
         <div class="rep-row"><span>💳 Şahsi Cüzdan</span><span class="val-pos">${Math.round(emp.personalCash)} ₺</span></div>
         <div class="rep-row"><span>⛽ İstasyon Maaşın</span><span class="val-pos">+${sal.stationSal} ₺/gün</span></div>
         <div class="rep-row"><span>🅿️ Otopark Maaşın</span><span class="val-pos">+${sal.parkingSal} ₺/gün</span></div>
-        <div class="rep-row"><span>🏬 Yan Arazi &amp; AVM Maaşın</span><span class="val-pos">+${sal.land2Sal} ₺/gün</span></div>
+        <div class="rep-row"><span>🏬 2. Arazi &amp; AVM Maaşın</span><span class="val-pos">+${sal.land2Sal} ₺/gün</span></div>
+        <div class="rep-row"><span>🎡 3. Arazi Maaşın</span><span class="val-pos">+${sal.land3Sal} ₺/gün</span></div>
         <div class="rep-row"><span>🏠 Emlak Kira Geliri</span><span class="val-pos">+${calcDailyRent(emp)} ₺/gün</span></div>
         <div class="rep-row"><span>📈 Hisse Portföyü</span><span class="val-pos">${calcPortfolioValue(emp)} ₺</span></div>
         <div class="rep-row"><span>🏢 Şirket Kasası</span><span style="color:#fde047; font-weight:900;">${Math.round(data.cash)} ₺</span></div>

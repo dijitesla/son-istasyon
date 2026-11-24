@@ -5,6 +5,7 @@
   const MR = window.MapRenderer;
   const SE = window.ScenarioEngine;
   const EMP = window.EmpireSystem;
+  const L3 = window.Land3System;
 
   const SAVE_KEY = "son_istasyon_v12_pro";
   const LEGACY_KEYS = ["son_istasyon_v11_pro", "son_istasyon_v9_pro", "son_istasyon_v8_pro", "son_istasyon_v7_pro"];
@@ -25,24 +26,43 @@
   function createEmptyDailyStats() {
     return {
       fuelIncome: 0,
+      lpgIncome: 0,
       evIncome: 0,
+      towIncome: 0,
+      washIncome: 0,
+      garageIncome: 0,
+      serviceIncome: 0,
       marketIncome: 0,
       restaurantIncome: 0,
       motelIncome: 0,
       scaleIncome: 0,
-      serviceIncome: 0,
+      busBakeryIncome: 0,
       parkingIncome: 0,
+      parkingCount: 0,
       mallIncome: 0,
+      mallShopIncomes: {},
+      logisticsIncome: 0,
+      officeIncome: 0,
       land2Income: 0,
+      land3ThemeIncome: 0,
+      land3RefineryIncome: 0,
+      land3FleetIncome: 0,
+      land3FleetTrips: 0,
+      land3ResortIncome: 0,
       eventIncome: 0,
       tankerCost: 0,
       eventLoss: 0,
       carsServed: 0,
+      lpgServed: 0,
       evServed: 0,
+      towRescues: 0,
+      washServed: 0,
+      garageServed: 0,
       dishesServed: 0,
       marketServed: 0,
       motelGuests: 0,
-      trucksWeighed: 0
+      trucksWeighed: 0,
+      busesServed: 0
     };
   }
 
@@ -53,6 +73,12 @@
     autoTanker: false,
     pumpsUnlocked: 1, // 1..9
     pumpSpeedLvl: 1, // 1..10
+    lpgUnlocked: false,
+    lpgLvl: 1, // 1..6
+    towUnlocked: false,
+    towLvl: 1, // 1..6
+    busBakeryUnlocked: false,
+    busBakeryLvl: 1, // 1..6
     marketLvl: 1, // 1..8
     restaurantUnlocked: false,
     restaurantLvl: 1, // 1..6
@@ -136,6 +162,9 @@
   function stationLevel() {
     return (
       data.pumpsUnlocked +
+      (data.lpgUnlocked ? 2 : 0) +
+      (data.towUnlocked ? 2 : 0) +
+      (data.busBakeryUnlocked ? 2 : 0) +
       (data.evUnlocked ? 2 : 0) +
       (data.restaurantUnlocked ? 2 : 0) +
       (data.motelUnlocked ? 2 : 0) +
@@ -185,6 +214,9 @@
 
   function calcDailyUtilityCost() {
     let base = 20 + data.pumpsUnlocked * 8;
+    if (data.lpgUnlocked) base += 14;
+    if (data.towUnlocked) base += 16;
+    if (data.busBakeryUnlocked) base += 18;
     if (data.evUnlocked) base += 20;
     if (data.restaurantUnlocked) base += 26;
     if (data.motelUnlocked) base += 28;
@@ -256,6 +288,7 @@
 
     tabStationBtn: document.getElementById("tabStationBtn"),
     tabLand2Btn: document.getElementById("tabLand2Btn"),
+    tabLand3Btn: document.getElementById("tabLand3Btn"),
     openCityBtn: document.getElementById("openCityBtn"),
     personalCashTop: document.getElementById("personalCashTop"),
     openPhoneBtn: document.getElementById("openPhoneBtn"),
@@ -289,29 +322,32 @@
   const HIGHWAY_IN_Y = 58;
   const ENTRY_X = 98;
   const EXIT_X = 412;
-  const APRON_MID_Y = 212;
+  const APRON_MID_Y = 215;
   const APRON_LOW_Y = 338;
 
   // 9 Pompa Adası: Üst Sıra (P1..P5 VIP) + Orta Sıra (P6..P9 VIP)
   const PUMPS = [
-    { idx: 0, x: 144, y: 136, carX: 144, carY: 170, laneY: APRON_MID_Y, unlockCost: 0, label: "POMPA 1", short: "P-1", shortLabel: "P-1", isVip: false },
-    { idx: 1, x: 200, y: 136, carX: 200, carY: 170, laneY: APRON_MID_Y, unlockCost: 420, label: "POMPA 2", short: "P-2", shortLabel: "P-2", isVip: false },
-    { idx: 2, x: 256, y: 136, carX: 256, carY: 170, laneY: APRON_MID_Y, unlockCost: 1150, label: "POMPA 3", short: "P-3", shortLabel: "P-3", isVip: false },
-    { idx: 3, x: 312, y: 136, carX: 312, carY: 170, laneY: APRON_MID_Y, unlockCost: 2200, label: "POMPA 4", short: "P-4", shortLabel: "P-4", isVip: false },
-    { idx: 4, x: 368, y: 136, carX: 368, carY: 170, laneY: APRON_MID_Y, unlockCost: 3600, label: "POMPA 5 VIP", short: "VIP-1", shortLabel: "P-5 VIP", isVip: true },
+    { idx: 0, x: 144, y: 142, carX: 144, carY: 175, laneY: APRON_MID_Y, unlockCost: 0, label: "POMPA 1", short: "P-1", shortLabel: "P-1", isVip: false },
+    { idx: 1, x: 200, y: 142, carX: 200, carY: 175, laneY: APRON_MID_Y, unlockCost: 420, label: "POMPA 2", short: "P-2", shortLabel: "P-2", isVip: false },
+    { idx: 2, x: 256, y: 142, carX: 256, carY: 175, laneY: APRON_MID_Y, unlockCost: 1150, label: "POMPA 3", short: "P-3", shortLabel: "P-3", isVip: false },
+    { idx: 3, x: 312, y: 142, carX: 312, carY: 175, laneY: APRON_MID_Y, unlockCost: 2200, label: "POMPA 4", short: "P-4", shortLabel: "P-4", isVip: false },
+    { idx: 4, x: 368, y: 142, carX: 368, carY: 175, laneY: APRON_MID_Y, unlockCost: 3600, label: "POMPA 5 VIP", short: "VIP-1", shortLabel: "P-5 VIP", isVip: true },
     { idx: 5, x: 158, y: 262, carX: 158, carY: 296, laneY: APRON_LOW_Y, unlockCost: 5200, label: "POMPA 6", short: "P-6", shortLabel: "P-6", isVip: false },
     { idx: 6, x: 224, y: 262, carX: 224, carY: 296, laneY: APRON_LOW_Y, unlockCost: 7200, label: "POMPA 7", short: "P-7", shortLabel: "P-7", isVip: false },
     { idx: 7, x: 290, y: 262, carX: 290, carY: 296, laneY: APRON_LOW_Y, unlockCost: 9800, label: "POMPA 8", short: "P-8", shortLabel: "P-8", isVip: false },
     { idx: 8, x: 356, y: 262, carX: 356, carY: 296, laneY: APRON_LOW_Y, unlockCost: 13500, label: "POMPA 9 VIP", short: "VIP-2", shortLabel: "P-9 VIP", isVip: true }
   ];
 
-  const TANK_POS = { x: 64, y: 196, w: 36, h: 86 };
+  const TANK_POS = { x: 64, y: 168, w: 36, h: 82 };
+  const LPG_POS = { x: 96, y: 262, carX: 96, carY: 296, tankX: 54, tankY: 274, laneY: APRON_LOW_Y, unlockCost: 1350 };
+  const BUS_BAY_POS = { x: 138, y: 78, w: 236, h: 24, busX: 222, busY: 90, unlockCost: 1850 };
 
-  // Band 3 — 4 Araç Girişli Tesis (APRON_LOW_Y üzerinden engelsiz giriş!)
-  const EV_POS = { x: 48, y: 362, w: 92, h: 98, carX: 100, carY: 420, unlockCost: 1100 };
-  const WASH_POS = { x: 144, y: 362, w: 92, h: 98, carX: 190, carY: 420, unlockCost: 850 };
-  const GARAGE_POS = { x: 240, y: 362, w: 92, h: 98, carX: 286, carY: 420, unlockCost: 1950 };
-  const SCALE_POS = { x: 336, y: 362, w: 96, h: 98, carX: 384, carY: 420, unlockCost: 2900 };
+  // Band 3 — 5 Araç Girişli Tesis (EV Şarj • Yıkama • Tamirhane • 7/24 Oto Çekici • Tır Kantarı)
+  const EV_POS = { x: 48, y: 362, w: 73, h: 98, carX: 84, carY: 420, unlockCost: 1100 };
+  const WASH_POS = { x: 126, y: 362, w: 73, h: 98, carX: 162, carY: 420, unlockCost: 850 };
+  const GARAGE_POS = { x: 204, y: 362, w: 73, h: 98, carX: 240, carY: 420, unlockCost: 1950 };
+  const TOW_POS = { x: 282, y: 362, w: 73, h: 98, carX: 318, carY: 420, unlockCost: 2600 };
+  const SCALE_POS = { x: 360, y: 362, w: 72, h: 98, carX: 396, carY: 420, unlockCost: 2900 };
 
   // Band 4 — 3 Yaya Tesis Meydanı (Market + Restoran + Mini Motel)
   const MARKET_POS = { x: 48, y: 474, w: 122, h: 110, doorX: 109, doorY: 474 };
@@ -340,6 +376,11 @@
   let washCar = null;
   let garageCar = null;
   let scaleCar = null;
+  let lpgCar = null;
+  let pointerHeldLpg = false;
+  let stalledCar = null;
+  let activeTowTruck = null;
+  let activeBus = null;
   let tanker = null;
   let policeCruiser = null;
   let floatingTexts = [];
@@ -350,6 +391,9 @@
   let nextSpecialTarget = SE.nextSpecialInterval(data);
   let pendingSpecialReady = false;
   let spawnCooldown = 0.85;
+  let lpgSpawnCooldown = 3.5;
+  let towMissionCooldown = 9.0;
+  let busCooldown = 10.0;
   let evSpawnCooldown = 3.0;
   let scaleSpawnCooldown = 4.0;
 
@@ -367,10 +411,10 @@
     zeynep: { x: 105, y: 520, color: "#ec4899", hat: "#be185d", name: "Zeynep", moving: false },
     mehmet: { x: 235, y: 520, color: "#f97316", hat: "#ffffff", name: "Mehmet", moving: false },
     selin: { x: 365, y: 520, color: "#f472b6", hat: "#831843", name: "Selin", moving: false },
-    kerem: { x: 64, y: 418, color: "#06b6d4", hat: "#0e7490", name: "Kerem", moving: false },
-    kadir: { x: 158, y: 418, color: "#22c55e", hat: "#15803d", name: "Kadir", moving: false },
-    cemil: { x: 254, y: 418, color: "#a855f7", hat: "#6b21a8", name: "Cemil", moving: false },
-    osman: { x: 350, y: 418, color: "#eab308", hat: "#854d0e", name: "Osman", moving: false },
+    kerem: { x: 60, y: 418, color: "#06b6d4", hat: "#0e7490", name: "Kerem", moving: false },
+    kadir: { x: 138, y: 418, color: "#22c55e", hat: "#15803d", name: "Kadir", moving: false },
+    cemil: { x: 216, y: 418, color: "#a855f7", hat: "#6b21a8", name: "Cemil", moving: false },
+    osman: { x: 372, y: 418, color: "#eab308", hat: "#854d0e", name: "Osman", moving: false },
     duman: { x: 130, y: 102, dir: 1 }
   };
 
@@ -392,9 +436,14 @@
     return { name: base.name, short: base.short, emoji: base.emoji, price: Math.round(base.basePrice * mult * vipMult) };
   }
 
+  function hasFreeRefinery() {
+    return !!(data.empire && data.empire.land3 && data.empire.land3.refineryUnlocked);
+  }
+
   function tankerRefillCost() {
     const missing = maxFuelCapacity() - data.fuelStock;
     if (missing < 80) return 0;
+    if (hasFreeRefinery()) return 0; // 3. Arazi Rafinerisi tanker ikmalini %100 BEDAVA yapar!
     let cost = Math.max(45, Math.round(missing * 0.065));
     if (data.tankerDiscount) cost = Math.max(25, Math.round(cost * 0.6));
     return cost;
@@ -435,8 +484,14 @@
       el.activeEffectBar.classList.add("hidden");
     }
 
+    const missingFuel = maxFuelCapacity() - data.fuelStock;
     const tCost = tankerRefillCost();
-    el.tankerCostSub.textContent = tCost === 0 ? "Depo Dolu ✓" : `Doldur (${tCost}₺)`;
+    el.tankerCostSub.textContent =
+      missingFuel < 80
+        ? "Depo Dolu ✓"
+        : hasFreeRefinery()
+        ? "Doldur (0₺ Rafineri!)"
+        : `Doldur (${tCost}₺)`;
     el.btnCallTanker.classList.toggle("fuel-low", data.fuelStock < maxFuelCapacity() * 0.18);
 
     const staffKeys = ["ali", "murat", "hasan", "zeynep", "mehmet", "kerem", "selin", "osman", "kadir", "cemil"];
@@ -449,9 +504,14 @@
     el.personalCashTop.textContent = Math.round(data.empire.personalCash || 0);
     el.tabStationBtn.classList.toggle("active", activeLand === "station");
     el.tabLand2Btn.classList.toggle("active", activeLand === "land2");
-    el.tabLand2Btn.textContent = data.empire.land2Owned ? "🛍️ Yan Arazi" : "🏗️ Yan Arazi";
+    if (el.tabLand3Btn) {
+      el.tabLand3Btn.classList.toggle("active", activeLand === "land3");
+      const l3Owned = !!(data.empire.land3 && data.empire.land3.owned);
+      el.tabLand3Btn.textContent = l3Owned ? "🎡 3. Arazi" : "🏗️ 3. Arazi";
+    }
+    el.tabLand2Btn.textContent = data.empire.land2Owned ? "🛍️ 2. Arazi" : "🏗️ 2. Arazi";
     el.openPhoneBtn.classList.toggle("locked", !data.empire.electronics.phone);
-    el.openPhoneBtn.textContent = data.empire.electronics.phone ? "📱 Telefon" : "🔒 Telefon";
+    el.openPhoneBtn.textContent = data.empire.electronics.phone ? "📱 Tel" : "🔒 Tel";
   }
 
   // =========================================================================
@@ -686,11 +746,12 @@
       if (!isAuto) showToast("🚛 Yakıt tankeri zaten istasyonda!");
       return;
     }
-    const cost = tankerRefillCost();
-    if (cost === 0) {
+    const missing = maxFuelCapacity() - data.fuelStock;
+    if (missing < 80) {
       if (!isAuto) showToast("🛢️ Ana yakıt depon zaten dolu!");
       return;
     }
+    const cost = tankerRefillCost();
 
     if (data.cash < cost) {
       if (data.fuelStock < 35 && data.cash < 45) {
@@ -735,21 +796,43 @@
     const wages = calcDailyStaffWages();
     const utility = calcDailyUtilityCost();
 
-    const parkingRev = d.parkingIncome || 0;
-    const mallRev = d.mallIncome || 0;
-    const towersRev = Math.max(0, (d.land2Income || 0) - mallRev);
+    const washRev = d.washIncome || 0;
+    const garageRev = d.garageIncome || 0;
+    const lpgRev = d.lpgIncome || 0;
+    const towRev = d.towIncome || 0;
+    const busRev = d.busBakeryIncome || 0;
 
-    const totalRev =
+    // 1. Arazi (İstasyon) Alt Toplamı
+    const stationSubTotal =
       d.fuelIncome +
+      lpgRev +
       d.evIncome +
+      towRev +
+      washRev +
+      garageRev +
       d.marketIncome +
       d.restaurantIncome +
       d.motelIncome +
       d.scaleIncome +
-      d.serviceIncome +
-      parkingRev +
-      (d.land2Income || 0) +
+      busRev +
       d.eventIncome;
+
+    // 2. Arazi (Otopark + Otoyol AVM + Lojistik & Plaza) Alt Toplamı
+    const parkingRev = d.parkingIncome || 0;
+    const mallRev = d.mallIncome || 0;
+    const logisticsRev = d.logisticsIncome || 0;
+    const officeRev = d.officeIncome || 0;
+    const towersFallback = Math.max(0, (d.land2Income || 0) - mallRev - logisticsRev - officeRev);
+    const land2SubTotal = parkingRev + mallRev + logisticsRev + officeRev + towersFallback;
+
+    // 3. Arazi (Go-Kart & Lunapark + Rafineri + Tır Filosu + Tatil Köyü) Alt Toplamı
+    const l3ThemeRev = d.land3ThemeIncome || 0;
+    const l3RefRev = d.land3RefineryIncome || 0;
+    const l3FleetRev = d.land3FleetIncome || 0;
+    const l3ResortRev = d.land3ResortIncome || 0;
+    const land3SubTotal = l3ThemeRev + l3RefRev + l3FleetRev + l3ResortRev;
+
+    const totalRev = stationSubTotal + land2SubTotal + land3SubTotal;
     const totalCost = d.tankerCost + wages.total + utility + d.eventLoss;
     const net = totalRev - totalCost;
     const dailyRent = EMP.calcDailyRent(data.empire);
@@ -760,20 +843,27 @@
       const endDeduction = wages.total + utility;
       data.cash = Math.max(0, data.cash - endDeduction);
 
-      // İstasyon + Otopark + Yan Arazi/AVM Maaşlarının Tamamı Şirket Kasasından Şahsi Cüzdanına Yatar!
+      // Tüm Arazilerden Belirlenen Şahsi Maaşlar Şirket Kasasından Şahsi Cüzdanına Yatar!
       paidSalary = Math.min(Math.floor(data.cash), sal.total);
       data.cash -= paidSalary;
       data.empire.personalCash += paidSalary + dailyRent;
 
-      el.repModalTitle.textContent = `📊 Gün ${data.dayNumber} Sonu Raporu`;
+      el.repModalTitle.textContent = `📊 Gün ${data.dayNumber} Ayrıntılı Kazanç Raporu`;
       el.repModalBadge.textContent = "Vardiya Kapandı";
       el.closeDayReportBtn.textContent = `GÜN ${data.dayNumber + 1}'E BAŞLA ➔`;
     } else {
       paidSalary = sal.total;
-      el.repModalTitle.textContent = `📊 Gün ${data.dayNumber} Canlı Bilanço`;
-      el.repModalBadge.textContent = "Anlık Özet";
+      el.repModalTitle.textContent = `📊 Gün ${data.dayNumber} Ayrıntılı Canlı Bilanço`;
+      el.repModalBadge.textContent = "Anlık Döküm";
       el.closeDayReportBtn.textContent = "HARİTAYA DÖN ➔";
     }
+
+    // AVM Dükkanlarının Tek Tek Kira Dökümü
+    const shopIncomes = d.mallShopIncomes || {};
+    const mallShopLines = EMP.MALL_SHOPS
+      .filter((sh) => (data.empire.mallShops[sh.key] && data.empire.mallShops[sh.key].rented) || shopIncomes[sh.key])
+      .map((sh) => `<div class="rep-row" style="font-size:12.5px; color:#cbd5e1; padding-left:10px;"><span>↳ ${sh.emoji} ${sh.name}</span><span class="val-pos">+${Math.round(shopIncomes[sh.key] || 0)} ₺</span></div>`)
+      .join("");
 
     const wageLines =
       wages.breakdown.length > 0
@@ -783,24 +873,46 @@
         : `<div class="rep-row"><span>• Çalışan maaşı yok (Tek çalışıyorsun)</span><span>0 ₺</span></div>`;
 
     el.dayReportContent.innerHTML = `
+      <!-- 1. ARAZİ DÖKÜMÜ -->
       <div class="rep-section">
-        <h4>💰 ŞİRKET GELİRLERİ (Toplam: +${Math.round(totalRev)} ₺)</h4>
-        <div class="rep-row"><span>⛽ Yakıt Satışları (${d.carsServed} araç)</span><span class="val-pos">+${Math.round(d.fuelIncome)} ₺</span></div>
+        <h4>⛽ 1. ARAZİ — İSTASYON GELİRLERİ (+${Math.round(stationSubTotal)} ₺)</h4>
+        <div class="rep-row"><span>⛽ Benzin &amp; Mazot (${d.carsServed} araç)</span><span class="val-pos">+${Math.round(d.fuelIncome)} ₺</span></div>
+        <div class="rep-row"><span>🔵 LPG / Otogaz (${d.lpgServed || 0} araç)</span><span class="val-pos">+${Math.round(lpgRev)} ₺</span></div>
         <div class="rep-row"><span>⚡ EV Hızlı Şarj (${d.evServed} araç)</span><span class="val-pos">+${Math.round(d.evIncome)} ₺</span></div>
+        <div class="rep-row"><span>🚜 7/24 Oto Çekici (${d.towRescues || 0} kurtarma)</span><span class="val-pos">+${Math.round(towRev)} ₺</span></div>
+        <div class="rep-row"><span>🚿 Oto Yıkama (${d.washServed || 0} araç)</span><span class="val-pos">+${Math.round(washRev)} ₺</span></div>
+        <div class="rep-row"><span>🔧 Tamirhane (${d.garageServed || 0} onarım)</span><span class="val-pos">+${Math.round(garageRev)} ₺</span></div>
         <div class="rep-row"><span>🏪 7/24 Market (${d.marketServed} satış)</span><span class="val-pos">+${Math.round(d.marketIncome)} ₺</span></div>
-        <div class="rep-row"><span>🍽️ Yol Restoranı (${d.dishesServed} tabak)</span><span class="val-pos">+${Math.round(d.restaurantIncome)} ₺</span></div>
+        <div class="rep-row"><span>🍽️ Yol Restoranı (${d.dishesServed} porsiyon)</span><span class="val-pos">+${Math.round(d.restaurantIncome)} ₺</span></div>
         <div class="rep-row"><span>🏨 Mini Motel (${d.motelGuests} oda)</span><span class="val-pos">+${Math.round(d.motelIncome)} ₺</span></div>
         <div class="rep-row"><span>🚛 Tır Kantarı (${d.trucksWeighed} tır)</span><span class="val-pos">+${Math.round(d.scaleIncome)} ₺</span></div>
-        <div class="rep-row"><span>🚿 Yıkama &amp; 🔧 Tamirhane</span><span class="val-pos">+${Math.round(d.serviceIncome)} ₺</span></div>
-        <div class="rep-row"><span>🅿️ Ücretli Otopark Gişesi</span><span class="val-pos">+${Math.round(parkingRev)} ₺</span></div>
-        <div class="rep-row"><span>🏬 Otoyol AVM Mağaza Kiraları</span><span class="val-pos">+${Math.round(mallRev)} ₺</span></div>
-        <div class="rep-row"><span>🏢 Yan Arazi Lojistik &amp; Plaza</span><span class="val-pos">+${Math.round(towersRev)} ₺</span></div>
+        <div class="rep-row"><span>🚌 Otobüs Peronu &amp; 🥖 Fırın (${d.busesServed || 0} otobüs)</span><span class="val-pos">+${Math.round(busRev)} ₺</span></div>
         <div class="rep-row"><span>🕵️ Özel Olay Ödülleri</span><span class="val-pos">+${Math.round(d.eventIncome)} ₺</span></div>
       </div>
 
+      <!-- 2. ARAZİ DÖKÜMÜ -->
+      <div class="rep-section" style="border-color:#38bdf8;">
+        <h4>🛍️ 2. ARAZİ — OTOPARK &amp; AVM GELİRLERİ (+${Math.round(land2SubTotal)} ₺)</h4>
+        <div class="rep-row"><span>🅿️ Ücretli Otopark Gişesi (${d.parkingCount || 0} araç)</span><span class="val-pos">+${Math.round(parkingRev)} ₺</span></div>
+        <div class="rep-row"><span>🏬 Otoyol AVM Toplam Kira</span><span class="val-pos">+${Math.round(mallRev)} ₺</span></div>
+        ${mallShopLines}
+        <div class="rep-row"><span>📦 E-Ticaret Lojistik Deposu</span><span class="val-pos">+${Math.round(logisticsRev + towersFallback)} ₺</span></div>
+        <div class="rep-row"><span>🏢 İş Merkezi &amp; Plaza Kulesi</span><span class="val-pos">+${Math.round(officeRev)} ₺</span></div>
+      </div>
+
+      <!-- 3. ARAZİ DÖKÜMÜ -->
+      <div class="rep-section" style="border-color:#a855f7;">
+        <h4>🎡 3. ARAZİ — PARK, FİLO &amp; TATİL KÖYÜ (+${Math.round(land3SubTotal)} ₺)</h4>
+        <div class="rep-row"><span>🏎️ Go-Kart &amp; 🎡 Lunapark Biletleri</span><span class="val-pos">+${Math.round(l3ThemeRev)} ₺</span></div>
+        <div class="rep-row"><span>🛢️ Yakıt Rafinerisi (${hasFreeRefinery() ? "Tanker 0₺!" : "Kapalı"})</span><span class="val-pos">+${Math.round(l3RefRev)} ₺</span></div>
+        <div class="rep-row"><span>🚛 Kendi Tır Filomuz (${d.land3FleetTrips || 0} sefer)</span><span class="val-pos">+${Math.round(l3FleetRev)} ₺</span></div>
+        <div class="rep-row"><span>🏖️ Bungalov &amp; Termal Köy Kiraları</span><span class="val-pos">+${Math.round(l3ResortRev)} ₺</span></div>
+      </div>
+
+      <!-- GİDERLER -->
       <div class="rep-section">
-        <h4>📉 ŞİRKET GİDERLERİ (Toplam: -${Math.round(totalCost)} ₺)</h4>
-        <div class="rep-row"><span>🚛 Tanker Yakıt Alımları</span><span class="val-neg">-${Math.round(d.tankerCost)} ₺</span></div>
+        <h4>📉 ŞİRKET GİDERLERİ (-${Math.round(totalCost)} ₺)</h4>
+        <div class="rep-row"><span>🚛 Tanker Yakıt Alımı${hasFreeRefinery() ? " (Rafineri Bedava!)" : ""}</span><span class="val-neg">-${Math.round(d.tankerCost)} ₺</span></div>
         <div class="rep-row"><span>⚡ Elektrik &amp; Tesis Gideri${data.solarInstalled ? " (Güneş %45 İnd.)" : ""}</span><span class="val-neg">-${utility} ₺</span></div>
         <div class="rep-row"><span>❌ Olay / Ceza Kayıpları</span><span class="val-neg">-${Math.round(d.eventLoss)} ₺</span></div>
         <div class="rep-row" style="margin-top:4px; border-top:1px solid #334155; padding-top:5px;">
@@ -810,12 +922,14 @@
         ${wageLines}
       </div>
 
+      <!-- ŞAHSİ CÜZDAN -->
       <div class="rep-section" style="border-color:#22c55e;">
         <h4>💳 PATRON ŞAHSİ CÜZDAN (${isDayEnd ? "Yatırıldı!" : "Gün Sonu Yatar"})</h4>
-        <div class="rep-row"><span>⛽ İstasyon Maaşın</span><span class="val-pos">+${sal.stationSal} ₺</span></div>
+        <div class="rep-row"><span>⛽ 1. İstasyon Maaşın</span><span class="val-pos">+${sal.stationSal} ₺</span></div>
         <div class="rep-row"><span>🅿️ Ücretli Otopark Maaşın</span><span class="val-pos">+${sal.parkingSal} ₺</span></div>
-        <div class="rep-row"><span>🏬 Yan Arazi &amp; AVM Maaşın</span><span class="val-pos">+${sal.land2Sal} ₺</span></div>
-        <div class="rep-row"><span>🏠 Emlak Kira Gelirlerin</span><span class="val-pos">+${dailyRent} ₺</span></div>
+        <div class="rep-row"><span>🏬 2. Arazi &amp; AVM Maaşın</span><span class="val-pos">+${sal.land2Sal} ₺</span></div>
+        <div class="rep-row"><span>🎡 3. Arazi Maaşın</span><span class="val-pos">+${sal.land3Sal || 0} ₺</span></div>
+        <div class="rep-row"><span>🏠 Şahsi Emlak Kiraların</span><span class="val-pos">+${dailyRent} ₺</span></div>
         <div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:3px;">
           <span><strong>💼 Toplam Yatırılan Maaş</strong></span>
           <span class="val-pos">+${paidSalary} ₺</span>
@@ -925,13 +1039,13 @@
         kemalOutageFixTimer = 0;
       }
 
-      // 3. Yan arazideyken tüm istasyon tesislerini kesintisiz çalıştırır!
-      if (activeLand === "land2") {
+      // 3. 2. veya 3. arazideyken tüm istasyon tesislerini kesintisiz çalıştırır!
+      if (activeLand !== "station") {
         cars.forEach((c) => {
           if (!c.isStory && c.pumpIdx >= 0 && (c.state === "waiting_fuel" || c.state === "fueling") && data.fuelStock > 1) {
             c.manualLatched = true;
           }
-          if ((c.state === "charging" || c.state === "weighing" || c.state === "washing" || c.state === "repairing") && !c.serviceManual) {
+          if ((c.state === "charging" || c.state === "weighing" || c.state === "washing" || c.state === "repairing" || c.state === "lpg_filling") && !c.serviceManual) {
             c.serviceManual = true;
           }
         });
@@ -962,7 +1076,7 @@
             waitingStory.managerNotified = true;
             EMP.addManagerLog(data.empire, `🚨 ÇOK ACİL: ${waitingStory.storyEvent.name} için acil müdahalen gerekiyor patron!`);
           }
-        } else if (waitingStory.managerWait >= (activeLand === "land2" ? 2.0 : 4.8)) {
+        } else if (waitingStory.managerWait >= (activeLand !== "station" ? 2.0 : 4.8)) {
           // Sakin ve güvenli çözüm: Hata yapmaz, istasyonu aksatmaz!
           const safeGain = 95;
           data.cash += safeGain;
@@ -1014,6 +1128,160 @@
       if (data.reputation >= 70 || vipRushTimer > 0) baseInterval *= 0.82;
       if (data.reputation < 30 || slowTrafficTimer > 0) baseInterval *= 1.38;
       spawnCooldown = baseInterval;
+    }
+
+    // 🔵 LPG / Otogaz Araç Doğurma
+    if (data.lpgUnlocked && !lpgCar) {
+      lpgSpawnCooldown -= dt;
+      if (lpgSpawnCooldown <= 0) {
+        lpgSpawnCooldown = 5.0 + Math.random() * 3.5;
+        const isTaxi = Math.random() < 0.6;
+        lpgCar = {
+          x: -45,
+          y: HIGHWAY_IN_Y,
+          angle: Math.PI / 2,
+          pumpIdx: -1,
+          color: isTaxi ? "#facc15" : CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)],
+          shape: isTaxi ? "taxi" : "sedan",
+          state: "going_lpg",
+          waypoints: [
+            { x: ENTRY_X, y: HIGHWAY_IN_Y, speed: 138 },
+            { x: ENTRY_X, y: APRON_LOW_Y, speed: 120 },
+            { x: LPG_POS.carX, y: APRON_LOW_Y, speed: 110 },
+            { x: LPG_POS.carX, y: LPG_POS.carY, speed: 92, finalAngle: 0 }
+          ],
+          serviceProg: 0,
+          serviceManual: false,
+          isLpg: true,
+          isStory: false
+        };
+        cars.push(lpgCar);
+      }
+    }
+
+    // 🚜 7/24 Sarı Oto Çekici / Kurtarıcı Görevi
+    if (data.towUnlocked) {
+      if (!stalledCar && !activeTowTruck) {
+        towMissionCooldown -= dt;
+        if (towMissionCooldown <= 0) {
+          towMissionCooldown = 14 + Math.random() * 8;
+          stalledCar = {
+            x: 235 + Math.random() * 95,
+            y: HIGHWAY_UP_Y,
+            color: CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)],
+            shape: "sedan"
+          };
+          activeTowTruck = {
+            x: TOW_POS.carX,
+            y: TOW_POS.carY - 12,
+            angle: 0,
+            phase: "to_wreck",
+            towedColor: null,
+            timer: 0.85,
+            waypoints: [
+              { x: TOW_POS.carX, y: APRON_LOW_Y, speed: 92 },
+              { x: EXIT_X, y: APRON_LOW_Y, speed: 118 },
+              { x: EXIT_X, y: HIGHWAY_UP_Y, speed: 122 },
+              { x: stalledCar.x + 28, y: HIGHWAY_UP_Y, speed: 128, finalAngle: -Math.PI / 2 }
+            ]
+          };
+        }
+      } else if (activeTowTruck) {
+        if (activeTowTruck.phase === "to_wreck") {
+          if (followWaypoints(activeTowTruck, dt, 10)) activeTowTruck.phase = "loading";
+        } else if (activeTowTruck.phase === "loading") {
+          activeTowTruck.timer -= dt;
+          if (activeTowTruck.timer <= 0) {
+            activeTowTruck.towedColor = stalledCar ? stalledCar.color : "#ef4444";
+            stalledCar = null;
+            activeTowTruck.phase = "returning";
+            activeTowTruck.waypoints = [
+              { x: ENTRY_X, y: HIGHWAY_UP_Y, speed: 125 },
+              { x: ENTRY_X, y: APRON_LOW_Y, speed: 112 },
+              { x: TOW_POS.carX, y: APRON_LOW_Y, speed: 112 },
+              { x: TOW_POS.carX, y: TOW_POS.carY - 12, speed: 88, finalAngle: 0 }
+            ];
+          }
+        } else if (activeTowTruck.phase === "returning") {
+          if (followWaypoints(activeTowTruck, dt, 10)) {
+            const towPay = Math.round((125 + (data.towLvl - 1) * 34) * (vipRushTimer > 0 ? 1.25 : 1));
+            data.cash += towPay;
+            data.daily.towIncome = (data.daily.towIncome || 0) + towPay;
+            data.daily.towRescues = (data.daily.towRescues || 0) + 1;
+            sfx.cashRegister();
+            addFloatingText(TOW_POS.carX, TOW_POS.y - 8, `🚜 Çekici +${towPay} ₺`, "#fde047");
+
+            if (data.garageUnlocked && !garageCar) {
+              const rescued = {
+                x: GARAGE_POS.carX,
+                y: GARAGE_POS.carY,
+                angle: Math.PI,
+                pumpIdx: -1,
+                color: activeTowTruck.towedColor,
+                shape: "sedan",
+                state: "repairing",
+                serviceProg: 0,
+                serviceManual: data.staff.cemil === 0 && data.empire.managerHired,
+                isStory: false
+              };
+              garageCar = rescued;
+              cars.push(rescued);
+            }
+            activeTowTruck = null;
+            saveGame();
+          }
+        }
+      }
+    }
+
+    // 🚌 Şehirlerarası Otobüs Peronu & 🥖 Sıcak Taş Fırın Döngüsü
+    if (data.busBakeryUnlocked) {
+      if (!activeBus) {
+        busCooldown -= dt;
+        if (busCooldown <= 0) {
+          busCooldown = 16 + Math.random() * 8;
+          activeBus = {
+            x: -60,
+            y: HIGHWAY_IN_Y,
+            angle: Math.PI / 2,
+            color: ["#0284c7", "#dc2626", "#059669", "#7c3aed"][Math.floor(Math.random() * 4)],
+            phase: "entering",
+            stayTimer: 4.8,
+            waypoints: [
+              { x: ENTRY_X, y: HIGHWAY_IN_Y, speed: 118 },
+              { x: ENTRY_X, y: BUS_BAY_POS.busY, speed: 95 },
+              { x: BUS_BAY_POS.busX, y: BUS_BAY_POS.busY, speed: 92, finalAngle: Math.PI / 2 }
+            ]
+          };
+        }
+      } else {
+        if (activeBus.phase === "entering") {
+          if (followWaypoints(activeBus, dt, 8.5)) {
+            activeBus.phase = "boarding";
+            const bakeryPay = Math.round((95 + (data.busBakeryLvl - 1) * 30) * (vipRushTimer > 0 ? 1.25 : 1));
+            data.cash += bakeryPay;
+            data.daily.busBakeryIncome = (data.daily.busBakeryIncome || 0) + bakeryPay;
+            data.daily.busesServed = (data.daily.busesServed || 0) + 1;
+            sfx.cashRegister();
+            addFloatingText(BUS_BAY_POS.x + BUS_BAY_POS.w - 32, BUS_BAY_POS.y - 6, `🚌🥖 +${bakeryPay} ₺`, "#fb923c");
+            marketQueue = Math.min(5, marketQueue + 2);
+            if (data.restaurantUnlocked && restaurantQueue.length < 5) restaurantQueue.push(pickRestaurantDish());
+            saveGame();
+          }
+        } else if (activeBus.phase === "boarding") {
+          activeBus.stayTimer -= dt;
+          if (activeBus.stayTimer <= 0) {
+            activeBus.phase = "leaving";
+            activeBus.waypoints = [
+              { x: EXIT_X, y: BUS_BAY_POS.busY, speed: 96 },
+              { x: EXIT_X, y: HIGHWAY_IN_Y, speed: 105 },
+              { x: WORLD_W + 90, y: HIGHWAY_IN_Y, speed: 132 }
+            ];
+          }
+        } else if (activeBus.phase === "leaving") {
+          if (followWaypoints(activeBus, dt, 8.5)) activeBus = null;
+        }
+      }
     }
 
     // EV Araç Doğurma (Yakıttan bağımsız!)
@@ -1281,10 +1549,36 @@
           if (car.serviceProg >= 100) {
             const washPay = Math.round((36 + (data.carWashLvl - 1) * 14) * (vipRushTimer > 0 ? 1.3 : 1));
             data.cash += washPay;
+            data.daily.washIncome = (data.daily.washIncome || 0) + washPay;
+            data.daily.washServed = (data.daily.washServed || 0) + 1;
             data.daily.serviceIncome += washPay;
             sfx.cashRegister();
             addFloatingText(car.x, car.y - 25, `🚿 +${washPay} ₺`, "#38bdf8");
             washCar = null;
+            setCarExitPath(car, true);
+            saveGame();
+          }
+        }
+      } else if (car.state === "going_lpg") {
+        if (followWaypoints(car, dt, 10)) {
+          car.state = "lpg_filling";
+          car.serviceProg = 0;
+          car.serviceManual = false;
+        }
+      } else if (car.state === "lpg_filling") {
+        const hasPumper = data.staff.ali > 0 || data.staff.murat > 0 || data.staff.hasan > 0;
+        const autoSpd = hasPumper ? 28 + Math.max(data.staff.ali, data.staff.murat, data.staff.hasan) * 8 : 0;
+        const manSpd = pointerHeldLpg || car.serviceManual ? 42 : 0;
+        if (autoSpd + manSpd > 0 && !powerOutage) {
+          car.serviceProg += (autoSpd + manSpd) * dt;
+          if (car.serviceProg >= 100) {
+            const lpgPay = Math.round((44 + (data.lpgLvl - 1) * 14) * (vipRushTimer > 0 ? 1.25 : 1));
+            data.cash += lpgPay;
+            data.daily.lpgIncome = (data.daily.lpgIncome || 0) + lpgPay;
+            data.daily.lpgServed = (data.daily.lpgServed || 0) + 1;
+            sfx.cashRegister();
+            addFloatingText(car.x, car.y - 25, `🔵 LPG +${lpgPay} ₺`, "#38bdf8");
+            lpgCar = null;
             setCarExitPath(car, true);
             saveGame();
           }
@@ -1303,6 +1597,8 @@
           if (car.serviceProg >= 100) {
             const repPay = Math.round((58 + (data.garageLvl - 1) * 20) * (vipRushTimer > 0 ? 1.3 : 1));
             data.cash += repPay;
+            data.daily.garageIncome = (data.daily.garageIncome || 0) + repPay;
+            data.daily.garageServed = (data.daily.garageServed || 0) + 1;
             data.daily.serviceIncome += repPay;
             sfx.cashRegister();
             addFloatingText(car.x, car.y - 25, `🔧 +${repPay} ₺`, "#c084fc");
@@ -1465,9 +1761,14 @@
     ctx.save();
     ctx.scale((cw * dpr) / WORLD_W, (ch * dpr) / WORLD_H);
 
-    // Eğer oyuncu 2. Arazi (Yan Arsa / Outlet & Plaza) sekmesindeyse 2. Araziyi çiz!
+    // Eğer oyuncu 2. veya 3. Arazi sekmesindeyse ilgili araziyi çiz!
     if (activeLand === "land2") {
       EMP.renderLand2(ctx, WORLD_W, WORLD_H, phase, data, MR);
+      ctx.restore();
+      return;
+    }
+    if (activeLand === "land3" && L3) {
+      L3.renderLand3(ctx, WORLD_W, WORLD_H, phase, data, MR);
       ctx.restore();
       return;
     }
@@ -1500,14 +1801,21 @@
     ctx.fillText("⬇ GİRİŞ", ENTRY_X, 88);
     ctx.fillText("⬆ ÇIKIŞ", EXIT_X, 88);
 
-    if (data.billboardInstalled) MR.drawHighwayBillboard(ctx, 255, 95, powerOutage);
-    MR.drawStreetLamp(ctx, 165, 93, phase.night, powerOutage);
-    MR.drawStreetLamp(ctx, 255, 93, phase.night, powerOutage);
-    MR.drawStreetLamp(ctx, 345, 93, phase.night, powerOutage);
+    if (data.billboardInstalled) MR.drawHighwayBillboard(ctx, 255, 68, powerOutage);
+    MR.drawBusBakeryStation(ctx, BUS_BAY_POS, data.busBakeryUnlocked, data.busBakeryLvl);
+    MR.drawStreetLamp(ctx, 128, 93, phase.night, powerOutage);
+    MR.drawStreetLamp(ctx, 382, 93, phase.night, powerOutage);
 
     highwayBgCars.forEach((hc) =>
       MR.drawDetailedVehicle(ctx, hc.x, hc.y, hc.color, "sedan", hc.angle, { nightIntensity: phase.night })
     );
+
+    if (stalledCar) {
+      MR.drawDetailedVehicle(ctx, stalledCar.x, stalledCar.y, stalledCar.color, stalledCar.shape, -Math.PI / 2, {
+        nightIntensity: phase.night,
+        hazardLights: true
+      });
+    }
 
     // Ana Depo & Tanker
     MR.drawFuelDepot(ctx, TANK_POS, data.fuelStock, maxFuelCapacity());
@@ -1523,13 +1831,15 @@
       }
     }
 
-    // 9 Pompa Adası
+    // 9 Pompa Adası + 🔵 LPG / Otogaz Adası
+    MR.drawLpgIsland(ctx, LPG_POS, data.lpgUnlocked, data.lpgLvl, powerOutage);
     PUMPS.forEach((p, idx) => MR.drawPumpIsland(ctx, p, idx < data.pumpsUnlocked, data.pumpSpeedLvl, powerOutage));
 
-    // Band 3 — 4 Araç Girişli Tesis: ⚡ EV Şarj, 🚿 Oto Yıkama, 🔧 Tamirhane, 🚛 Tır Kantarı
+    // Band 3 — 5 Araç Girişli Tesis: ⚡ EV Şarj, 🚿 Oto Yıkama, 🔧 Tamirhane, 🚜 Oto Çekici, 🚛 Tır Kantarı
     MR.drawEvChargerBay(ctx, EV_POS, data.evUnlocked, data.evLvl, powerOutage);
     MR.drawServiceBay(ctx, WASH_POS, data.carWashUnlocked, data.carWashLvl, "wash");
     MR.drawServiceBay(ctx, GARAGE_POS, data.garageUnlocked, data.garageLvl, "garage");
+    MR.drawTowTruckBay(ctx, TOW_POS, data.towUnlocked, data.towLvl, !!activeTowTruck);
     const scaleWeightTxt = scaleCar && scaleCar.state === "weighing" ? `${scaleCar.weightTons} TON` : "";
     MR.drawTruckScaleBay(ctx, SCALE_POS, data.scaleUnlocked, data.scaleLvl, scaleWeightTxt);
 
@@ -1643,6 +1953,28 @@
         ctx.fillText("❗ İNCELE!", car.x, car.y - 30 + bounce);
       }
 
+      if (car.state === "lpg_filling") {
+        ctx.strokeStyle = "#38bdf8";
+        ctx.lineWidth = 2.8;
+        ctx.beginPath();
+        ctx.moveTo(LPG_POS.x, LPG_POS.y);
+        ctx.quadraticCurveTo(LPG_POS.x + 12, LPG_POS.y + 14, car.x + 7, car.y - 4);
+        ctx.stroke();
+
+        const hasPumper = data.staff.ali > 0 || data.staff.murat > 0 || data.staff.hasan > 0;
+        if (!hasPumper && !car.serviceManual) {
+          MR.rr(ctx, car.x - 35, car.y - 38, 70, 22, 6, "#0284c7", "#fef08a", 1.8);
+          ctx.fillStyle = "#fff";
+          ctx.font = "900 9.5px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("🔵 LPG VER!", car.x, car.y - 23.5);
+        } else {
+          MR.rr(ctx, car.x - 25, car.y - 34, 50, 9, 4, "#090d1a", "#38bdf8", 1.2);
+          ctx.fillStyle = "#38bdf8";
+          ctx.fillRect(car.x - 23, car.y - 32, 46 * (car.serviceProg / 100), 5);
+        }
+      }
+
       if (!car.isStory && car.pumpIdx >= 0 && (car.state === "waiting_fuel" || car.state === "fueling")) {
         const pct = Math.min(1, car.fuelFilled / car.fuelNeeded);
         if (pct < 0.02 && data.staff.ali === 0 && data.staff.murat === 0 && data.staff.hasan === 0) {
@@ -1658,6 +1990,20 @@
         }
       }
     });
+
+    if (activeTowTruck) {
+      MR.drawDetailedVehicle(ctx, activeTowTruck.x, activeTowTruck.y, "#f59e0b", "tow", activeTowTruck.angle, {
+        nightIntensity: phase.night,
+        headlightsAlways: true,
+        towedCarColor: activeTowTruck.towedColor
+      });
+    }
+
+    if (activeBus) {
+      MR.drawDetailedVehicle(ctx, activeBus.x, activeBus.y, activeBus.color, "bus", activeBus.angle, {
+        nightIntensity: phase.night
+      });
+    }
 
     if (policeCruiser) {
       MR.drawDetailedVehicle(ctx, policeCruiser.x, policeCruiser.y, "#1e3a8a", "sedan", policeCruiser.angle, {
@@ -1747,6 +2093,78 @@
 
     if (activeLand === "land2") {
       EMP.handleLand2Click(pt, data, empireHelpers);
+      return;
+    }
+    if (activeLand === "land3" && L3) {
+      L3.handleLand3Click(pt, data, empireHelpers);
+      return;
+    }
+
+    // 0. 🚌 Otobüs Peronu & 🥖 Taş Fırın
+    if (inBox(pt, BUS_BAY_POS)) {
+      if (!data.busBakeryUnlocked) {
+        if (data.cash >= BUS_BAY_POS.unlockCost) {
+          data.cash -= BUS_BAY_POS.unlockCost;
+          data.busBakeryUnlocked = true;
+          sfx.perfectHit();
+          addFloatingText(BUS_BAY_POS.busX, BUS_BAY_POS.y + 20, "🚌 OTOBÜS & FIRIN AÇILDI!", "#fb923c");
+          showToast("🚌 Şehirlerarası Otobüs Peronu & Sıcak Taş Fırın açıldı!");
+          saveGame();
+          updateHUD();
+        } else {
+          sfx.burnFail();
+          showToast(`Otobüs Peronu & Taş Fırın için ${BUS_BAY_POS.unlockCost} ₺ gerekli!`);
+        }
+      } else {
+        openUpgradesModal();
+      }
+      return;
+    }
+
+    // 0b. 🔵 LPG / Otogaz Adası
+    if (Math.abs(pt.x - LPG_POS.x) < 32 && pt.y > LPG_POS.y - 38 && pt.y < LPG_POS.carY + 28) {
+      if (!data.lpgUnlocked) {
+        if (data.cash >= LPG_POS.unlockCost) {
+          data.cash -= LPG_POS.unlockCost;
+          data.lpgUnlocked = true;
+          sfx.perfectHit();
+          addFloatingText(LPG_POS.x, LPG_POS.y, "🔵 LPG OTOGAZ KURULDU!", "#38bdf8");
+          showToast("🔵 LPG / Otogaz Pompası ve Basınçlı Tank kuruldu!");
+          saveGame();
+          updateHUD();
+        } else {
+          sfx.burnFail();
+          showToast(`LPG Adası için ${LPG_POS.unlockCost} ₺ gerekli!`);
+        }
+        return;
+      }
+      if (lpgCar && lpgCar.state === "lpg_filling") {
+        pointerHeldLpg = true;
+        lpgCar.serviceManual = true;
+        sfx.tap();
+      }
+      return;
+    }
+
+    // 0c. 🚜 7/24 Oto Çekici Kurtarıcı
+    if (inBox(pt, TOW_POS)) {
+      if (!data.towUnlocked) {
+        if (data.cash >= TOW_POS.unlockCost) {
+          data.cash -= TOW_POS.unlockCost;
+          data.towUnlocked = true;
+          towMissionCooldown = 2.0;
+          sfx.perfectHit();
+          addFloatingText(TOW_POS.carX, TOW_POS.y + 30, "🚜 KURTARICI ÇEKİCİ HAZIR!", "#fde047");
+          showToast("🚜 7/24 Sarı Oto Çekici göreve başladı!");
+          saveGame();
+          updateHUD();
+        } else {
+          sfx.burnFail();
+          showToast(`7/24 Oto Çekici için ${TOW_POS.unlockCost} ₺ gerekli!`);
+        }
+      } else {
+        openUpgradesModal();
+      }
       return;
     }
 
@@ -1944,8 +2362,14 @@
     }
   });
 
-  window.addEventListener("pointerup", () => (pointerHeldPump = -1));
-  window.addEventListener("pointercancel", () => (pointerHeldPump = -1));
+  window.addEventListener("pointerup", () => {
+    pointerHeldPump = -1;
+    pointerHeldLpg = false;
+  });
+  window.addEventListener("pointercancel", () => {
+    pointerHeldPump = -1;
+    pointerHeldLpg = false;
+  });
 
   // =========================================================================
   // TESİS GELİŞTİRME VE 11 KİŞİLİK EKİP MENÜLERİ
@@ -1971,6 +2395,40 @@
         done: data.pumpSpeedLvl >= 10,
         cost: Math.round(240 * Math.pow(1.52, data.pumpSpeedLvl - 1)),
         buy: () => (data.pumpSpeedLvl += 1)
+      },
+      {
+        title: data.lpgUnlocked ? `🔵 LPG / Otogaz Sistemi (Sv.${data.lpgLvl}/6)` : "🔵 LPG / Otogaz Adası & Basınçlı Tank Kur",
+        desc: data.lpgUnlocked ? "LPG satış gelirini araç başı +14 ₺ artırır." : "Taksilere ve LPG'li araçlara yüksek kârlı otogaz satışı başlatır!",
+        done: data.lpgUnlocked && data.lpgLvl >= 6,
+        cost: data.lpgUnlocked ? Math.round(520 * Math.pow(1.55, data.lpgLvl - 1)) : LPG_POS.unlockCost,
+        buy: () => {
+          if (!data.lpgUnlocked) data.lpgUnlocked = true;
+          else data.lpgLvl += 1;
+        }
+      },
+      {
+        title: data.towUnlocked ? `🚜 7/24 Oto Çekici Kurtarıcı (Sv.${data.towLvl}/6)` : "🚜 7/24 Sarı Oto Çekici (Kurtarıcı) Al",
+        desc: data.towUnlocked ? "Çekici kurtarma ücretini +34 ₺ artırır!" : "Otoyolda kalan araçları sırtına yükleyip Tamirhanene getirir — çifte kazanç!",
+        done: data.towUnlocked && data.towLvl >= 6,
+        cost: data.towUnlocked ? Math.round(820 * Math.pow(1.55, data.towLvl - 1)) : TOW_POS.unlockCost,
+        buy: () => {
+          if (!data.towUnlocked) {
+            data.towUnlocked = true;
+            towMissionCooldown = 2.0;
+          } else data.towLvl += 1;
+        }
+      },
+      {
+        title: data.busBakeryUnlocked ? `🚌 Otobüs Peronu & 🥖 Taş Fırın (Sv.${data.busBakeryLvl}/6)` : "🚌 Şehirlerarası Otobüs Peronu & 🥖 Taş Fırın Kur",
+        desc: data.busBakeryUnlocked ? "Otobüs mola ve sıcak fırın gelirini +30 ₺ artırır!" : "Yolcu otobüsleri yanaşır; sıcak simit/fırın, market ve restoran dolup taşar!",
+        done: data.busBakeryUnlocked && data.busBakeryLvl >= 6,
+        cost: data.busBakeryUnlocked ? Math.round(680 * Math.pow(1.55, data.busBakeryLvl - 1)) : BUS_BAY_POS.unlockCost,
+        buy: () => {
+          if (!data.busBakeryUnlocked) {
+            data.busBakeryUnlocked = true;
+            busCooldown = 2.5;
+          } else data.busBakeryLvl += 1;
+        }
       },
       {
         title: data.evUnlocked ? `⚡ EV Süper Şarj Geliştir (Sv.${data.evLvl}/6)` : "⚡ Elektrikli Araç Hızlı Şarj Kur",
@@ -2194,17 +2652,24 @@
   function switchLand(land) {
     activeLand = land;
     sfx.tap();
-    el.liveHintText.textContent =
-      land === "land2"
-        ? data.empire.land2Owned
-          ? "🅿️ Otopark (20->150) & 🏬 AVM Dükkanları: Dokun kur ve kiraya ver!"
-          : "🏗️ Yan Arazi tapusunu alıp Otopark ve AVM kur!"
-        : "👆 Pompadaki araca dokun / basılı tut!";
+    if (land === "land2") {
+      el.liveHintText.textContent = data.empire.land2Owned
+        ? "🅿️ Otopark (20->150) & 🏬 AVM Dükkanları: Dokun kur ve kiraya ver!"
+        : "🏗️ 2. Arazi tapusunu alıp Otopark ve AVM kur!";
+    } else if (land === "land3") {
+      const l3Owned = !!(data.empire.land3 && data.empire.land3.owned);
+      el.liveHintText.textContent = l3Owned
+        ? "🏎️ Go-Kart • 🏭 Rafineri & 10 Tır Filosu • 🏖️ Tatil Köyü!"
+        : "🎡 3. Arazi tapusunu alıp Go-Kart, Tır Filosu ve Tatil Köyü kur!";
+    } else {
+      el.liveHintText.textContent = "👆 Pompadaki araca dokun / basılı tut!";
+    }
     updateHUD();
   }
 
   el.tabStationBtn.addEventListener("click", () => switchLand("station"));
   el.tabLand2Btn.addEventListener("click", () => switchLand("land2"));
+  if (el.tabLand3Btn) el.tabLand3Btn.addEventListener("click", () => switchLand("land3"));
 
   el.managerAlertBar.addEventListener("click", () => {
     switchLand("station");
