@@ -15,7 +15,7 @@
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
 - **Oyun Türü:** 10 Arazili gerçekçi 2.5D/3D kuşbakışı canlı işletme & holding simülasyonu + önce manuel yönetip büyüdükçe eleman/müdür alma döngüsü + çok kaynaklı şahsi maaş, borsa ve şehir yaşamı.
 
-### Mevcut Özellikler ve Dosya Yapısı (v15.0)
+### Mevcut Özellikler ve Dosya Yapısı (v17.0)
 1. **1. Arazi — Ana İstasyon (`game.js`, `map_renderer.js`):**
    - 9 Yakıt Pompası (2 VIP), **🔵 LPG / Otogaz Adası & Basınçlı Tank**, **🚜 7/24 Sarı Kayar Kasalı Oto Çekici** (otoyolda arıza yapan aracı sırtına yükleyip Tamirhaneye getirir), **🚌 Şehirlerarası Otobüs Peronu & 🥖 Sıcak Taş Fırın**, EV Hızlı Şarj, Oto Yıkama, Tamirhane, Tır Kantarı, 7/24 Market, 10 Çeşit Yemekli Restoran, Mini Motel ve **👔 Sakin Müdür Kemal Bey** (çok acil kriz olmadıkça patronu rahatsız etmez).
 2. **2. Arazi — Canlı İşlemli Ücretli Otopark & Otoyol Grand AVM (`empire.js`):**
@@ -51,11 +51,18 @@
     - Tam ekran sinematik 3D açılış kapağı (`assets/cover-v17.jpg`), yazı kalabalığından tamamen arındırılmış minimalist altın tipografi ve tek dokunuşla `▶ KALDIĞIN YERDEN DEVAM ET` / `▶ OYUNA BAŞLA`.
     - 4 sıkışık üst bar yerine **tek temiz yüzen üst çubuk** (2 ana para birimi kısaltmalı + gün + `⚙️` açılır hızlı durum/ses paneli), **tek dokunuşlu kaydırmalı 10 arazi şeridi (`◀ 1..10 ▶ 🗺️`)** ve haritanın sağ kenarında **yüzen cam aksiyon butonları (`🏆 Holding`, `📱 Telefon`, `🏙️ Şehir`, `📊 Rapor`)** kuruldu.
 
-## 📌 Diğer Bilgisayardaki Asistana Devir Notu (24 Kasım — Windows v16.0)
-- Windows bilgisayarda **v16.0** (`holding_v16.js` + `index.html`, `style.css`, `empire.js`, `game.js` bağlantıları) tamamlandı ve canlı tarayıcıda 0 konsol hatasıyla doğrulandı.
-- **Kullanıcının Önemli Yayın Öncesi Kararı:** Şu an yeni özellik ve arazi geliştirmelerine odaklanıyoruz; mevcut erken aşama para kazanma hızına şimdilik dokunma. Oyun geliştirmesi tamamen bittiğinde yayınlamadan hemen önce:
-  1. **Zorluk ve Ekonomi Dengelemesi** (yeni arazi/tesis alımlarının başlangıçtaki tatlı zorluk hissini koruması),
-  2. **Son Aşama Genel Grafik Cilası** yapılacak.
+## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — Windows -> Mac, v17.0)
+- **Mevcut Sürüm:** **v17.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.
+- **Bu Oturumda Tamamlananlar (v16.0 -> v17.0):**
+  1. `holding_v16.js`: Holding Ligi + **5 rakip holdingin altında toplam 15 alt şirketi tek tek satın alma** (veya %8 indirimli toplu devralma), Günlük Görevler & 8 Patron Rütbesi, Büyük Otoyol Günleri (`Bayram`, `Kar`, `Derbi`, `VIP`), Kurumsal Banka & Halka Arz (`SONH`), Özel Plaka, Yat, Genel Merkez ve Uçan Patron Helikopteri.
+  2. **Kasadan mı, Şahsi Cüzdandan mı? (`#payChoiceModal`):** Tüm iş büyütme ve rakip şirket satın alımlarında Şirket Kasası, Şahsi Cüzdan veya Kasa + Cüzdan Birlikte Öde seçeneği.
+  3. **Otomasyon Düzeltmesi:** 4.–10. arazilerdeki araç donma hatası kesin çözüldü; tüm 10 arazi tam otopilotta sorunsuz çalışıyor.
+  4. **Anlık +%1000 Borsa Rallisi:** Tek seferlik `surge1000Applied` bayrağıyla eklendi (kullanıcının mevcut kaydı `SAVE_KEY = "son_istasyon_v12_pro"` bozulmaz!).
+  5. **Görsel & Arayüz Devrimi (v17.0):** 3 yeni 3D arazi zemini (`land2-ground.jpg`, `land3-ground.jpg`, `extra-ground.jpg`), yeni AAA sinematik açılış kapağı (`cover-v17.jpg`), tek satır sade yüzen üst çubuk, tek dokunuşlu kaydırmalı **10 arazi geçiş şeridi (`◀ 1..10 ▶ 🗺️`)** ve sağ kenar yüzen cam butonları (`🏆`, `📱`, `🏙️`, `📊`).
+- **Yarın İçin Sıradaki Olası Adımlar:**
+  1. Kullanıcının v17.0 yeni arayüz ve kapak ekranıyla ilgili geri bildirimlerine göre son görsel ince ayarlar (ör. harita içi bina çizimlerinin daha da 3D/modern hale getirilmesi, ses/müzik cilası),
+  2. Yayın öncesi **Zorluk ve Ekonomi Dengelemesi** (erken aşama para kazanma hızına kullanıcı isteyene kadar dokunma; son aşamada dengelenecek),
+  3. **ÖNEMLİ:** `SAVE_KEY = "son_istasyon_v12_pro"` anahtarını değiştirme ki kullanıcının canlı sitedeki kendi ilerlemesi asla sıfırlanmasın.
 
 ## İki Bilgisayar Arasında Çalışma Akışı (Mac & Windows)
 - Çalışmaya başlarken son değişiklikleri çek: `git pull origin main`
