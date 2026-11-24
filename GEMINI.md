@@ -9,25 +9,23 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v14.0 — 3 Arazi, LPG, Oto Çekici, Otobüs Peronu, Go-Kart, Tır Filosu & Tatil Köyü)
+## Proje Özeti: Son İstasyon (v15.0 — 10 Arazi Sistemi, Grand Otel & 6 Mega Proje, Canlı 2. Arazi İşlemleri)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
-- **Oyun Türü:** 3 Arazili gerçekçi 2.5D/3D kuşbakışı canlı işletme & holding simülasyonu + çok modlu hikaye olayları + 4 kaynaklı şahsi maaş, şehir yaşamı ve akıllı telefon (Borsa/Sosyal Medya).
+- **Oyun Türü:** 10 Arazili gerçekçi 2.5D/3D kuşbakışı canlı işletme & holding simülasyonu + önce manuel yönetip büyüdükçe eleman/müdür alma döngüsü + çok kaynaklı şahsi maaş, borsa ve şehir yaşamı.
 
-### Mevcut Özellikler (v14.0)
-1. **1. Arazi — Dev İstasyon & Gerçekçi Yeni Tesisler (`game.js`, `map_renderer.js`):**
-   - **9 Yakıt Pompası (2 VIP)**, **🔵 LPG / Otogaz Adası & Basınçlı Çelik Tank**, **🚜 7/24 Sarı Kayar Kasalı Oto Çekici** (otoyolda duman çıkaran arızalı araçları sırtına yükleyip Tamirhaneye getirir!), **🚌 Şehirlerarası Otobüs Peronu & 🥖 Sıcak Taş Fırın** (yolcu otobüsleri yanaşır), **⚡ EV Hızlı Şarj**, **🚿 Oto Yıkama**, **🔧 Tamirhane**, **🚛 Tır Kantarı**, **🏪 7/24 Market**, **🍽️ Yol Restoranı** ve **🏨 Mini Motel**.
-   - **👔 Sakin İstasyon Müdürü Kemal Bey:** Rutin olayların %95'ini ve elektrik kesintilerini sessizce halleder; patronu yalnızca çok nadir büyük güvenlik krizlerinde arar.
-2. **2. Arazi — Ücretli Otopark & Otoyol Grand AVM (`empire.js`):**
-   - **🅿️ Ücretli Otopark:** Başlangıçta **20 araç kapasiteli** olup `35 -> 55 -> 80 -> 110 -> 150 araca` büyütülür; hareketli bariyerli gişe sistemi ve VIP Vale vardır.
-   - **🏬 Otoyol AVM (8 Dükkan):** İçindeki 8 dükkan önce tek tek **satın alınır**, sonra **kiraya verilir**; yanında **📦 Lojistik** ve **🏢 Plaza Kulesi** bulunur.
-3. **3. Arazi — Mega Holding Arsası (`land3.js`):**
-   - **🏎️ Go-Kart Yarış Pisti & 🎡 Işıklı Dönme Dolap:** Canlı yarışan 4 Go-Kart aracı ve dönen kabinli dönme dolap.
-   - **🏭 Akaryakıt Dolum Rafinerisi & 🚛 Kendi Tır Filomuz (1..10 Tır):** Rafineri kurulduğunda 1. İstasyonun tanker yakıt ikmalini **%100 BEDAVA (`0 ₺`)** yapar; kendi tır filomuz otoyoldan şehirlere sefere çıkıp büyük kazanç getirir.
-   - **🏖️ Havuzlu Bungalov & Termal Tatil Köyü:** Turkuaz yüzme/termal havuzu, SPA merkezi ve tek tek satın alınıp gecelik kiraya verilen **6 ahşap A-Frame bungalov**.
-4. **Ayrıntılı Gün Sonu Muhasebe Tablosu & 4 Kaynaklı Şahsi Maaş (`game.js`, `empire.js`):**
-   - Gün sonunda **1. Arazi, 2. Arazi (AVM dükkanları tek tek dahil) ve 3. Arazi** kazançları müşteri/sefer sayılarıyla ayrı ayrı hesaplanır.
-   - **4 Ayrı Şahsi Maaş:** `⛽ İstasyon` + `🅿️ Otopark` + `🏬 2. Arazi/AVM` + `🎡 3. Arazi` maaşları şahsi cüzdana yatar.
+### Mevcut Özellikler (v15.0)
+1. **1. Arazi — Ana İstasyon (`game.js`, `map_renderer.js`):** 9 Pompa (2 VIP), LPG Adası, 7/24 Sarı Oto Çekici, Otobüs Peronu & Taş Fırın, EV Şarj, Oto Yıkama, Tamirhane, Tır Kantarı, Market, Restoran, Motel ve Sakin Müdür Kemal.
+2. **2. Arazi — Canlı İşlemli Otopark & Otoyol Grand AVM (`empire.js`):**
+   - **Canlı İşlemler & Ekip:** Otopark çıkış gişesinde `🎫 Ücret Al`, AVM'de `📦 Mal Kabul Kamyonu` ve `🧹 AVM Bakım/Temizlik` işlemleri başta patron tarafından yapılır; geliştirildikçe **Gişe Görevlisi, Mal Kabul Sorumlusu, Teknik Ekip ve 2. Arazi Müdürü** işe alınır.
+3. **3. Arazi — Park, Rafineri, 10 Tır Filosu & Tatil Köyü (`land3.js`):** Go-Kart & Dönme Dolap, Bedava Tanker sağlayan Rafineri, 10 Tırlık Filo ve 6 Bungalovlu Termal Köy.
+4. **4.–10. Araziler — 10 Arazili Harita & 6 Seçenekli Mega Projeler (`lands_4_10.js`):**
+   - `45.000 ₺`'den `1.100.000 ₺`'ye uzanan 7 yeni arsa (`4. Arazi` .. `10. Arazi`).
+   - Her arsa alındığında **6 dev seçenek** sunulur: **🏨 5 Yıldızlı Grand Otel**, **🏥 Özel Hastane**, **🚗 Otomobil Fabrikası**, **🏟️ Stadyum**, **💻 Teknokent Veri Merkezi**, **👑 Kongre & Düğün Sarayı**.
+   - Her projede başta müşteri kaydı ve oda/birim temizliğiyle oyuncu ilgilenir; büyüdükçe 4 kademe personel/müdür alınır ve 5 kata kadar büyütülür.
+
+### Yayın Öncesi Notlar (Son Aşamada Yapılacaklar)
+- Tüm özellikler tamamlandıktan sonra yayın öncesi **ekonomi/zorluk dengesi** (2. ve yeni arazilere geçiş hızının başlangıç zorluğunda dengelenmesi) ve **son aşama grafik cilası** yapılacak.
 5. **Çok Modlu, Tekrarsız Özel Olay Motoru (`story_events.js`):**
    - 13 farklı olay ailesi (Emanet çanta, tur konvoyu pazarlığı, veresiye ikilemi, rota/fiş analizi, saha kavgası, lüks araç arızası, sığınma tuzağı, teknisyen/sabotajcı, ucuz yakıt, nakit kontrolü, gizli denetim, sponsorluk, filo sözleşmesi) + önceki kararlara bağlı devam olayları. Her olayın kendi özel inceleme butonları ve 4 özgün karar seçeneği vardır.
 6. **Sakin Ses Motoru & Gün Sonu Kâr/Zarar Raporu (`audio.js`, `game.js`):**

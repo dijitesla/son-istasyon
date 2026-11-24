@@ -224,11 +224,20 @@ window.EmpireSystem = (function () {
       mallUnlocked: false,
       mallShops: createDefaultMallShops(),
 
+      // 2. Arazi Operasyon Ekibi (Başta Biz İlgileniriz -> Sonra Eleman Alırız!)
+      land2Staff: {
+        gateOfficer: false, // 👮 Otopark Çıkış Gişe Görevlisi (4.200 ₺)
+        dockWorker: false, // 📦 AVM Mal Kabul Sorumlusu (6.200 ₺)
+        facilityTech: false, // 🧹 AVM Temizlik & Klima Ekibi (7.800 ₺)
+        land2Manager: false // 👔 2. Arazi & AVM Genel Müdürü (18.500 ₺)
+      },
+
       // Sağ Kanat Lojistik & Plaza
       sideLevels: { logistics: 0, office: 0 },
 
-      // 3. Arazi Mega Holding Kompleksi
+      // 3. Arazi Mega Holding Kompleksi & 4..10 Araziler
       land3: window.Land3System ? window.Land3System.createDefaultLand3() : null,
+      extraLands: window.ExtraLandsSystem ? window.ExtraLandsSystem.createDefaultExtraLands() : null,
 
       // Çok Kaynaklı Şahsi Maaş Sistemi!
       personalCash: 0,
@@ -283,8 +292,15 @@ window.EmpireSystem = (function () {
     out.dailySalary = Number.isFinite(out.dailySalary) ? out.dailySalary : 200;
     out.parkingSalary = Number.isFinite(out.parkingSalary) ? out.parkingSalary : 0;
     out.land2Salary = Number.isFinite(out.land2Salary) ? out.land2Salary : 0;
+    out.land2Staff = Object.assign(
+      { gateOfficer: false, dockWorker: false, facilityTech: false, land2Manager: false },
+      saved.land2Staff || {}
+    );
     if (window.Land3System) {
       out.land3 = window.Land3System.mergeLand3(saved.land3);
+    }
+    if (window.ExtraLandsSystem) {
+      out.extraLands = window.ExtraLandsSystem.mergeExtraLands(saved.extraLands);
     }
 
     out.electronics = Object.assign({}, saved.electronics || {});
@@ -361,7 +377,7 @@ window.EmpireSystem = (function () {
     return Math.round(tower.baseIncome * (1 + (lvl - 1) * 0.45));
   }
 
-  // Çok Kaynaklı Şahsi Maaş Hesabı (1. İstasyon + Otopark + 2. Arazi/AVM + 3. Arazi)
+  // Çok Kaynaklı Şahsi Maaş Hesabı (1. İstasyon + Otopark + 2. Arazi/AVM + 3. Arazi + 4..10 Araziler)
   function calcSalaryBreakdown(emp) {
     const stationSal = Math.max(0, emp.dailySalary || 0);
     const parkingSal = emp.parkingUnlocked ? Math.max(0, emp.parkingSalary || 0) : 0;
@@ -369,12 +385,14 @@ window.EmpireSystem = (function () {
     const land2Sal = hasLand2Biz ? Math.max(0, emp.land2Salary || 0) : 0;
     const hasLand3Biz = window.Land3System && window.Land3System.hasAnyLand3Business(emp.land3);
     const land3Sal = hasLand3Biz ? Math.max(0, (emp.land3 && emp.land3.land3Salary) || 0) : 0;
+    const extraSal = window.ExtraLandsSystem ? window.ExtraLandsSystem.calcTotalExtraSalary(emp.extraLands) : 0;
     return {
       stationSal,
       parkingSal,
       land2Sal,
       land3Sal,
-      total: stationSal + parkingSal + land2Sal + land3Sal
+      extraSal,
+      total: stationSal + parkingSal + land2Sal + land3Sal + extraSal
     };
   }
 
@@ -428,6 +446,10 @@ window.EmpireSystem = (function () {
   let exitGateTimer = 0;
   let parkSpawnTimer = 1.1;
   let mallRentProgress = 0;
+  let mallDeliveryWaiting = false;
+  let mallDeliveryTimer = 11.0;
+  let mallNeedsCleaning = false;
+  let mallCleanTimer = 18.0;
   const sideProgress = { logistics: 0, office: 0 };
   let stockTickTimer = 9;
   let socialCooldown = 0;
@@ -545,6 +567,9 @@ window.EmpireSystem = (function () {
     if (window.Land3System) {
       window.Land3System.updateLand3(dt, data, callbacks.onLand2Earn);
     }
+    if (window.ExtraLandsSystem) {
+      window.ExtraLandsSystem.updateExtraLands(dt, data, callbacks.onLand2Earn);
+    }
     if (Math.random() < dt * 0.8 && lotBgHighwayCars.length < 4) {
       lotBgHighwayCars.push({
         x: 520,
@@ -603,7 +628,14 @@ window.EmpireSystem = (function () {
             ];
           }
         } else if (car.state === "exiting") {
-          if (!car.paid && Math.abs(car.x - 404) < 20 && car.y < 122) {
+          const autoGate = !!(emp.land2Staff && (emp.land2Staff.gateOfficer || emp.land2Staff.land2Manager));
+          if (!car.paid && Math.abs(car.x - 404) < 20 && car.y < 130) {
+            if (!autoGate && !car.manualGateApproved) {
+              // Gişe görevlisi yoksa araç bariyerde durup senin tahsil etmeni bekler!
+              car.waitingAtBooth = true;
+              return;
+            }
+            car.waitingAtBooth = false;
             car.paid = true;
             exitGateTimer = 0.95;
             const fee = getParkingFee(emp);
@@ -613,7 +645,6 @@ window.EmpireSystem = (function () {
               data.daily.parkingCount = (data.daily.parkingCount || 0) + 1;
             }
 
-            // Otoparktan Şahsi Maaş seçiliyse canlı maaş avansı da şahsi cüzdana damlar!
             let personalCut = 0;
             if (emp.parkingSalary > 0) {
               personalCut = Math.max(2, Math.round(emp.parkingSalary * 0.014));
@@ -637,11 +668,45 @@ window.EmpireSystem = (function () {
       parkingCars = parkingCars.filter((c) => !c.remove);
     }
 
-    // 3. OTOYOL AVM KİRA DÖNGÜSÜ (Kiraya verilmiş dükkanların toplam kirası!)
+    // 3. OTOYOL AVM CANLI İŞLEMLER (Mal Kabul Kamyonu & Temizlik/Bakım) + KİRA DÖNGÜSÜ!
     if (emp.mallUnlocked) {
+      const hasRentedShop = getMallCounts(emp).rented > 0;
+      if (hasRentedShop) {
+        // Mal Kabul Kamyonu
+        if (!mallDeliveryWaiting) {
+          mallDeliveryTimer -= dt;
+          if (mallDeliveryTimer <= 0) {
+            mallDeliveryTimer = 14 + Math.random() * 6;
+            mallDeliveryWaiting = true;
+          }
+        } else if (emp.land2Staff && (emp.land2Staff.dockWorker || emp.land2Staff.land2Manager)) {
+          mallDeliveryWaiting = false;
+          const dockBonus = 140;
+          data.cash += dockBonus;
+          if (data.daily) {
+            data.daily.mallIncome = (data.daily.mallIncome || 0) + dockBonus;
+            data.daily.land2Income = (data.daily.land2Income || 0) + dockBonus;
+          }
+          land2Floats.push({ x: 96, y: 298, text: `📦 Oto Mal Kabul +${dockBonus} ₺`, color: "#fde047", life: 1.4 });
+        }
+
+        // AVM Temizlik & Klima Bakımı
+        if (!mallNeedsCleaning) {
+          mallCleanTimer -= dt;
+          if (mallCleanTimer <= 0) {
+            mallCleanTimer = 20 + Math.random() * 8;
+            mallNeedsCleaning = true;
+          }
+        } else if (emp.land2Staff && (emp.land2Staff.facilityTech || emp.land2Staff.land2Manager)) {
+          mallNeedsCleaning = false;
+          land2Floats.push({ x: 220, y: 340, text: "✨ Teknik Ekip Bakımı Yaptı!", color: "#38bdf8", life: 1.3 });
+        }
+      }
+
       const totalRent = getMallTotalCycleRent(emp);
       if (totalRent > 0) {
-        mallRentProgress += dt / 7.5;
+        const cleanMult = mallNeedsCleaning ? 0.45 : 1.0;
+        mallRentProgress += (dt / 7.5) * cleanMult;
         if (mallRentProgress >= 1) {
           mallRentProgress -= 1;
           data.cash += totalRent;
@@ -1130,7 +1195,37 @@ window.EmpireSystem = (function () {
       MR.drawCustomerCharacter(ctx, v.x, v.y, v.shirt, v.hair, v.leaving ? "" : v.icon, v.phase);
     });
 
-    // 6. Uçan Gelir Yazıları
+    // 6. Uçan Gelir Yazıları & Canlı 2. Arazi İşlem Balonları!
+    const waitingGateCars = parkingCars.filter((c) => c.waitingAtBooth).length;
+    if (waitingGateCars > 0) {
+      const b = Math.sin(Date.now() * 0.01) * 3;
+      MR.rr(ctx, 344, 108 + b, 114, 26, 7, "#dc2626", "#fef08a", 2);
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 9.5px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`🎫 ÜCRET AL (${waitingGateCars})!`, 401, 125 + b);
+    }
+
+    if (emp.mallUnlocked && mallDeliveryWaiting) {
+      // AVM Mal Kabul Kamyonu + Tıklanabilir Koli Balonu!
+      MR.drawDetailedVehicle(ctx, 92, 304, "#ea580c", "truck", Math.PI / 2, { nightIntensity: phase.night });
+      const b = Math.sin(Date.now() * 0.01) * 3;
+      MR.rr(ctx, 44, 270 + b, 112, 25, 7, "#d97706", "#fef08a", 2);
+      ctx.fillStyle = "#090d1a";
+      ctx.font = "900 9.5px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("📦 MAL KABUL YAP!", 100, 286 + b);
+    }
+
+    if (emp.mallUnlocked && mallNeedsCleaning) {
+      const b = Math.sin(Date.now() * 0.011) * 3;
+      MR.rr(ctx, 110, 352 + b, 128, 26, 7, "#dc2626", "#fef08a", 2);
+      ctx.fillStyle = "#fff";
+      ctx.font = "900 9.5px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("🧹 AVM BAKIM YAP!", 174, 369 + b);
+    }
+
     land2Floats.forEach((f) => {
       ctx.globalAlpha = Math.min(1, f.life);
       ctx.font = "900 13.5px sans-serif";
@@ -1222,6 +1317,16 @@ window.EmpireSystem = (function () {
           </button>
         </div>
 
+        <div class="upgrade-card" style="border-color:#38bdf8;">
+          <div class="up-info">
+            <h3>👮 Otopark Çıkış Gişe Görevlisi</h3>
+            <p>Sen dokunmadan bariyerde bekleyen araçlardan ücreti otomatik tahsil eder!</p>
+          </div>
+          <button id="btnBuyGateOff" class="up-buy-btn" ${emp.land2Staff.gateOfficer ? "disabled" : ""}>
+            ${emp.land2Staff.gateOfficer ? "GÖREVDE ✓" : "4200 ₺"}
+          </button>
+        </div>
+
         <div class="rep-section" style="border-color:#22c55e; margin-top:6px;">
           <h4>💳 OTOPARKTAN ŞAHSİ MAAŞINI SEÇ</h4>
           <p style="font-size:12px; color:#cbd5e1; margin-bottom:6px;">Otopark gelirinden hem her araç çıkışında canlı avans hem de gün sonunda maaş yatar!</p>
@@ -1284,6 +1389,24 @@ window.EmpireSystem = (function () {
         });
       }
 
+      const gateBtn = document.getElementById("btnBuyGateOff");
+      if (gateBtn && !emp.land2Staff.gateOfficer) {
+        gateBtn.addEventListener("click", () => {
+          if (data.cash < 4200) {
+            helpers.sfx.burnFail();
+            return helpers.showToast("Gişe görevlisi için 4.200 ₺ gerekli!");
+          }
+          data.cash -= 4200;
+          emp.land2Staff.gateOfficer = true;
+          parkingCars.forEach((c) => { if (c.waitingAtBooth) c.manualGateApproved = true; });
+          helpers.sfx.perfectHit();
+          helpers.showToast("👮 Otopark Gişe Görevlisi işe başladı! Çıkış bariyeri artık otomatik!");
+          helpers.saveGame();
+          helpers.updateHUD();
+          renderLand2Modal(data, helpers);
+        });
+      }
+
       body.querySelectorAll(".park-sal-quick").forEach((b) => {
         b.addEventListener("click", () => {
           emp.parkingSalary = Number(b.dataset.amt);
@@ -1320,6 +1443,36 @@ window.EmpireSystem = (function () {
       <p style="font-size:12.5px; color:#cbd5e1; margin-bottom:9px;">
         AVM'deki dükkanların önce <strong>tapusunu satın al</strong>, ardından kurumsal veya ciro ortaklı markaya <strong>kiraya ver!</strong> ${emp.parkingUnlocked ? `<span style="color:#38bdf8; font-weight:800;">(🅿️ Otopark Yoğunluk Bonusu: +%${parkBonusPct})</span>` : ""}
       </p>
+
+      <div class="upgrade-card" style="border-color:#fde047;">
+        <div class="up-info">
+          <h3>📦 AVM Mal Kabul Sorumlusu</h3>
+          <p>Sevkiyat kamyonlarını otomatik boşaltıp her seferde +140 ₺ kazandırır.</p>
+        </div>
+        <button id="btnBuyDockStf" class="up-buy-btn" ${emp.land2Staff.dockWorker ? "disabled" : ""}>
+          ${emp.land2Staff.dockWorker ? "GÖREVDE ✓" : "6200 ₺"}
+        </button>
+      </div>
+
+      <div class="upgrade-card" style="border-color:#38bdf8;">
+        <div class="up-info">
+          <h3>🧹 AVM Temizlik &amp; Klima Ekibi</h3>
+          <p>AVM bakım ve temizliğini otomatik yaparak kiraların yavaşlamasını önler!</p>
+        </div>
+        <button id="btnBuyTechStf" class="up-buy-btn" ${emp.land2Staff.facilityTech ? "disabled" : ""}>
+          ${emp.land2Staff.facilityTech ? "GÖREVDE ✓" : "7800 ₺"}
+        </button>
+      </div>
+
+      <div class="upgrade-card" style="border-color:#22c55e;">
+        <div class="up-info">
+          <h3>👔 2. Arazi &amp; AVM Genel Müdürü</h3>
+          <p>Otopark gişesi, mal kabul ve AVM bakımının tamamını tek başına %100 otopilot yönetir!</p>
+        </div>
+        <button id="btnBuyL2Mgr" class="up-buy-btn" ${emp.land2Staff.land2Manager ? "disabled" : ""}>
+          ${emp.land2Staff.land2Manager ? "OTOPİLOT ✓" : "18500 ₺"}
+        </button>
+      </div>
     `;
 
     MALL_SHOPS.forEach((shop) => {
@@ -1386,6 +1539,43 @@ window.EmpireSystem = (function () {
 
     body.innerHTML = html;
 
+    const dockB = document.getElementById("btnBuyDockStf");
+    if (dockB && !emp.land2Staff.dockWorker) {
+      dockB.addEventListener("click", () => {
+        if (data.cash < 6200) { helpers.sfx.burnFail(); return helpers.showToast("6.200 ₺ gerekli!"); }
+        data.cash -= 6200;
+        emp.land2Staff.dockWorker = true;
+        helpers.sfx.perfectHit();
+        helpers.showToast("📦 AVM Mal Kabul Sorumlusu göreve başladı!");
+        helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+      });
+    }
+    const techB = document.getElementById("btnBuyTechStf");
+    if (techB && !emp.land2Staff.facilityTech) {
+      techB.addEventListener("click", () => {
+        if (data.cash < 7800) { helpers.sfx.burnFail(); return helpers.showToast("7.800 ₺ gerekli!"); }
+        data.cash -= 7800;
+        emp.land2Staff.facilityTech = true;
+        mallNeedsCleaning = false;
+        helpers.sfx.perfectHit();
+        helpers.showToast("🧹 AVM Temizlik & Teknik Ekip göreve başladı!");
+        helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+      });
+    }
+    const mgrB = document.getElementById("btnBuyL2Mgr");
+    if (mgrB && !emp.land2Staff.land2Manager) {
+      mgrB.addEventListener("click", () => {
+        if (data.cash < 18500) { helpers.sfx.burnFail(); return helpers.showToast("18.500 ₺ gerekli!"); }
+        data.cash -= 18500;
+        emp.land2Staff.land2Manager = true;
+        mallNeedsCleaning = false;
+        parkingCars.forEach((c) => { if (c.waitingAtBooth) c.manualGateApproved = true; });
+        helpers.sfx.perfectHit();
+        helpers.showToast("👔 2. Arazi & AVM Genel Müdürü atandı! Tam otopilot aktif!");
+        helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+      });
+    }
+
     body.querySelectorAll(".shop-action-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const key = btn.dataset.shop;
@@ -1451,6 +1641,41 @@ window.EmpireSystem = (function () {
           helpers.showToast(`Yan Arazi tapusu için Şirket Kasasında ${LAND2_COST} ₺ gerekli!`);
         }
       }
+      return;
+    }
+
+    // 0. Canlı Manuel İşlem Tıklamaları (Gişe Tahsilatı, AVM Mal Kabul, AVM Bakım)
+    if (emp.parkingUnlocked && pt.x >= 340 && pt.y >= 78 && pt.y <= 145) {
+      const waiting = parkingCars.filter((c) => c.waitingAtBooth);
+      if (waiting.length > 0) {
+        waiting.forEach((c) => { c.manualGateApproved = true; c.waitingAtBooth = false; });
+        helpers.sfx.tap();
+        return;
+      }
+    }
+
+    if (emp.mallUnlocked && mallDeliveryWaiting && pt.x >= 40 && pt.x <= 165 && pt.y >= 265 && pt.y <= 325) {
+      mallDeliveryWaiting = false;
+      const bonus = 185;
+      data.cash += bonus;
+      if (data.daily) {
+        data.daily.mallIncome = (data.daily.mallIncome || 0) + bonus;
+        data.daily.land2Income = (data.daily.land2Income || 0) + bonus;
+      }
+      helpers.sfx.cashRegister();
+      land2Floats.push({ x: 100, y: 288, text: `📦 Mal Kabul +${bonus} ₺`, color: "#fde047", life: 1.5 });
+      helpers.saveGame();
+      helpers.updateHUD();
+      return;
+    }
+
+    if (emp.mallUnlocked && mallNeedsCleaning && pt.x >= 95 && pt.x <= 250 && pt.y >= 345 && pt.y <= 390) {
+      mallNeedsCleaning = false;
+      data.cash += 95;
+      helpers.sfx.perfectHit();
+      land2Floats.push({ x: 174, y: 358, text: "✨ Bakım Yapıldı +95 ₺", color: "#38bdf8", life: 1.4 });
+      helpers.saveGame();
+      helpers.updateHUD();
       return;
     }
 
@@ -1875,6 +2100,7 @@ window.EmpireSystem = (function () {
         <div class="rep-row"><span>🅿️ Otopark Maaşın</span><span class="val-pos">+${sal.parkingSal} ₺/gün</span></div>
         <div class="rep-row"><span>🏬 2. Arazi &amp; AVM Maaşın</span><span class="val-pos">+${sal.land2Sal} ₺/gün</span></div>
         <div class="rep-row"><span>🎡 3. Arazi Maaşın</span><span class="val-pos">+${sal.land3Sal} ₺/gün</span></div>
+        <div class="rep-row"><span>🗺️ 4.–10. Araziler Maaşın</span><span class="val-pos">+${sal.extraSal || 0} ₺/gün</span></div>
         <div class="rep-row"><span>🏠 Emlak Kira Geliri</span><span class="val-pos">+${calcDailyRent(emp)} ₺/gün</span></div>
         <div class="rep-row"><span>📈 Hisse Portföyü</span><span class="val-pos">${calcPortfolioValue(emp)} ₺</span></div>
         <div class="rep-row"><span>🏢 Şirket Kasası</span><span style="color:#fde047; font-weight:900;">${Math.round(data.cash)} ₺</span></div>

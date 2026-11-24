@@ -6,6 +6,7 @@
   const SE = window.ScenarioEngine;
   const EMP = window.EmpireSystem;
   const L3 = window.Land3System;
+  const XL = window.ExtraLandsSystem;
 
   const SAVE_KEY = "son_istasyon_v12_pro";
   const LEGACY_KEYS = ["son_istasyon_v11_pro", "son_istasyon_v9_pro", "son_istasyon_v8_pro", "son_istasyon_v7_pro"];
@@ -49,6 +50,7 @@
       land3FleetIncome: 0,
       land3FleetTrips: 0,
       land3ResortIncome: 0,
+      extraLandIncomes: {},
       eventIncome: 0,
       tankerCost: 0,
       eventLoss: 0,
@@ -209,6 +211,18 @@
       total += 55;
       breakdown.push({ label: "👔 İstasyon Müdürü Kemal", amount: 55 });
     }
+    if (data.empire && data.empire.land2Staff) {
+      const s2 = data.empire.land2Staff;
+      if (s2.gateOfficer) { total += 32; breakdown.push({ label: "👮 Otopark Gişe Görevlisi", amount: 32 }); }
+      if (s2.dockWorker) { total += 36; breakdown.push({ label: "📦 AVM Mal Kabul Sorumlusu", amount: 36 }); }
+      if (s2.facilityTech) { total += 40; breakdown.push({ label: "🧹 AVM Temizlik & Teknik Ekip", amount: 40 }); }
+      if (s2.land2Manager) { total += 65; breakdown.push({ label: "👔 2. Arazi & AVM Müdürü", amount: 65 }); }
+    }
+    if (XL && data.empire && data.empire.extraLands) {
+      const extW = XL.calcDailyExtraWages(data.empire.extraLands);
+      total += extW.total;
+      extW.breakdown.forEach((b) => breakdown.push(b));
+    }
     return { total, breakdown };
   }
 
@@ -289,6 +303,9 @@
     tabStationBtn: document.getElementById("tabStationBtn"),
     tabLand2Btn: document.getElementById("tabLand2Btn"),
     tabLand3Btn: document.getElementById("tabLand3Btn"),
+    openLandsDirBtn: document.getElementById("openLandsDirBtn"),
+    landsDirectoryModal: document.getElementById("landsDirectoryModal"),
+    closeLandsDirBtn: document.getElementById("closeLandsDirBtn"),
     openCityBtn: document.getElementById("openCityBtn"),
     personalCashTop: document.getElementById("personalCashTop"),
     openPhoneBtn: document.getElementById("openPhoneBtn"),
@@ -507,9 +524,14 @@
     if (el.tabLand3Btn) {
       el.tabLand3Btn.classList.toggle("active", activeLand === "land3");
       const l3Owned = !!(data.empire.land3 && data.empire.land3.owned);
-      el.tabLand3Btn.textContent = l3Owned ? "🎡 3. Arazi" : "🏗️ 3. Arazi";
+      el.tabLand3Btn.textContent = l3Owned ? "🎡 3.Park" : "🏗️ 3.Arsa";
     }
-    el.tabLand2Btn.textContent = data.empire.land2Owned ? "🛍️ 2. Arazi" : "🏗️ 2. Arazi";
+    if (el.openLandsDirBtn) {
+      const isExtra = activeLand.startsWith("land") && activeLand !== "land2" && activeLand !== "land3";
+      el.openLandsDirBtn.classList.toggle("active", isExtra);
+      el.openLandsDirBtn.textContent = isExtra ? `📍 ${activeLand.replace("land", "")}.Arazi` : "🗺️ 10 Arazi";
+    }
+    el.tabLand2Btn.textContent = data.empire.land2Owned ? "🛍️ 2.AVM" : "🏗️ 2.Arsa";
     el.openPhoneBtn.classList.toggle("locked", !data.empire.electronics.phone);
     el.openPhoneBtn.textContent = data.empire.electronics.phone ? "📱 Tel" : "🔒 Tel";
   }
@@ -832,7 +854,27 @@
     const l3ResortRev = d.land3ResortIncome || 0;
     const land3SubTotal = l3ThemeRev + l3RefRev + l3FleetRev + l3ResortRev;
 
-    const totalRev = stationSubTotal + land2SubTotal + land3SubTotal;
+    // 4..10 Araziler Alt Toplamı & Satırları
+    const extMap = d.extraLandIncomes || {};
+    let extraSubTotal = 0;
+    let extraLinesHtml = "";
+    if (XL && data.empire.extraLands) {
+      XL.EXTRA_LANDS.forEach((l) => {
+        const st = data.empire.extraLands[l.id];
+        const earned = extMap[l.id] || 0;
+        extraSubTotal += earned;
+        if ((st && st.owned) || earned > 0) {
+          const pDef = st && st.projectKey ? XL.getProjectDef(st.projectKey) : null;
+          const lbl = pDef ? `${pDef.emoji} ${l.num}. Arazi (${pDef.name})` : `🏞️ ${l.num}. Arazi (Boş Tapu)`;
+          extraLinesHtml += `<div class="rep-row"><span>${lbl}</span><span class="val-pos">+${Math.round(earned)} ₺</span></div>`;
+        }
+      });
+    }
+    if (!extraLinesHtml) {
+      extraLinesHtml = `<div class="rep-row"><span style="color:#94a3b8;">Henüz 4.–10. arazi satın alınmadı</span><span>0 ₺</span></div>`;
+    }
+
+    const totalRev = stationSubTotal + land2SubTotal + land3SubTotal + extraSubTotal;
     const totalCost = d.tankerCost + wages.total + utility + d.eventLoss;
     const net = totalRev - totalCost;
     const dailyRent = EMP.calcDailyRent(data.empire);
@@ -909,6 +951,12 @@
         <div class="rep-row"><span>🏖️ Bungalov &amp; Termal Köy Kiraları</span><span class="val-pos">+${Math.round(l3ResortRev)} ₺</span></div>
       </div>
 
+      <!-- 4..10 ARAZİLER DÖKÜMÜ -->
+      <div class="rep-section" style="border-color:#facc15;">
+        <h4>🗺️ 4.–10. ARAZİLER — OTEL &amp; MEGA PROJELER (+${Math.round(extraSubTotal)} ₺)</h4>
+        ${extraLinesHtml}
+      </div>
+
       <!-- GİDERLER -->
       <div class="rep-section">
         <h4>📉 ŞİRKET GİDERLERİ (-${Math.round(totalCost)} ₺)</h4>
@@ -929,6 +977,7 @@
         <div class="rep-row"><span>🅿️ Ücretli Otopark Maaşın</span><span class="val-pos">+${sal.parkingSal} ₺</span></div>
         <div class="rep-row"><span>🏬 2. Arazi &amp; AVM Maaşın</span><span class="val-pos">+${sal.land2Sal} ₺</span></div>
         <div class="rep-row"><span>🎡 3. Arazi Maaşın</span><span class="val-pos">+${sal.land3Sal || 0} ₺</span></div>
+        <div class="rep-row"><span>🗺️ 4.–10. Araziler Maaşın</span><span class="val-pos">+${sal.extraSal || 0} ₺</span></div>
         <div class="rep-row"><span>🏠 Şahsi Emlak Kiraların</span><span class="val-pos">+${dailyRent} ₺</span></div>
         <div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:3px;">
           <span><strong>💼 Toplam Yatırılan Maaş</strong></span>
@@ -1772,6 +1821,11 @@
       ctx.restore();
       return;
     }
+    if (activeLand.startsWith("land") && activeLand !== "land2" && activeLand !== "land3" && XL) {
+      XL.renderExtraLand(ctx, WORLD_W, WORLD_H, phase, data, MR, activeLand);
+      ctx.restore();
+      return;
+    }
 
     // 1. 3D Stilize Zemin Haritası
     MR.drawGround(ctx, WORLD_W, WORLD_H, phase.night);
@@ -2097,6 +2151,10 @@
     }
     if (activeLand === "land3" && L3) {
       L3.handleLand3Click(pt, data, empireHelpers);
+      return;
+    }
+    if (activeLand.startsWith("land") && activeLand !== "land2" && activeLand !== "land3" && XL) {
+      XL.handleExtraLandClick(pt, data, empireHelpers, activeLand);
       return;
     }
 
@@ -2661,6 +2719,14 @@
       el.liveHintText.textContent = l3Owned
         ? "🏎️ Go-Kart • 🏭 Rafineri & 10 Tır Filosu • 🏖️ Tatil Köyü!"
         : "🎡 3. Arazi tapusunu alıp Go-Kart, Tır Filosu ve Tatil Köyü kur!";
+    } else if (land.startsWith("land") && XL) {
+      const lDef = XL.getLandDef(land);
+      const st = data.empire.extraLands && data.empire.extraLands[land];
+      el.liveHintText.textContent = !st || !st.owned
+        ? `🏞️ ${lDef.name}: Tapuyu alıp 6 dev projeden birini seç!`
+        : !st.projectKey
+        ? `🏗️ ${lDef.num}. Arazi: 6 projeden birini (Grand Otel vb.) seç!`
+        : `👆 Önce müşteri/temizlikle sen ilgilen, büyüdükçe eleman al!`;
     } else {
       el.liveHintText.textContent = "👆 Pompadaki araca dokun / basılı tut!";
     }
@@ -2670,6 +2736,17 @@
   el.tabStationBtn.addEventListener("click", () => switchLand("station"));
   el.tabLand2Btn.addEventListener("click", () => switchLand("land2"));
   if (el.tabLand3Btn) el.tabLand3Btn.addEventListener("click", () => switchLand("land3"));
+
+  if (el.openLandsDirBtn) {
+    el.openLandsDirBtn.addEventListener("click", () => {
+      sfx.tap();
+      if (XL) XL.renderLandsDirectory(data, activeLand, (selected) => switchLand(selected));
+      el.landsDirectoryModal.classList.remove("hidden");
+    });
+  }
+  if (el.closeLandsDirBtn) {
+    el.closeLandsDirBtn.addEventListener("click", () => el.landsDirectoryModal.classList.add("hidden"));
+  }
 
   el.managerAlertBar.addEventListener("click", () => {
     switchLand("station");
