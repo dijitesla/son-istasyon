@@ -31,6 +31,8 @@
       motelIncome: 0,
       scaleIncome: 0,
       serviceIncome: 0,
+      parkingIncome: 0,
+      mallIncome: 0,
       land2Income: 0,
       eventIncome: 0,
       tankerCost: 0,
@@ -267,6 +269,8 @@
 
   let activeLand = "station"; // "station" | "land2"
   let managerAlertTargetCar = null;
+  let kemalEmergencyCooldown = 210; // Müdür Kemal çok acil bir kriz olmadıkça en az ~4 dk boyunca patronu aramaz!
+  let kemalOutageFixTimer = 0;
 
   let toastTimer = null;
   function showToast(msg) {
@@ -731,6 +735,10 @@
     const wages = calcDailyStaffWages();
     const utility = calcDailyUtilityCost();
 
+    const parkingRev = d.parkingIncome || 0;
+    const mallRev = d.mallIncome || 0;
+    const towersRev = Math.max(0, (d.land2Income || 0) - mallRev);
+
     const totalRev =
       d.fuelIncome +
       d.evIncome +
@@ -739,20 +747,21 @@
       d.motelIncome +
       d.scaleIncome +
       d.serviceIncome +
+      parkingRev +
       (d.land2Income || 0) +
       d.eventIncome;
     const totalCost = d.tankerCost + wages.total + utility + d.eventLoss;
     const net = totalRev - totalCost;
     const dailyRent = EMP.calcDailyRent(data.empire);
+    const sal = EMP.calcSalaryBreakdown(data.empire);
     let paidSalary = 0;
 
     if (isDayEnd) {
       const endDeduction = wages.total + utility;
       data.cash = Math.max(0, data.cash - endDeduction);
 
-      // Kendi Belirlediğin Günlük Maaşın Şirket Kasasından Şahsi Cüzdanına Yatar!
-      const wantedSal = Math.max(0, data.empire.dailySalary || 0);
-      paidSalary = Math.min(Math.floor(data.cash), wantedSal);
+      // İstasyon + Otopark + Yan Arazi/AVM Maaşlarının Tamamı Şirket Kasasından Şahsi Cüzdanına Yatar!
+      paidSalary = Math.min(Math.floor(data.cash), sal.total);
       data.cash -= paidSalary;
       data.empire.personalCash += paidSalary + dailyRent;
 
@@ -760,7 +769,7 @@
       el.repModalBadge.textContent = "Vardiya Kapandı";
       el.closeDayReportBtn.textContent = `GÜN ${data.dayNumber + 1}'E BAŞLA ➔`;
     } else {
-      paidSalary = data.empire.dailySalary || 0;
+      paidSalary = sal.total;
       el.repModalTitle.textContent = `📊 Gün ${data.dayNumber} Canlı Bilanço`;
       el.repModalBadge.textContent = "Anlık Özet";
       el.closeDayReportBtn.textContent = "HARİTAYA DÖN ➔";
@@ -783,7 +792,9 @@
         <div class="rep-row"><span>🏨 Mini Motel (${d.motelGuests} oda)</span><span class="val-pos">+${Math.round(d.motelIncome)} ₺</span></div>
         <div class="rep-row"><span>🚛 Tır Kantarı (${d.trucksWeighed} tır)</span><span class="val-pos">+${Math.round(d.scaleIncome)} ₺</span></div>
         <div class="rep-row"><span>🚿 Yıkama &amp; 🔧 Tamirhane</span><span class="val-pos">+${Math.round(d.serviceIncome)} ₺</span></div>
-        <div class="rep-row"><span>🛍️ Yan Arazi (Outlet &amp; Plaza)</span><span class="val-pos">+${Math.round(d.land2Income || 0)} ₺</span></div>
+        <div class="rep-row"><span>🅿️ Ücretli Otopark Gişesi</span><span class="val-pos">+${Math.round(parkingRev)} ₺</span></div>
+        <div class="rep-row"><span>🏬 Otoyol AVM Mağaza Kiraları</span><span class="val-pos">+${Math.round(mallRev)} ₺</span></div>
+        <div class="rep-row"><span>🏢 Yan Arazi Lojistik &amp; Plaza</span><span class="val-pos">+${Math.round(towersRev)} ₺</span></div>
         <div class="rep-row"><span>🕵️ Özel Olay Ödülleri</span><span class="val-pos">+${Math.round(d.eventIncome)} ₺</span></div>
       </div>
 
@@ -801,8 +812,14 @@
 
       <div class="rep-section" style="border-color:#22c55e;">
         <h4>💳 PATRON ŞAHSİ CÜZDAN (${isDayEnd ? "Yatırıldı!" : "Gün Sonu Yatar"})</h4>
-        <div class="rep-row"><span>💼 Şahsi Maaşın (Şirketten)</span><span class="val-pos">+${paidSalary} ₺</span></div>
+        <div class="rep-row"><span>⛽ İstasyon Maaşın</span><span class="val-pos">+${sal.stationSal} ₺</span></div>
+        <div class="rep-row"><span>🅿️ Ücretli Otopark Maaşın</span><span class="val-pos">+${sal.parkingSal} ₺</span></div>
+        <div class="rep-row"><span>🏬 Yan Arazi &amp; AVM Maaşın</span><span class="val-pos">+${sal.land2Sal} ₺</span></div>
         <div class="rep-row"><span>🏠 Emlak Kira Gelirlerin</span><span class="val-pos">+${dailyRent} ₺</span></div>
+        <div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:3px;">
+          <span><strong>💼 Toplam Yatırılan Maaş</strong></span>
+          <span class="val-pos">+${paidSalary} ₺</span>
+        </div>
         <div class="rep-row"><span><strong>💳 Güncel Şahsi Cüzdanın</strong></span><span class="val-pos">${Math.round(data.empire.personalCash)} ₺</span></div>
       </div>
 
@@ -885,15 +902,30 @@
       }
     });
 
-    // 👔 TEMKİNLİ İSTASYON MÜDÜRÜ KEMAL BEY OTOPİLOT & KRİZ BİLDİRİM SİSTEMİ
+    // 👔 SAKİN VE TEMKİNLİ İSTASYON MÜDÜRÜ KEMAL BEY OTOPİLOT SİSTEMİ
+    // Çok acil bir kriz olmadıkça patronu ASLA rahatsız etmez, istasyonu sessizce yönetir!
+    if (kemalEmergencyCooldown > 0) kemalEmergencyCooldown = Math.max(0, kemalEmergencyCooldown - dt);
+
     if (data.empire.managerHired) {
-      // 1. Depo %22'nin altına inerse temkinli tanker çağırır!
+      // 1. Depo %22'nin altına inerse sessizce tanker çağırır!
       if (!tanker && data.fuelStock < maxFuelCapacity() * 0.22 && data.cash >= tankerRefillCost()) {
         callFuelTanker(true);
-        EMP.addManagerLog(data.empire, "👔 Kemal Bey: Depo %22 altına inince yakıt tankerini temkinle çağırdım.");
+        EMP.addManagerLog(data.empire, "👔 Kemal Bey: Depo %22 altına inince yakıt tankerini sessizce çağırdım.");
       }
 
-      // 2. Yan arazideyken işçi eksiği olan yerlere destek olur (istasyon asla tıkanmaz!)
+      // 2. Elektrik kesilirse patronu aramak yerine şalteri 2 saniyede kendi kaldırır!
+      if (powerOutage) {
+        kemalOutageFixTimer += dt;
+        if (kemalOutageFixTimer >= 2.0) {
+          powerOutage = false;
+          kemalOutageFixTimer = 0;
+          EMP.addManagerLog(data.empire, "👔 Kemal Bey: İstasyonda sigorta attı, sizi rahatsız etmeden hemen açtım.");
+        }
+      } else {
+        kemalOutageFixTimer = 0;
+      }
+
+      // 3. Yan arazideyken tüm istasyon tesislerini kesintisiz çalıştırır!
       if (activeLand === "land2") {
         cars.forEach((c) => {
           if (!c.isStory && c.pumpIdx >= 0 && (c.state === "waiting_fuel" || c.state === "fueling") && data.fuelStock > 1) {
@@ -908,43 +940,46 @@
         if (motelQueue.length > 0 && data.staff.selin === 0 && motelOccupants.length < maxMotelRooms() && !powerOutage) checkInOneMotelGuest();
       }
 
-      // 3. Özel Müşteriler: Rutin olanları temkinle güvenle çözer, KRİTİK olanlarda seni hemen arar!
+      // 4. Özel Müşteriler: %95'ini sessizce kendisi çözer; sadece ÇOK ACİL nadir krizlerde (4-5 dakikada en fazla 1 kez) arar!
       const waitingStory = cars.find((c) => c.isStory && c.state === "story_wait");
-      const CRITICAL_FAMILIES = ["brand_sponsor", "fleet_contract", "convoy_deal", "mystery_package", "parking_dispute", "followup_police"];
+      const RARE_EMERGENCY_FAMILIES = ["followup_police", "sabotage_tech"];
 
       if (waitingStory) {
         waitingStory.managerWait = (waitingStory.managerWait || 0) + dt;
-        const isCritical = !!(waitingStory.storyEvent.critical || CRITICAL_FAMILIES.includes(waitingStory.storyEvent.family));
-        if (isCritical) {
+        if (waitingStory.isRareEmergency === undefined) {
+          const isSevereType = RARE_EMERGENCY_FAMILIES.includes(waitingStory.storyEvent.family);
+          waitingStory.isRareEmergency = kemalEmergencyCooldown <= 0 && isSevereType;
+          if (waitingStory.isRareEmergency) {
+            kemalEmergencyCooldown = 260; // Bir daha en az 4.5 dakika boyunca patronu aramaz!
+          }
+        }
+
+        if (waitingStory.isRareEmergency && waitingStory.managerWait < 45) {
           managerAlertTargetCar = waitingStory;
-          el.managerAlertBar.textContent = `📞 MÜDÜR KEMAL ARIYOR: İstasyonda kritik karar var (${waitingStory.storyEvent.categoryTag || "Acil"})! Dokun & İncele!`;
+          el.managerAlertBar.textContent = `🚨 ÇOK ACİL — MÜDÜR KEMAL: İstasyonda büyük güvenlik krizi var! Müsait olunca dokun!`;
           el.managerAlertBar.classList.remove("hidden");
           if (!waitingStory.managerNotified) {
             waitingStory.managerNotified = true;
-            EMP.addManagerLog(data.empire, `🚨 ACİL: ${waitingStory.storyEvent.name} için kritik karar gerekiyor! İstasyona bekleniyorsun patron.`);
-            if (activeLand === "land2") showToast("📞 Müdür Kemal arıyor: İstasyonda acil müdahalen lazım!");
+            EMP.addManagerLog(data.empire, `🚨 ÇOK ACİL: ${waitingStory.storyEvent.name} için acil müdahalen gerekiyor patron!`);
           }
-        } else if (waitingStory.managerWait >= (activeLand === "land2" ? 2.2 : 5.5)) {
-          // Temkinli çözüm: Hata yapmaz, riskli şeye girmez, güvenli kâr + itibar/güvenlik!
-          const safeGain = 85;
+        } else if (waitingStory.managerWait >= (activeLand === "land2" ? 2.0 : 4.8)) {
+          // Sakin ve güvenli çözüm: Hata yapmaz, istasyonu aksatmaz!
+          const safeGain = 95;
           data.cash += safeGain;
           data.daily.eventIncome += safeGain;
           data.reputation = clamp(data.reputation + 4, 0, 100);
           data.security = clamp(data.security + 4, 0, 100);
           EMP.addManagerLog(
             data.empire,
-            `👔 Kemal Bey: ${waitingStory.storyEvent.name} (${waitingStory.storyEvent.plate}) olayını temkinle güvene aldı (+${safeGain}₺, ⭐+4, 🛡️+4).`
+            `👔 Kemal Bey: ${waitingStory.storyEvent.name} (${waitingStory.storyEvent.plate}) konusunu sessizce hallettim (+${safeGain}₺).`
           );
           if (activeLand === "station") {
-            addFloatingText(waitingStory.x, waitingStory.y - 24, `👔 Kemal Çözdü +${safeGain}₺`, "#fde047");
+            addFloatingText(waitingStory.x, waitingStory.y - 24, `👔 Kemal Halletti +${safeGain}₺`, "#fde047");
           }
+          el.managerAlertBar.classList.add("hidden");
           setCarExitPath(waitingStory, false);
           saveGame();
         }
-      } else if (powerOutage && activeLand === "land2") {
-        managerAlertTargetCar = null;
-        el.managerAlertBar.textContent = "📞 MÜDÜR KEMAL: İstasyonda şalter attı! Dokun ve sigortayı aç!";
-        el.managerAlertBar.classList.remove("hidden");
       } else {
         managerAlertTargetCar = null;
         el.managerAlertBar.classList.add("hidden");
@@ -1111,10 +1146,12 @@
         if (followWaypoints(car, dt, 10.5)) {
           if (car.isStory) {
             car.state = "story_wait";
-            sfx.doorBell();
-            el.liveHintText.textContent = "❗ Özel olay aracı geldi! Kırmızı ünlemli araca dokun!";
-            if (data.dumanHired && car.storyEvent.dumanHint && car.storyEvent.dumanHint.includes("hırl")) {
-              sfx.dogGrowl();
+            if (!(activeLand === "land2" && data.empire.managerHired)) {
+              sfx.doorBell();
+              el.liveHintText.textContent = "❗ Özel olay aracı geldi! Kırmızı ünlemli araca dokun!";
+              if (data.dumanHired && car.storyEvent.dumanHint && car.storyEvent.dumanHint.includes("hırl")) {
+                sfx.dogGrowl();
+              }
             }
           } else {
             car.state = "waiting_fuel";
@@ -2160,8 +2197,8 @@
     el.liveHintText.textContent =
       land === "land2"
         ? data.empire.land2Owned
-          ? "🛍️ Yan Arazi: İşletmelere dokunup inşa et & büyüt!"
-          : "🏗️ Yan Arazi tapusunu alıp 6 yeni iş kur!"
+          ? "🅿️ Otopark (20->150) & 🏬 AVM Dükkanları: Dokun kur ve kiraya ver!"
+          : "🏗️ Yan Arazi tapusunu alıp Otopark ve AVM kur!"
         : "👆 Pompadaki araca dokun / basılı tut!";
     updateHUD();
   }
@@ -2409,7 +2446,7 @@
     ];
 
     Object.assign(data, {
-      cash: 7500,
+      cash: 9500,
       fuelStock: 7500,
       tankLevel: 8,
       autoTanker: true,
