@@ -3060,15 +3060,61 @@
     });
   }
 
-  // URL parametresi (?kayit=yan-arazi) veya mevcut kayıt varsa açılış ekranını atlayıp doğrudan kaldığı yerden başlat!
+  function applyV15Checkpoint() {
+    applyFullStationPreset();
+    data.lpgUnlocked = true;
+    data.lpgLvl = 4;
+    data.towUnlocked = true;
+    data.towLvl = 4;
+    data.busBakeryUnlocked = true;
+    data.busBakeryLvl = 4;
+    data.cash = 125000;
+    data.dayNumber = 22;
+
+    const emp = data.empire;
+    emp.land2Owned = true;
+    emp.parkingUnlocked = true;
+    emp.parkingCapLvl = 3;
+    emp.parkingFeeLvl = 3;
+    emp.parkingSalary = 500;
+    emp.mallUnlocked = true;
+    ["coffee", "burger", "supermarket", "fashion"].forEach((k) => {
+      emp.mallShops[k] = { owned: true, rented: true, lvl: 2, contract: "share" };
+    });
+    emp.land2Staff = { gateOfficer: true, dockWorker: true, facilityTech: true, land2Manager: true };
+    emp.land2Salary = 1000;
+
+    if (emp.land3) {
+      emp.land3.owned = true;
+      emp.land3.themeUnlocked = true;
+      emp.land3.themeLvl = 2;
+      emp.land3.refineryUnlocked = true;
+      emp.land3.fleetCount = 4;
+      emp.land3.resortUnlocked = true;
+      emp.land3.bungalows.b1 = { owned: true, rented: true, lvl: 2 };
+      emp.land3.bungalows.b2 = { owned: true, rented: true, lvl: 1 };
+      emp.land3.land3Salary = 1500;
+    }
+    emp.personalCash = 6500;
+    emp.electronics.phone = true;
+    saveGame();
+  }
+
+  // URL parametresi (?kayit=son-durum veya ?kayit=yan-arazi) veya mevcut kayıt varsa doğrudan kaldığı yerden başlat!
   try {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("kayit") === "yan-arazi") {
+    if (params.get("kayit") === "son-durum") {
+      applyV15Checkpoint();
+      try {
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch (_) {}
+      launchIntoMap("✅ v15.0 Son İlerlemen Yüklendi! Üstten '🗺️ 10 Arazi'ye basıp 4. Araziye Otel kurabilirsin!");
+    } else if (params.get("kayit") === "yan-arazi") {
       applyFullStationPreset();
       try {
         window.history.replaceState({}, "", window.location.pathname);
       } catch (_) {}
-      launchIntoMap("✅ Son ilerlemen açıldı! Üstten '🛍️ Yan Arazi'ye geçip arsayı alabilirsin!");
+      launchIntoMap("✅ Son ilerlemen açıldı! Üstten '🛍️ 2.AVM'ye geçip arsayı alabilirsin!");
     } else if (data.totalServed > 0 || data.pumpsUnlocked > 1 || data.dayNumber > 1 || (data.empire && data.empire.land2Owned)) {
       launchIntoMap();
     }
