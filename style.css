@@ -49,47 +49,358 @@ html, body {
   .phone-stage { max-width: 100%; max-height: 100dvh; border: none; }
 }
 
-/* ÜST BİLGİ ÇUBUĞU — BÜYÜK VE NET OKUNUR */
+/* ÜST BİLGİ ÇUBUĞU — YENİ NESİL PARLAK CAM EFEKTİ */
 .hud-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(env(safe-area-inset-top, 6px) + 6px) 10px 7px;
-  background: #070b16;
-  border-bottom: 2.5px solid #1e293b;
-  gap: 6px;
+  padding: calc(env(safe-area-inset-top, 6px) + 5px) 8px 6px;
+  background: linear-gradient(180deg, #0d1629 0%, #080e1c 100%);
+  border-bottom: 1.5px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+  gap: 4px;
   z-index: 12;
 }
 
 .hud-box {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: #131d33;
-  border: 2px solid #2b3b61;
+  gap: 3px;
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.96));
+  border: 1.5px solid rgba(100, 116, 139, 0.45);
   border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 15px;
+  padding: 4px 7px;
+  font-size: 12.5px;
   font-weight: 900;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
-.hud-cash { color: #4ade80; font-size: 16px; }
+.cat-pill {
+  display: inline-block;
+  background: linear-gradient(90deg, #be123c, #ea580c);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.4);
+}
+
+.hud-cash { color: #4ade80; font-size: 13px; }
 .hud-fuel { color: #fde68a; }
-.hud-level { color: #38bdf8; }
+.hud-rep { color: #facc15; }
+.hud-sec { color: #38bdf8; }
+.hud-sec.low { color: #f87171; border-color: #ef4444; }
+.hud-rep.low { color: #fb923c; border-color: #f97316; }
 
 .hud-icon-row {
   display: flex;
-  gap: 5px;
+  gap: 3px;
 }
 
 .icon-btn {
   background: #17233d;
-  border: 2px solid #334673;
+  border: 1.8px solid #334673;
   color: #fff;
-  border-radius: 10px;
-  padding: 6px 9px;
-  font-size: 15px;
+  border-radius: 9px;
+  padding: 4px 7px;
+  font-size: 13.5px;
   cursor: pointer;
+}
+
+.shift-pill {
+  background: #0b1324;
+  border: 1.5px solid #334155;
+  border-radius: 8px;
+  padding: 2px 7px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #93c5fd;
+  white-space: nowrap;
+}
+
+.effect-strip {
+  background: linear-gradient(90deg, #1e1b4b, #312e81);
+  border-bottom: 2px solid #4f46e5;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 900;
+  color: #fef08a;
+  text-align: center;
+}
+
+.effect-strip.danger {
+  background: linear-gradient(90deg, #7f1d1d, #991b1b);
+  border-bottom-color: #f87171;
+  color: #ffffff;
+}
+
+.effect-strip.hidden { display: none; }
+
+.impact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.impact-badge {
+  background: #1e293b;
+  border: 1.5px solid #334155;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.impact-badge.pos { color: #4ade80; border-color: #16a34a; }
+.impact-badge.neg { color: #f87171; border-color: #dc2626; }
+.impact-badge.info { color: #fde047; border-color: #ca8a04; }
+
+/* GÜN SONU KÂR / ZARAR RAPORU */
+.report-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rep-section {
+  background: #1e293b;
+  border: 1.5px solid #334155;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.rep-section h4 {
+  font-size: 13px;
+  font-weight: 900;
+  color: #93c5fd;
+  margin-bottom: 6px;
+  letter-spacing: 0.4px;
+}
+
+.rep-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 0;
+  color: #e2e8f0;
+}
+
+.rep-row .val-pos { color: #4ade80; font-weight: 900; }
+.rep-row .val-neg { color: #f87171; font-weight: 900; }
+
+.rep-net-box {
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 900;
+  border: 2px solid #22c55e;
+  background: rgba(22, 163, 74, 0.16);
+  color: #4ade80;
+}
+
+.rep-net-box.loss {
+  border-color: #ef4444;
+  background: rgba(220, 38, 38, 0.18);
+  color: #fca5a5;
+}
+
+/* BÖLGE SEKMELERİ, ŞEHİR & AKILLI TELEFON ARAYÜZÜ (v12.0) */
+.world-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.25fr 0.95fr;
+  gap: 5px;
+  padding: 5px 8px;
+  background: #0a1020;
+  border-bottom: 1.5px solid #1e293b;
+  z-index: 12;
+}
+
+.wtab-btn {
+  background: #131d33;
+  color: #cbd5e1;
+  border: 1.5px solid #334155;
+  border-radius: 9px;
+  padding: 5px 4px;
+  font-size: 11.5px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wtab-btn.active {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+  color: #090d1a;
+  border-color: #fde68a;
+}
+
+.wtab-btn.city-pill {
+  background: linear-gradient(180deg, #14532d, #052e16);
+  border-color: #22c55e;
+  color: #bbf7d0;
+}
+
+.wtab-btn.phone-pill {
+  background: linear-gradient(180deg, #0c4a6e, #082f49);
+  border-color: #38bdf8;
+  color: #e0f2fe;
+}
+
+.wtab-btn.phone-pill.locked {
+  opacity: 0.55;
+  background: #1e293b;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+.manager-alert-bar {
+  width: 100%;
+  background: linear-gradient(90deg, #b91c1c, #ea580c);
+  color: #fff;
+  border: none;
+  border-bottom: 2px solid #fde047;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  font-weight: 900;
+  text-align: center;
+  cursor: pointer;
+  animation: pulseWarn 0.95s infinite;
+}
+
+.manager-alert-bar.hidden { display: none; }
+
+.subtab-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.city-tab-btn, .phone-nav-btn {
+  background: #1e293b;
+  color: #cbd5e1;
+  border: 1.5px solid #334155;
+  border-radius: 9px;
+  padding: 7px 4px;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.city-tab-btn.active, .phone-nav-btn.active {
+  background: #0284c7;
+  border-color: #7dd3fc;
+  color: #fff;
+}
+
+.sal-btn {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1.5px solid #475569;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sal-btn.active {
+  background: #16a34a;
+  border-color: #86efac;
+  color: #fff;
+}
+
+.phone-bezel {
+  background: linear-gradient(180deg, #0b1120, #050811);
+  border: 3.5px solid #38bdf8;
+  border-radius: 26px;
+  box-shadow: 0 0 36px rgba(56, 189, 248, 0.35);
+}
+
+.phone-status-bar {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.phone-app-screen {
+  min-height: 290px;
+  max-height: 56dvh;
+  overflow-y: auto;
+}
+
+.phone-news-bar {
+  background: rgba(234, 179, 8, 0.14);
+  border: 1.5px solid #ca8a04;
+  color: #fef08a;
+  border-radius: 9px;
+  padding: 7px 9px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.stock-card {
+  background: #131d33;
+  border: 1.5px solid #2b3b61;
+  border-radius: 11px;
+  padding: 9px 10px;
+  margin-bottom: 7px;
+}
+
+.stock-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.stk-btn {
+  border: none;
+  border-radius: 7px;
+  padding: 6px 4px;
+  font-size: 11.5px;
+  font-weight: 900;
+  color: #fff;
+  cursor: pointer;
+}
+
+.stk-btn.buy { background: #16a34a; }
+.stk-btn.sell { background: #dc2626; }
+
+.social-post {
+  background: #131d33;
+  border: 1.5px solid #334155;
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 7px;
+}
+
+.chat-bubble {
+  background: #1e293b;
+  border-left: 3.5px solid #f59e0b;
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #f1f5f9;
 }
 
 /* İSTASYON DURUM / REHBER ŞERİDİ */

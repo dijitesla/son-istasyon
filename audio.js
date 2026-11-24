@@ -1,14 +1,13 @@
-// Son İstasyon v5.0 — Gelişmiş Ses, Lo-Fi Gece Radyosu Müziği ve Cam Silme Motoru
+// Son İstasyon v10.0 — Yumuşak, Rahatsız Etmeyen Modern Ses Motoru (Yağmur Sesi Kaldırıldı!)
 class SoundEngine {
   constructor() {
     this.ctx = null;
     this.muted = false;
-    this.musicOn = true;
-    this.rainNode = null;
-    this.rainGain = null;
+    this.musicOn = false; // Varsayılan sakin sessiz başlangıç; oyuncu isterse 🎵 ile yumuşak ambiyans açar
     this.musicTimer = null;
     this.chordStep = 0;
-    this.lastWipeSound = 0;
+    this.lastPumpTick = 0;
+    this.lastCashSound = 0;
   }
 
   init() {
@@ -23,16 +22,13 @@ class SoundEngine {
 
   toggleMute() {
     this.muted = !this.muted;
-    if (this.rainGain && this.ctx) {
-      this.rainGain.gain.setTargetAtTime(this.muted ? 0 : 0.024, this.ctx.currentTime, 0.1);
-    }
     return this.muted;
   }
 
   toggleMusic() {
     this.musicOn = !this.musicOn;
     if (this.musicOn) {
-      this.startLoFiMusic();
+      this.startChillMusic();
     } else if (this.musicTimer) {
       clearInterval(this.musicTimer);
       this.musicTimer = null;
@@ -40,51 +36,31 @@ class SoundEngine {
     return this.musicOn;
   }
 
-  vibrate(ms = 25) {
+  vibrate(ms = 15) {
     try {
       if (navigator.vibrate && !this.muted) navigator.vibrate(ms);
     } catch (_) {}
   }
 
+  // Eski çağrılarla uyumlu ama yağmur/cızırtı sesi TAMAMEN KALDIRILDI!
   startRainAmbience() {
     this.init();
-    if (!this.ctx) return;
-    if (!this.rainNode) {
-      const bufferSize = 2 * this.ctx.sampleRate;
-      const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const out = noiseBuffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) out[i] = Math.random() * 2 - 1;
-
-      const whiteNoise = this.ctx.createBufferSource();
-      whiteNoise.buffer = noiseBuffer;
-      whiteNoise.loop = true;
-
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = 860;
-      filter.Q.value = 0.75;
-
-      this.rainGain = this.ctx.createGain();
-      this.rainGain.gain.value = this.muted ? 0 : 0.024;
-
-      whiteNoise.connect(filter);
-      filter.connect(this.rainGain);
-      this.rainGain.connect(this.ctx.destination);
-      whiteNoise.start(0);
-      this.rainNode = whiteNoise;
-    }
-    if (this.musicOn) this.startLoFiMusic();
+    if (this.musicOn) this.startChillMusic();
   }
 
-  startLoFiMusic() {
+  startChillMusic() {
     this.init();
     if (!this.ctx || this.musicTimer || !this.musicOn) return;
 
-    // Sıcak gece radyosu akor dizisi: Am7 -> Fmaj7 -> Dm7 -> E7
+    // 8 akorlu çok yumuşak, fısıltı düzeyinde sıcak elektrik piyano ambiyansı
     const chords = [
-      [220.0, 261.63, 329.63, 392.0],
+      [196.0, 246.94, 293.66, 369.99],
+      [164.81, 196.0, 246.94, 293.66],
+      [146.83, 185.0, 220.0, 261.63],
+      [130.81, 164.81, 196.0, 246.94],
       [174.61, 220.0, 261.63, 329.63],
       [146.83, 174.61, 220.0, 261.63],
+      [196.0, 246.94, 293.66, 349.23],
       [164.81, 207.65, 246.94, 293.66]
     ];
 
@@ -99,233 +75,127 @@ class SoundEngine {
         const filter = this.ctx.createBiquadFilter();
         const gain = this.ctx.createGain();
 
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
 
         filter.type = "lowpass";
-        filter.frequency.setValueAtTime(680, now);
+        filter.frequency.setValueAtTime(480, now);
 
-        gain.gain.setValueAtTime(0.0001, now + idx * 0.06);
-        gain.gain.linearRampToValueAtTime(0.02, now + idx * 0.06 + 0.35);
-        gain.gain.exponentialRampToValueAtTime(0.0008, now + 2.5);
+        gain.gain.setValueAtTime(0.0001, now + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(0.009, now + idx * 0.08 + 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.0005, now + 3.4);
 
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(this.ctx.destination);
-        osc.start(now + idx * 0.06);
-        osc.stop(now + 2.6);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + 3.5);
       });
     };
 
     playChord();
-    this.musicTimer = setInterval(playChord, 2700);
+    this.musicTimer = setInterval(playChord, 3800);
   }
 
-  tone(freq, duration = 0.12, type = "sine", vol = 0.11, delay = 0) {
+  // Yumuşak filtreli, kliksiz sıcak ses üretici (ASLA cızırtılı kare/testere dalgası yok!)
+  softTone(freq, duration = 0.14, vol = 0.04, delay = 0, endFreq = null) {
     if (this.muted) return;
     this.init();
     if (!this.ctx) return;
     const now = this.ctx.currentTime + delay;
+
     const osc = this.ctx.createOscillator();
+    const filter = this.ctx.createBiquadFilter();
     const gain = this.ctx.createGain();
-    osc.type = type;
+
+    osc.type = "sine";
     osc.frequency.setValueAtTime(freq, now);
-    gain.gain.setValueAtTime(vol, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
-    osc.connect(gain);
+    if (endFreq) {
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+    }
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(1400, now);
+
+    // Yumuşak 10ms açılış + pürüzsüz sönüm (kulak yormaz!)
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(vol, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0005, now + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(this.ctx.destination);
     osc.start(now);
-    osc.stop(now + duration);
-  }
-
-  glassWipe() {
-    const nowMs = Date.now();
-    if (nowMs - this.lastWipeSound < 130) return;
-    this.lastWipeSound = nowMs;
-    this.tone(1250 + Math.random() * 250, 0.055, "sine", 0.035, 0);
-  }
-
-  thunder() {
-    this.tone(68, 0.45, "sawtooth", 0.09, 0);
-    this.tone(52, 0.65, "triangle", 0.11, 0.12);
-  }
-
-  doorBell() {
-    this.tone(659.25, 0.2, "triangle", 0.12, 0);
-    this.tone(523.25, 0.3, "triangle", 0.12, 0.15);
-  }
-
-  dogBark() {
-    this.tone(360, 0.09, "triangle", 0.14, 0);
-    this.tone(240, 0.11, "sawtooth", 0.1, 0.05);
-    this.tone(390, 0.09, "triangle", 0.14, 0.2);
-    this.tone(260, 0.12, "sawtooth", 0.1, 0.25);
-  }
-
-  dogGrowl() {
-    this.vibrate([30, 20, 40]);
-    this.tone(88, 0.32, "sawtooth", 0.11, 0);
-    this.tone(76, 0.35, "sawtooth", 0.12, 0.18);
-  }
-
-  landlineRing() {
-    this.vibrate([50, 40, 50]);
-    for (let i = 0; i < 5; i++) {
-      this.tone(i % 2 === 0 ? 920 : 1120, 0.055, "square", 0.09, i * 0.06);
-    }
-    for (let i = 0; i < 5; i++) {
-      this.tone(i % 2 === 0 ? 920 : 1120, 0.055, "square", 0.09, 0.42 + i * 0.06);
-    }
-  }
-
-  flashlightClick() {
-    this.tone(950, 0.04, "square", 0.07, 0);
-    this.tone(1320, 0.05, "sine", 0.06, 0.035);
-  }
-
-  coinChange() {
-    this.tone(1046.5, 0.08, "triangle", 0.11, 0);
-    this.tone(1396.9, 0.1, "sine", 0.1, 0.05);
-  }
-
-  ledgerWrite() {
-    this.tone(440, 0.06, "triangle", 0.09, 0);
-    this.tone(554.37, 0.08, "triangle", 0.09, 0.07);
-    this.tone(659.25, 0.14, "triangle", 0.1, 0.14);
-  }
-
-  pumpTick(pitch = 320) {
-    this.tone(pitch, 0.04, "square", 0.04, 0);
-  }
-
-  perfectHit() {
-    this.vibrate([20, 30, 40]);
-    this.tone(587.33, 0.1, "triangle", 0.13, 0);
-    this.tone(880, 0.14, "triangle", 0.14, 0.08);
-    this.tone(1174.66, 0.24, "triangle", 0.14, 0.16);
-  }
-
-  coffeeBrew() {
-    this.tone(260, 0.14, "sine", 0.08, 0);
-    this.tone(410, 0.17, "sine", 0.09, 0.12);
-    this.tone(590, 0.22, "triangle", 0.11, 0.25);
-  }
-
-  toastStart() {
-    this.tone(220, 0.08, "sawtooth", 0.08, 0);
-    this.tone(330, 0.09, "triangle", 0.08, 0.06);
-  }
-
-  toastReady() {
-    this.vibrate(25);
-    this.tone(880, 0.15, "triangle", 0.13, 0);
-    this.tone(1174.66, 0.24, "triangle", 0.13, 0.09);
-  }
-
-  shelfGrab() {
-    this.tone(510, 0.07, "sine", 0.1, 0);
-    this.tone(760, 0.11, "triangle", 0.1, 0.06);
-  }
-
-  idCardSlide() {
-    this.tone(380, 0.06, "triangle", 0.09, 0);
-    this.tone(620, 0.08, "sine", 0.08, 0.05);
-  }
-
-  powerOutage() {
-    this.vibrate([60, 40, 80]);
-    this.tone(280, 0.15, "sawtooth", 0.15, 0);
-    this.tone(140, 0.25, "sawtooth", 0.16, 0.12);
-    this.tone(75, 0.35, "square", 0.14, 0.25);
-  }
-
-  powerRestore() {
-    this.tone(220, 0.1, "sine", 0.1, 0);
-    this.tone(440, 0.12, "triangle", 0.12, 0.08);
-    this.tone(880, 0.24, "triangle", 0.13, 0.16);
-  }
-
-  burnFail() {
-    this.vibrate(50);
-    this.tone(160, 0.2, "sawtooth", 0.13, 0);
-    this.tone(112, 0.28, "sawtooth", 0.13, 0.13);
-  }
-
-  uvToggle() {
-    this.tone(420, 0.08, "sine", 0.08, 0);
-    this.tone(690, 0.15, "sine", 0.07, 0.05);
-  }
-
-  keypadBeep(digit = 5) {
-    this.tone(420 + digit * 36, 0.055, "sine", 0.085, 0);
-  }
-
-  pinUnlock() {
-    this.vibrate(30);
-    this.tone(660, 0.1, "triangle", 0.12, 0);
-    this.tone(990, 0.2, "triangle", 0.13, 0.09);
-  }
-
-  phoneBuzz() {
-    this.vibrate([40, 50, 40]);
-    this.tone(135, 0.15, "sawtooth", 0.1, 0);
-    this.tone(135, 0.15, "sawtooth", 0.1, 0.2);
-    this.tone(987.77, 0.14, "sine", 0.11, 0.42);
-    this.tone(1318.5, 0.2, "sine", 0.11, 0.53);
-  }
-
-  cameraClick() {
-    this.tone(1150, 0.04, "square", 0.055, 0);
-    this.tone(820, 0.05, "square", 0.05, 0.04);
-  }
-
-  alarmBlast() {
-    this.vibrate([50, 30, 50]);
-    this.tone(880, 0.13, "square", 0.13, 0);
-    this.tone(620, 0.13, "square", 0.13, 0.14);
-    this.tone(880, 0.17, "square", 0.13, 0.28);
-  }
-
-  cashRegister() {
-    this.tone(987.77, 0.11, "triangle", 0.13, 0);
-    this.tone(1318.51, 0.28, "triangle", 0.14, 0.09);
-  }
-
-  safeRoom() {
-    this.tone(523.25, 0.12, "triangle", 0.12, 0);
-    this.tone(659.25, 0.14, "triangle", 0.12, 0.1);
-    this.tone(783.99, 0.24, "triangle", 0.13, 0.2);
-  }
-
-  lockDoor() {
-    this.vibrate(35);
-    this.tone(140, 0.13, "square", 0.15, 0);
-    this.tone(92, 0.2, "sawtooth", 0.16, 0.1);
-  }
-
-  policeSiren() {
-    if (this.muted) return;
-    this.init();
-    if (!this.ctx) return;
-    this.vibrate([40, 40, 60]);
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(620, now);
-    osc.frequency.linearRampToValueAtTime(920, now + 0.25);
-    osc.frequency.linearRampToValueAtTime(620, now + 0.5);
-    osc.frequency.linearRampToValueAtTime(920, now + 0.75);
-    gain.gain.setValueAtTime(0.13, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.88);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.88);
+    osc.stop(now + duration + 0.02);
   }
 
   tap() {
-    this.tone(540, 0.038, "sine", 0.055, 0);
+    this.softTone(420, 0.055, 0.028, 0, 340);
+  }
+
+  doorBell() {
+    // Hoş, yumuşak iki notalı karşılama çanı
+    this.softTone(523.25, 0.18, 0.036, 0);
+    this.softTone(659.25, 0.24, 0.032, 0.11);
+  }
+
+  pumpTick(pitch = 320) {
+    // Sadece 240ms arayla çok hafif yumuşak dolum tıklaması
+    const now = Date.now();
+    if (now - this.lastPumpTick < 240) return;
+    this.lastPumpTick = now;
+    const clamped = Math.min(480, Math.max(240, pitch * 0.75));
+    this.softTone(clamped, 0.045, 0.016, 0, clamped * 1.08);
+  }
+
+  cashRegister() {
+    // Çok sık üst üste çalmasını önle (280ms koruma) + yumuşak kalimba/marimba tınısı
+    const now = Date.now();
+    if (now - this.lastCashSound < 280) return;
+    this.lastCashSound = now;
+    this.softTone(587.33, 0.11, 0.035, 0);
+    this.softTone(880.0, 0.18, 0.032, 0.075);
+  }
+
+  perfectHit() {
+    this.vibrate(15);
+    this.softTone(523.25, 0.12, 0.038, 0);
+    this.softTone(659.25, 0.14, 0.038, 0.08);
+    this.softTone(783.99, 0.24, 0.036, 0.16);
+  }
+
+  coffeeBrew() {
+    this.softTone(310, 0.15, 0.028, 0, 420);
+    this.softTone(460, 0.18, 0.026, 0.12, 540);
+  }
+
+  flashlightClick() {
+    this.softTone(620, 0.045, 0.024, 0, 480);
+  }
+
+  dogBark() {
+    this.softTone(290, 0.08, 0.036, 0, 210);
+    this.softTone(320, 0.09, 0.034, 0.14, 220);
+  }
+
+  dogGrowl() {
+    this.softTone(135, 0.22, 0.032, 0, 110);
+  }
+
+  burnFail() {
+    // Rahatsız edici cızırtı yerine yumuşak tok ahşap uyarı sesi
+    this.vibrate(25);
+    this.softTone(220, 0.14, 0.042, 0, 165);
+    this.softTone(165, 0.18, 0.038, 0.11, 130);
+  }
+
+  policeSiren() {
+    // Kulağı tırmalamayan kısa ve yumuşak uzaktan siren geçişi
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    this.softTone(490, 0.26, 0.032, 0, 620);
+    this.softTone(620, 0.28, 0.028, 0.26, 490);
   }
 }
 

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#090e1c" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Son İstasyon v7.0 — Gelişmiş İstasyon Yönetimi</title>
+  <title>Son İstasyon v12.0 — İkinci Arazi, Müdür &amp; Patron Yaşamı</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./assets/app-icon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./assets/app-icon.png" />
@@ -19,47 +19,61 @@
     <!-- AÇILIŞ EKRANI -->
     <section id="startScreen" class="start-screen">
       <div>
-        <div style="font-size: 13px; font-weight: 900; color: #fde68a; letter-spacing: 1.5px;">
-          2.5D CANLI HARİTA • EKİP YÖNETİMİ • GİZEM
+        <div style="font-size: 11.5px; font-weight: 900; color: #fde68a; letter-spacing: 1px;">
+          İSTASYON • YAN ARAZİ PLAZA • MÜDÜR • BORSA &amp; TELEFON
         </div>
         <h1 class="neon-logo">SON İSTASYON</h1>
         <p style="font-size: 14px; color: #cbd5e1; margin-top: 4px; font-weight: 700;">
-          v7.0 Gelişmiş Grafik &amp; Dengeli Ekonomi
+          v12.0 Dev İş &amp; Patron Yaşamı Simülasyonu
         </p>
       </div>
 
       <div class="intro-card">
-        <div style="font-weight: 900; color: #fde68a; font-size: 17px; margin-bottom: 6px;">
-          ⛽ Sıfırdan Dev Bir İstasyon Kur!
+        <div style="font-weight: 900; color: #fde68a; font-size: 16.5px; margin-bottom: 6px;">
+          ⛽ İstasyondan Holding Patronluğuna!
         </div>
-        <p>• Küçük bir pompadan başlayıp <strong>4 Pompa Adası, 7/24 Market, Oto Yıkama ve Tamirhane</strong> inşa et.</p>
-        <p style="margin-top: 6px;">• <strong>1.200 Litrelik</strong> büyük yakıt deponu yönet, 6 farklı çalışan işe alıp eğit.</p>
-        <p style="margin-top: 6px;">• Her 5 araçta bir gelen <strong>❗ ÖZEL MÜŞTERİ</strong> olaylarını çözerek büyük ödüller kazan!</p>
+        <p>• <strong>1. Arazi (İstasyon):</strong> 9 Pompa, EV Şarj, Mini Motel, Tır Kantarı, Restoran, Market, Yıkama &amp; Tamirhane kur; başına temkinli <strong>👔 Müdür Kemal</strong>'i ata!</p>
+        <p style="margin-top: 6px;">• <strong>2. Arazi (Yan Arsa):</strong> Tapuyu alıp <strong>Kahve, Hipermarket, Eğlence, Lojistik, Sinema ve Plaza</strong> kur!</p>
+        <p style="margin-top: 6px;">• <strong>Şahsi Maaş &amp; Telefon:</strong> Kendi maaşını belirle; Elektronikten <strong>📱 Akıllı Telefon</strong> alıp <strong>Borsa (Hisse Senedi)</strong>, <strong>YolGram</strong>, <strong>Emlakçı</strong> ve <strong>Galerici</strong> dünyasına gir!</p>
       </div>
 
       <button id="startGameBtn" class="primary-btn" style="font-size: 18px; padding: 16px;">
-        🚀 İSTASYONU AÇ VE YÖNET!
+        🚀 İMPARATORLUĞU BAŞLAT!
       </button>
     </section>
 
     <!-- ÜST BİLGİ ÇUBUĞU -->
     <header class="hud-bar">
-      <div class="hud-box hud-cash">💵 <span id="cashText">120</span> ₺</div>
-      <div class="hud-box hud-fuel">🛢️ <span id="fuelStockText">1200</span>L</div>
-      <div class="hud-box hud-level">⭐ Sv.<span id="stationLvlText">1</span></div>
+      <div class="hud-box hud-cash" title="Şirket Kasası">💵 <span id="cashText">120</span>₺</div>
+      <div class="hud-box hud-fuel" title="Ana Yakıt Deposu">🛢️ <span id="fuelStockText">1200</span>L</div>
+      <div class="hud-box hud-rep" title="İtibar">⭐ <span id="repText">50</span></div>
+      <div class="hud-box hud-sec" title="Güvenlik">🛡️ <span id="secText">65</span></div>
       <div class="hud-icon-row">
-        <button id="musicBtn" class="icon-btn" title="Müzik">🎵</button>
-        <button id="muteBtn" class="icon-btn" title="Ses">🔊</button>
+        <button id="reportBtn" class="icon-btn" title="Günlük Kâr/Zarar Raporu">📊</button>
+        <button id="musicBtn" class="icon-btn" title="Sakin Müzik">🔕</button>
+        <button id="muteBtn" class="icon-btn" title="Ses Efektleri">🔊</button>
       </div>
     </header>
 
-    <!-- REHBER & ÖZEL MÜŞTERİ SAYACI ŞERİDİ -->
+    <!-- BÖLGE GEÇİŞİ & PATRON YAŞAM ŞERİDİ -->
+    <nav class="world-tabs">
+      <button id="tabStationBtn" class="wtab-btn active">⛽ İstasyon</button>
+      <button id="tabLand2Btn" class="wtab-btn">🛍️ Yan Arazi</button>
+      <button id="openCityBtn" class="wtab-btn city-pill">🏙️ Şehir (<span id="personalCashTop">0</span>₺)</button>
+      <button id="openPhoneBtn" class="wtab-btn phone-pill">📱 Telefon</button>
+    </nav>
+
+    <!-- MÜDÜR ACİL ÇAĞRI BANDI -->
+    <button id="managerAlertBar" class="manager-alert-bar hidden"></button>
+
+    <!-- VARDİYA & CANLI REHBER ŞERİDİ -->
     <div class="hint-strip">
       <span id="liveHintText">👆 Pompadaki araca dokun / basılı tut!</span>
-      <span id="storyProgressText" style="color:#38bdf8; white-space:nowrap;">🕵️ Özel: 0/5</span>
+      <span id="shiftBadgeText" class="shift-pill">🌙 G1 Gece</span>
     </div>
+    <div id="activeEffectBar" class="effect-strip hidden"></div>
 
-    <!-- CANLI 2.5D İSTASYON HARİTASI -->
+    <!-- CANLI 3D HARİTA ALANI (İSTASYON VEYA 2. ARAZİ) -->
     <section class="map-wrapper">
       <canvas id="stationCanvas"></canvas>
     </section>
@@ -75,13 +89,13 @@
       <button id="btnOpenUpgrades" class="dock-btn">
         <span class="dock-emoji">🏗️</span>
         <span class="dock-title">Tesis &amp; Pompa</span>
-        <span class="dock-sub">İnşa Et &amp; Büyüt</span>
+        <span id="stationLvlSub" class="dock-sub">İstasyon Sv.1</span>
       </button>
 
       <button id="btnOpenStaff" class="dock-btn">
         <span class="dock-emoji">👷</span>
-        <span class="dock-title">Çalışanlar</span>
-        <span id="staffCountSub" class="dock-sub">0/6 Ekip</span>
+        <span class="dock-title">Ekip &amp; Müdür</span>
+        <span id="staffCountSub" class="dock-sub">0/12 Ekip</span>
       </button>
     </footer>
 
@@ -97,61 +111,101 @@
       </div>
     </div>
 
-    <!-- MODAL 2: ÇALIŞANLAR -->
+    <!-- MODAL 2: ÇALIŞANLAR & MÜDÜR -->
     <div id="staffModal" class="overlay-modal hidden">
       <div class="modal-box">
         <div class="modal-header">
-          <h2>👷 İstasyon Ekibi</h2>
+          <h2>👷 Ekip &amp; İstasyon Müdürü</h2>
           <span style="font-size:16px; font-weight:900; color:#4ade80;"><span id="staffCashText">0</span> ₺</span>
         </div>
-        <p style="font-size:14px; color:#cbd5e1; margin-bottom:10px;">
-          Çalışanlar araçlara hızla hizmet verir ve <strong>Özel Müşteri sayacını da doldurur!</strong>
+        <p style="font-size:13.5px; color:#cbd5e1; margin-bottom:10px;">
+          <strong>👔 Müdür Kemal Bey</strong> işe alındığında istasyonu temkinle yönetir, rutin olayları güvenle çözer ve sadece kritik krizlerde seni arar!
         </p>
         <div id="staffList"></div>
         <button id="closeStaffBtn" class="primary-btn">Haritaya Dön</button>
       </div>
     </div>
 
-    <!-- MODAL 3: BÜYÜK YAZILI ÖZEL HİKAYE MÜŞTERİSİ EKRANI -->
+    <!-- MODAL 3: ÇOK MODLU ÖZEL OLAY & KARAR EKRANI -->
     <div id="storyModal" class="overlay-modal hidden">
       <div class="modal-box" style="border-color:#ff3358;">
+        <div id="storyCategoryTag" class="cat-pill">🔍 ÖZEL OLAY</div>
         <div class="story-top">
           <div id="storyAvatarBox" class="story-avatar"></div>
           <div class="story-who">
             <h3 id="storyName">Müşteri</h3>
-            <div id="storyRole" class="role-tag">Rol</div>
-            <div id="storyPlate" class="plate-tag">52 TR 618</div>
+            <div id="storyRole" class="role-tag">Gece Yolcusu</div>
+            <div id="storyPlate" class="plate-tag">TR • 34 KLM 128</div>
           </div>
         </div>
 
         <div id="storySpeech" class="big-speech-bubble"></div>
-        <div id="dumanStoryAlert" class="clue-reveal-box" style="display:none; border-color:#ef4444; color:#fecaca;"></div>
+        <div id="dumanStoryAlert" class="clue-reveal-box" style="display:none;"></div>
 
-        <div class="inspect-grid">
-          <button id="insIdBtn" class="inspect-btn">🪪 Kimliğe Bak</button>
-          <button id="insTrunkBtn" class="inspect-btn">🔦 Bagaja Bak</button>
-          <button id="insMoneyBtn" class="inspect-btn">🟣 Paraya Bak</button>
-          <button id="insPhoneBtn" class="inspect-btn">📱 Telefona Bak</button>
-        </div>
-
+        <div id="inspectGrid" class="inspect-grid"></div>
         <div id="inspectResultBox" class="clue-reveal-box" style="display:none;"></div>
         <div id="storyQuestionsBox" class="story-q-list"></div>
 
-        <div class="story-actions-grid">
-          <button id="actServeBtn" class="big-dec-btn big-serve">✅ YAKIT VER &amp; GÖNDER</button>
-          <button id="actHideBtn" class="big-dec-btn big-hide">🤫 İSTASYONDA SAKLA</button>
-          <button id="actLockBtn" class="big-dec-btn big-lock">🔒 POMPAYI KAPAT &amp; KOV</button>
-          <button id="actPoliceBtn" class="big-dec-btn big-police">🚨 112 POLİS ÇAĞIR</button>
-        </div>
+        <div id="storyActionsGrid" class="story-actions-grid"></div>
       </div>
     </div>
 
-    <!-- MODAL 4: HİKAYE SONUÇ BİLDİRİMİ -->
+    <!-- MODAL 4: OLAY SONUÇ BİLDİRİMİ -->
     <div id="storyResultModal" class="overlay-modal hidden">
       <div class="modal-box">
-        <h2 id="resTitle" style="font-size:22px; font-weight:900; margin-bottom:10px;"></h2>
-        <p id="resBody" style="font-size:17px; line-height:1.5; color:#f1f5f9; margin-bottom:16px;"></p>
-        <button id="closeResBtn" class="primary-btn">İSTASYONA DÖN ➔</button>
+        <h2 id="resTitle" style="font-size:21px; font-weight:900; margin-bottom:10px;"></h2>
+        <div id="resImpactRow" class="impact-row"></div>
+        <p id="resBody" style="font-size:16.5px; line-height:1.5; color:#f1f5f9; margin-bottom:16px;"></p>
+        <button id="closeResBtn" class="primary-btn">HARİTAYA DÖN ➔</button>
+      </div>
+    </div>
+
+    <!-- MODAL 5: GÜN SONU KÂR/ZARAR & ŞAHSİ MAAŞ RAPORU -->
+    <div id="dayReportModal" class="overlay-modal hidden">
+      <div class="modal-box" style="border-color:#38bdf8;">
+        <div class="modal-header">
+          <h2 id="repModalTitle">📊 Gün 1 Vardiya Raporu</h2>
+          <span id="repModalBadge" class="shift-pill">Gün Sonu</span>
+        </div>
+        <div id="dayReportContent" class="report-sheet"></div>
+        <button id="closeDayReportBtn" class="primary-btn" style="margin-top:12px;">YENİ GÜNE DEVAM ET ➔</button>
+      </div>
+    </div>
+
+    <!-- MODAL 6: ŞEHİR & ŞAHSİ YAŞAM (MAAŞ • ELEKTRONİK • EMLAKÇI • GALERİCİ) -->
+    <div id="cityModal" class="overlay-modal hidden">
+      <div class="modal-box" style="border-color:#22c55e;">
+        <div class="modal-header">
+          <h2>🏙️ Şehir &amp; Patron Yaşamı</h2>
+          <span style="font-size:15px; font-weight:900; color:#4ade80;">💳 <span id="cityPersonalCash">0</span> ₺</span>
+        </div>
+        <div class="subtab-row">
+          <button class="city-tab-btn active" data-tab="salary">💼 Maaşım</button>
+          <button class="city-tab-btn" data-tab="electronics">📱 Elektronik</button>
+          <button class="city-tab-btn" data-tab="properties">🏠 Emlakçı</button>
+          <button class="city-tab-btn" data-tab="cars">🏎️ Galerici</button>
+        </div>
+        <div id="cityModalBody"></div>
+        <button id="closeCityBtn" class="primary-btn" style="margin-top:10px;">Haritaya Dön</button>
+      </div>
+    </div>
+
+    <!-- MODAL 7: 📱 AKILLI TELEFON OS (BORSA • YOLGRAM • MÜDÜR • SERVET) -->
+    <div id="phoneModal" class="overlay-modal hidden">
+      <div class="modal-box phone-bezel">
+        <div class="phone-status-bar">
+          <span>📶 5G • SonOS</span>
+          <span style="color:#fde047;">📱 PATRON TELEFONU</span>
+          <span>🔋 96%</span>
+        </div>
+        <div class="subtab-row">
+          <button class="phone-nav-btn active" data-app="stocks">📈 Borsa</button>
+          <button class="phone-nav-btn" data-app="social">📸 YolGram</button>
+          <button class="phone-nav-btn" data-app="manager">💬 Müdür</button>
+          <button class="phone-nav-btn" data-app="wealth">💎 Servet</button>
+        </div>
+        <div id="phoneAppScreen" class="phone-app-screen"></div>
+        <button id="closePhoneBtn" class="primary-btn" style="margin-top:10px;">Telefonu Kapat</button>
       </div>
     </div>
   </main>
@@ -160,6 +214,7 @@
   <script src="./visuals.js"></script>
   <script src="./map_renderer.js"></script>
   <script src="./story_events.js"></script>
+  <script src="./empire.js"></script>
   <script src="./game.js"></script>
 </body>
 </html>
