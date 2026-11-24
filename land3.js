@@ -798,17 +798,14 @@ window.Land3System = (function () {
       const btn = document.getElementById("btnUpTheme3");
       if (btn && l3.themeLvl < 6) {
         btn.addEventListener("click", () => {
-          if (data.cash < upCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Yükseltme için ${upCost} ₺ gerekli!`);
-          }
-          data.cash -= upCost;
-          l3.themeLvl += 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🎡 Lunapark & Go-Kart Sv.${l3.themeLvl} oldu!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderLand3Modal(data, helpers);
+          helpers.payForBusiness(upCost, "Go-Kart & Lunapark Büyütme", () => {
+            l3.themeLvl += 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🎡 Lunapark & Go-Kart Sv.${l3.themeLvl} oldu!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand3Modal(data, helpers);
+          });
         });
       }
       return;
@@ -869,51 +866,42 @@ window.Land3System = (function () {
       const refBtn = document.getElementById("btnBuyRefinery");
       if (refBtn && !l3.refineryUnlocked) {
         refBtn.addEventListener("click", () => {
-          if (data.cash < REFINERY_COST) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Rafineri için ${REFINERY_COST} ₺ gerekli!`);
-          }
-          data.cash -= REFINERY_COST;
-          l3.refineryUnlocked = true;
-          helpers.sfx.perfectHit();
-          helpers.showToast("🛢️ Yakıt Rafinerisi kuruldu! Artık 1. İstasyonda tanker dolumu tamamen BEDAVA!");
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderLand3Modal(data, helpers);
+          helpers.payForBusiness(REFINERY_COST, "Akaryakıt Dolum Rafinerisi", () => {
+            l3.refineryUnlocked = true;
+            helpers.sfx.perfectHit();
+            helpers.showToast("🛢️ Yakıt Rafinerisi kuruldu! Artık 1. İstasyonda tanker dolumu tamamen BEDAVA!");
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand3Modal(data, helpers);
+          });
         });
       }
 
       const trkBtn = document.getElementById("btnBuyFleetTruck");
       if (trkBtn && l3.fleetCount < 10) {
         trkBtn.addEventListener("click", () => {
-          if (data.cash < truckCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Yeni tır için ${truckCost} ₺ gerekli!`);
-          }
-          data.cash -= truckCost;
-          l3.fleetCount += 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🚛 Filo Tır #${l3.fleetCount} satın alındı ve sefere hazır!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderLand3Modal(data, helpers);
+          helpers.payForBusiness(truckCost, `Filo Çekici Tır #${l3.fleetCount + 1}`, () => {
+            l3.fleetCount += 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🚛 Filo Tır #${l3.fleetCount} satın alındı ve sefere hazır!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand3Modal(data, helpers);
+          });
         });
       }
 
       const fltBtn = document.getElementById("btnUpFleetLvl");
       if (fltBtn && l3.fleetLvl < 5) {
         fltBtn.addEventListener("click", () => {
-          if (data.cash < fltUpCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Kontrat yükseltmesi için ${fltUpCost} ₺ gerekli!`);
-          }
-          data.cash -= fltUpCost;
-          l3.fleetLvl += 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`📦 Lojistik kontratları Sv.${l3.fleetLvl} seviyesine yükseldi!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderLand3Modal(data, helpers);
+          helpers.payForBusiness(fltUpCost, "Lojistik Kontrat Yükseltme", () => {
+            l3.fleetLvl += 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`📦 Lojistik kontratları Sv.${l3.fleetLvl} seviyesine yükseldi!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand3Modal(data, helpers);
+          });
         });
       }
       return;
@@ -992,17 +980,14 @@ window.Land3System = (function () {
     const spaBtn = document.getElementById("btnBuySpa3");
     if (spaBtn && !l3.spaUnlocked) {
       spaBtn.addEventListener("click", () => {
-        if (data.cash < SPA_UNLOCK_COST) {
-          helpers.sfx.burnFail();
-          return helpers.showToast(`Termal SPA için ${SPA_UNLOCK_COST} ₺ gerekli!`);
-        }
-        data.cash -= SPA_UNLOCK_COST;
-        l3.spaUnlocked = true;
-        helpers.sfx.perfectHit();
-        helpers.showToast("♨️ Termal SPA açıldı! Tüm bungalov kiraları +%35 arttı!");
-        helpers.saveGame();
-        helpers.updateHUD();
-        renderLand3Modal(data, helpers);
+        helpers.payForBusiness(SPA_UNLOCK_COST, "Termal SPA & Hamam Merkezi", () => {
+          l3.spaUnlocked = true;
+          helpers.sfx.perfectHit();
+          helpers.showToast("♨️ Termal SPA açıldı! Tüm bungalov kiraları +%35 arttı!");
+          helpers.saveGame();
+          helpers.updateHUD();
+          renderLand3Modal(data, helpers);
+        });
       });
     }
 
@@ -1015,28 +1000,30 @@ window.Land3System = (function () {
         if (!bDef || !st) return;
 
         if (act === "buy") {
-          if (data.cash < bDef.cost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`${bDef.name} için ${bDef.cost} ₺ gerekli!`);
-          }
-          data.cash -= bDef.cost;
-          st.owned = true;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🏡 ${bDef.name} inşa edildi! Şimdi kiraya verebilirsin!`);
+          helpers.payForBusiness(bDef.cost, bDef.name, () => {
+            st.owned = true;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🏡 ${bDef.name} inşa edildi! Şimdi kiraya verebilirsin!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand3Modal(data, helpers);
+          });
+          return;
         } else if (act === "rent") {
           st.rented = true;
           helpers.sfx.cashRegister();
           helpers.showToast(`🏖️ ${bDef.name} VIP tatilcilere kiraya verildi!`);
         } else if (act === "up" && st.lvl < 4) {
           const upCost = Math.round(bDef.cost * 0.6 * Math.pow(1.45, st.lvl - 1));
-          if (data.cash < upCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Yükseltme için ${upCost} ₺ gerekli!`);
-          }
-          data.cash -= upCost;
-          st.lvl += 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`⬆️ ${bDef.name} lüks seviyesi artırıldı!`);
+          helpers.payForBusiness(upCost, `${bDef.name} Yükseltme`, () => {
+            st.lvl += 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`⬆️ ${bDef.name} lüks seviyesi artırıldı!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand3Modal(data, helpers);
+          });
+          return;
         }
         helpers.saveGame();
         helpers.updateHUD();
@@ -1052,34 +1039,26 @@ window.Land3System = (function () {
 
     if (!l3.owned) {
       if (pt.x > 50 && pt.x < 430 && pt.y > 142 && pt.y < 442) {
-        if (data.cash >= LAND3_COST) {
-          data.cash -= LAND3_COST;
+        helpers.payForBusiness(LAND3_COST, "3. Arazi Tapusu", () => {
           l3.owned = true;
           helpers.sfx.perfectHit();
           helpers.showToast("🎉 3. Arazi tapusunu aldın! Go-Kart, Rafineri/Filo ve Tatil Köyü kurabilirsin!");
           helpers.saveGame();
           helpers.updateHUD();
-        } else {
-          helpers.sfx.burnFail();
-          helpers.showToast(`3. Arazi tapusu için Şirket Kasasında ${LAND3_COST} ₺ gerekli!`);
-        }
+        });
       }
       return;
     }
 
     if (inRect(pt, THEME_BOX)) {
       if (!l3.themeUnlocked) {
-        if (data.cash >= THEME_UNLOCK_COST) {
-          data.cash -= THEME_UNLOCK_COST;
+        helpers.payForBusiness(THEME_UNLOCK_COST, "Go-Kart & Lunapark Kurulumu", () => {
           l3.themeUnlocked = true;
           helpers.sfx.perfectHit();
           helpers.showToast("🏎️ Go-Kart Pisti ve 🎡 Dönme Dolap açıldı!");
           helpers.saveGame();
           helpers.updateHUD();
-        } else {
-          helpers.sfx.burnFail();
-          helpers.showToast(`Go-Kart & Lunapark için ${THEME_UNLOCK_COST} ₺ gerekli!`);
-        }
+        });
         return;
       }
       helpers.sfx.tap();
@@ -1095,18 +1074,14 @@ window.Land3System = (function () {
 
     if (inRect(pt, RESORT_BOX)) {
       if (!l3.resortUnlocked) {
-        if (data.cash >= RESORT_UNLOCK_COST) {
-          data.cash -= RESORT_UNLOCK_COST;
+        helpers.payForBusiness(RESORT_UNLOCK_COST, "Bungalov Tatil Köyü Kurulumu", () => {
           l3.resortUnlocked = true;
           helpers.sfx.perfectHit();
           helpers.showToast("🏖️ Havuzlu Bungalov Tatil Köyü açıldı! Şimdi bungalovları alıp kiraya ver!");
           helpers.saveGame();
           helpers.updateHUD();
           openLand3Modal("resort", data, helpers);
-        } else {
-          helpers.sfx.burnFail();
-          helpers.showToast(`Tatil Köyü için ${RESORT_UNLOCK_COST} ₺ gerekli!`);
-        }
+        });
         return;
       }
       helpers.sfx.tap();

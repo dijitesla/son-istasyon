@@ -235,9 +235,10 @@ window.EmpireSystem = (function () {
       // Sağ Kanat Lojistik & Plaza
       sideLevels: { logistics: 0, office: 0 },
 
-      // 3. Arazi Mega Holding Kompleksi & 4..10 Araziler
+      // 3. Arazi Mega Holding Kompleksi, 4..10 Araziler & v16 Holding Ligi / Banka / VIP
       land3: window.Land3System ? window.Land3System.createDefaultLand3() : null,
       extraLands: window.ExtraLandsSystem ? window.ExtraLandsSystem.createDefaultExtraLands() : null,
+      v16: window.HoldingV16 ? window.HoldingV16.createDefaultV16() : null,
 
       // Çok Kaynaklı Şahsi Maaş Sistemi!
       personalCash: 0,
@@ -301,6 +302,9 @@ window.EmpireSystem = (function () {
     }
     if (window.ExtraLandsSystem) {
       out.extraLands = window.ExtraLandsSystem.mergeExtraLands(saved.extraLands);
+    }
+    if (window.HoldingV16) {
+      out.v16 = window.HoldingV16.mergeV16(saved.v16);
     }
 
     out.electronics = Object.assign({}, saved.electronics || {});
@@ -397,7 +401,11 @@ window.EmpireSystem = (function () {
   }
 
   function calcDailyRent(emp) {
-    return PROPERTIES.reduce((sum, p) => sum + (emp.properties[p.key] ? p.dailyRent : 0), 0);
+    let total = PROPERTIES.reduce((sum, p) => sum + (emp.properties[p.key] ? p.dailyRent : 0), 0);
+    if (window.HoldingV16 && emp.v16) {
+      total += window.HoldingV16.calcVipDailyRent(emp.v16);
+    }
+    return total;
   }
 
   function calcPrestige(emp) {
@@ -407,6 +415,7 @@ window.EmpireSystem = (function () {
     GALLERY_CARS.forEach((c) => { if (emp.cars[c.key]) p += c.prestige; });
     if (emp.mallUnlocked) p += getMallCounts(emp).rented * 6;
     if (emp.parkingUnlocked) p += emp.parkingCapLvl * 4;
+    if (window.HoldingV16 && emp.v16) p += window.HoldingV16.calcVipPrestige(emp.v16);
     return p;
   }
 
@@ -1341,69 +1350,57 @@ window.EmpireSystem = (function () {
       const capBtn = document.getElementById("btnUpParkCap");
       if (capBtn && emp.parkingCapLvl < 6) {
         capBtn.addEventListener("click", () => {
-          if (data.cash < capCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Kapasite büyütmek için ${capCost} ₺ gerekli!`);
-          }
-          data.cash -= capCost;
-          emp.parkingCapLvl += 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🚗 Otopark kapasitesi ${ getMaxParkingCap(emp) } araca yükseltildi!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderLand2Modal(data, helpers);
+          helpers.payForBusiness(capCost, "Otopark Kapasite Büyütme", () => {
+            emp.parkingCapLvl += 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🚗 Otopark kapasitesi ${getMaxParkingCap(emp)} araca yükseltildi!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand2Modal(data, helpers);
+          });
         });
       }
 
       const feeBtn = document.getElementById("btnUpParkFee");
       if (feeBtn && emp.parkingFeeLvl < 6) {
         feeBtn.addEventListener("click", () => {
-          if (data.cash < feeCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Tarife yükseltmek için ${feeCost} ₺ gerekli!`);
-          }
-          data.cash -= feeCost;
-          emp.parkingFeeLvl += 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🎫 Otopark ücreti araç başı +${getParkingFee(emp)} ₺ oldu!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderLand2Modal(data, helpers);
+          helpers.payForBusiness(feeCost, "Otopark Tarife Yükseltme", () => {
+            emp.parkingFeeLvl += 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🎫 Otopark ücreti araç başı +${getParkingFee(emp)} ₺ oldu!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand2Modal(data, helpers);
+          });
         });
       }
 
       const valetBtn = document.getElementById("btnBuyValet");
       if (valetBtn && !emp.parkingValet) {
         valetBtn.addEventListener("click", () => {
-          if (data.cash < PARKING_VALET_COST) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`VIP Vale için ${PARKING_VALET_COST} ₺ gerekli!`);
-          }
-          data.cash -= PARKING_VALET_COST;
-          emp.parkingValet = true;
-          helpers.sfx.perfectHit();
-          helpers.showToast("⚡ VIP Vale & Plaka Tanıma Sistemi kuruldu!");
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderLand2Modal(data, helpers);
+          helpers.payForBusiness(PARKING_VALET_COST, "VIP Vale & Plaka Tanıma", () => {
+            emp.parkingValet = true;
+            helpers.sfx.perfectHit();
+            helpers.showToast("⚡ VIP Vale & Plaka Tanıma Sistemi kuruldu!");
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand2Modal(data, helpers);
+          });
         });
       }
 
       const gateBtn = document.getElementById("btnBuyGateOff");
       if (gateBtn && !emp.land2Staff.gateOfficer) {
         gateBtn.addEventListener("click", () => {
-          if (data.cash < 4200) {
-            helpers.sfx.burnFail();
-            return helpers.showToast("Gişe görevlisi için 4.200 ₺ gerekli!");
-          }
-          data.cash -= 4200;
-          emp.land2Staff.gateOfficer = true;
-          parkingCars.forEach((c) => { if (c.waitingAtBooth) c.manualGateApproved = true; });
-          helpers.sfx.perfectHit();
-          helpers.showToast("👮 Otopark Gişe Görevlisi işe başladı! Çıkış bariyeri artık otomatik!");
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderLand2Modal(data, helpers);
+          helpers.payForBusiness(4200, "Otopark Gişe Görevlisi", () => {
+            emp.land2Staff.gateOfficer = true;
+            parkingCars.forEach((c) => { if (c.waitingAtBooth) c.manualGateApproved = true; });
+            helpers.sfx.perfectHit();
+            helpers.showToast("👮 Otopark Gişe Görevlisi işe başladı! Çıkış bariyeri artık otomatik!");
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand2Modal(data, helpers);
+          });
         });
       }
 
@@ -1542,37 +1539,37 @@ window.EmpireSystem = (function () {
     const dockB = document.getElementById("btnBuyDockStf");
     if (dockB && !emp.land2Staff.dockWorker) {
       dockB.addEventListener("click", () => {
-        if (data.cash < 6200) { helpers.sfx.burnFail(); return helpers.showToast("6.200 ₺ gerekli!"); }
-        data.cash -= 6200;
-        emp.land2Staff.dockWorker = true;
-        helpers.sfx.perfectHit();
-        helpers.showToast("📦 AVM Mal Kabul Sorumlusu göreve başladı!");
-        helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+        helpers.payForBusiness(6200, "AVM Mal Kabul Sorumlusu", () => {
+          emp.land2Staff.dockWorker = true;
+          helpers.sfx.perfectHit();
+          helpers.showToast("📦 AVM Mal Kabul Sorumlusu göreve başladı!");
+          helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+        });
       });
     }
     const techB = document.getElementById("btnBuyTechStf");
     if (techB && !emp.land2Staff.facilityTech) {
       techB.addEventListener("click", () => {
-        if (data.cash < 7800) { helpers.sfx.burnFail(); return helpers.showToast("7.800 ₺ gerekli!"); }
-        data.cash -= 7800;
-        emp.land2Staff.facilityTech = true;
-        mallNeedsCleaning = false;
-        helpers.sfx.perfectHit();
-        helpers.showToast("🧹 AVM Temizlik & Teknik Ekip göreve başladı!");
-        helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+        helpers.payForBusiness(7800, "AVM Temizlik & Klima Ekibi", () => {
+          emp.land2Staff.facilityTech = true;
+          mallNeedsCleaning = false;
+          helpers.sfx.perfectHit();
+          helpers.showToast("🧹 AVM Temizlik & Teknik Ekip göreve başladı!");
+          helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+        });
       });
     }
     const mgrB = document.getElementById("btnBuyL2Mgr");
     if (mgrB && !emp.land2Staff.land2Manager) {
       mgrB.addEventListener("click", () => {
-        if (data.cash < 18500) { helpers.sfx.burnFail(); return helpers.showToast("18.500 ₺ gerekli!"); }
-        data.cash -= 18500;
-        emp.land2Staff.land2Manager = true;
-        mallNeedsCleaning = false;
-        parkingCars.forEach((c) => { if (c.waitingAtBooth) c.manualGateApproved = true; });
-        helpers.sfx.perfectHit();
-        helpers.showToast("👔 2. Arazi & AVM Genel Müdürü atandı! Tam otopilot aktif!");
-        helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+        helpers.payForBusiness(18500, "2. Arazi & AVM Genel Müdürü", () => {
+          emp.land2Staff.land2Manager = true;
+          mallNeedsCleaning = false;
+          parkingCars.forEach((c) => { if (c.waitingAtBooth) c.manualGateApproved = true; });
+          helpers.sfx.perfectHit();
+          helpers.showToast("👔 2. Arazi & AVM Genel Müdürü atandı! Tam otopilot aktif!");
+          helpers.saveGame(); helpers.updateHUD(); renderLand2Modal(data, helpers);
+        });
       });
     }
 
@@ -1585,15 +1582,16 @@ window.EmpireSystem = (function () {
         if (!shop || !st) return;
 
         if (act === "buy") {
-          if (data.cash < shop.deedCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`${shop.name} tapusu için ${shop.deedCost} ₺ gerekli!`);
-          }
-          data.cash -= shop.deedCost;
-          st.owned = true;
-          st.rented = false;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🔑 ${shop.name} tapusunu satın aldın! Şimdi kiracı seçip kiraya ver!`);
+          helpers.payForBusiness(shop.deedCost, `${shop.name} Tapusu`, () => {
+            st.owned = true;
+            st.rented = false;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🔑 ${shop.name} tapusunu satın aldın! Şimdi kiracı seçip kiraya ver!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand2Modal(data, helpers);
+          });
+          return;
         } else if (act === "rent_fixed" || act === "rent_share") {
           st.rented = true;
           st.contract = act === "rent_share" ? "share" : "fixed";
@@ -1601,14 +1599,15 @@ window.EmpireSystem = (function () {
           helpers.showToast(`📝 ${shop.name} kiraya verildi! Düzenli kira geliri başladı!`);
         } else if (act === "upgrade" && st.lvl < 5) {
           const upCost = getMallShopUpgradeCost(shop, st.lvl);
-          if (data.cash < upCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Mağaza yenilemesi için ${upCost} ₺ gerekli!`);
-          }
-          data.cash -= upCost;
-          st.lvl += 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`⬆️ ${shop.name} kirası +${getShopCycleRent(shop, st, emp)} ₺ seviyesine yükseldi!`);
+          helpers.payForBusiness(upCost, `${shop.name} Dekor Yenileme`, () => {
+            st.lvl += 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`⬆️ ${shop.name} kirası +${getShopCycleRent(shop, st, emp)} ₺ seviyesine yükseldi!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderLand2Modal(data, helpers);
+          });
+          return;
         }
 
         helpers.saveGame();
@@ -1629,17 +1628,13 @@ window.EmpireSystem = (function () {
 
     if (!emp.land2Owned) {
       if (pt.x > 54 && pt.x < 426 && pt.y > 150 && pt.y < 430) {
-        if (data.cash >= LAND2_COST) {
-          data.cash -= LAND2_COST;
+        helpers.payForBusiness(LAND2_COST, "2. Arazi Tapusu (Otopark & AVM)", () => {
           emp.land2Owned = true;
           helpers.sfx.perfectHit();
           helpers.showToast("🎉 Yan Arazi tapusunu aldın! Ücretli Otopark ve Otoyol AVM kurabilirsin!");
           helpers.saveGame();
           helpers.updateHUD();
-        } else {
-          helpers.sfx.burnFail();
-          helpers.showToast(`Yan Arazi tapusu için Şirket Kasasında ${LAND2_COST} ₺ gerekli!`);
-        }
+        });
       }
       return;
     }
@@ -1682,18 +1677,14 @@ window.EmpireSystem = (function () {
     // 1. Üst Bölge: Ücretli Otopark (Tabela dahil y: 80..280)
     if (pt.x >= 48 && pt.x <= 432 && pt.y >= 80 && pt.y <= 282) {
       if (!emp.parkingUnlocked) {
-        if (data.cash >= PARKING_UNLOCK_COST) {
-          data.cash -= PARKING_UNLOCK_COST;
+        helpers.payForBusiness(PARKING_UNLOCK_COST, "Ücretli Otopark Kurulumu", () => {
           emp.parkingUnlocked = true;
           emp.parkingCapLvl = 1; // 20 Araç!
           helpers.sfx.perfectHit();
           helpers.showToast("🅿️ 20 Araçlık Ücretli Otopark açıldı! Tekrar dokunarak kapasiteyi büyütebilirsin!");
           helpers.saveGame();
           helpers.updateHUD();
-        } else {
-          helpers.sfx.burnFail();
-          helpers.showToast(`Ücretli Otopark kurulumu için ${PARKING_UNLOCK_COST} ₺ gerekli!`);
-        }
+        });
         return;
       }
       helpers.sfx.tap();
@@ -1704,18 +1695,14 @@ window.EmpireSystem = (function () {
     // 2. Sol-Orta Dev Bölge: Otoyol Grand AVM
     if (inRect(pt, MALL_BOX)) {
       if (!emp.mallUnlocked) {
-        if (data.cash >= MALL_UNLOCK_COST) {
-          data.cash -= MALL_UNLOCK_COST;
+        helpers.payForBusiness(MALL_UNLOCK_COST, "Otoyol Grand AVM İnşaatı", () => {
           emp.mallUnlocked = true;
           helpers.sfx.perfectHit();
           helpers.showToast("🏬 Otoyol AVM inşa edildi! Şimdi içindeki dükkanları satın alıp kiraya ver!");
           helpers.saveGame();
           helpers.updateHUD();
           openLand2Modal("mall", data, helpers);
-        } else {
-          helpers.sfx.burnFail();
-          helpers.showToast(`Otoyol AVM inşası için ${MALL_UNLOCK_COST} ₺ gerekli!`);
-        }
+        });
         return;
       }
       helpers.sfx.tap();
@@ -1732,17 +1719,13 @@ window.EmpireSystem = (function () {
           return;
         }
         const cost = calcSideTowerUpgradeCost(tw, lvl);
-        if (data.cash >= cost) {
-          data.cash -= cost;
+        helpers.payForBusiness(cost, tw.name, () => {
           emp.sideLevels[tw.key] = lvl + 1;
           helpers.sfx.perfectHit();
           helpers.showToast(lvl === 0 ? `🎉 ${tw.name} açıldı!` : `⬆️ ${tw.name} Sv.${lvl + 1} oldu!`);
           helpers.saveGame();
           helpers.updateHUD();
-        } else {
-          helpers.sfx.burnFail();
-          helpers.showToast(`${tw.name} için ${cost} ₺ gerekli!`);
-        }
+        });
         return;
       }
     }
@@ -1963,6 +1946,27 @@ window.EmpireSystem = (function () {
         </div>
       `;
 
+      if (emp.v16 && emp.v16.ipoLaunched) {
+        const ipoDiff = emp.v16.ipoStockPrice - emp.v16.ipoPrevPrice;
+        const ipoPct = emp.v16.ipoPrevPrice > 0 ? ((ipoDiff / emp.v16.ipoPrevPrice) * 100).toFixed(1) : "0.0";
+        const ipoUp = ipoDiff >= 0;
+        const divDay = Math.round(emp.v16.ipoStockPrice * 3.5);
+        html += `
+          <div class="stock-card" style="border-color:#facc15; background:linear-gradient(180deg, rgba(245,158,11,0.16), rgba(15,23,42,0.95));">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-weight:900; font-size:14px; color:#fde047;">🔔 SONH <span style="font-size:11px; color:#cbd5e1; font-weight:700;">Senin Holding Hissen!</span></div>
+                <div style="font-size:11.5px; color:#4ade80;">Günlük Patron Temettüsü: <strong>+${divDay} ₺ / gün</strong></div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-weight:900; font-size:16px; color:#fde047;">${emp.v16.ipoStockPrice} ₺</div>
+                <div style="font-size:11px; font-weight:900; color:${ipoUp ? "#4ade80" : "#f87171"};">${ipoUp ? "▲" : "▼"} %${Math.abs(Number(ipoPct))}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       INITIAL_STOCKS.forEach((s) => {
         const st = emp.stocks[s.sym];
         const diff = st.price - st.prev;
@@ -2023,6 +2027,7 @@ window.EmpireSystem = (function () {
             emp.personalCash += gain;
             helpers.sfx.cashRegister();
           }
+          if (window.HoldingV16) window.HoldingV16.recordQuestAction(data, "stock");
           helpers.saveGame();
           helpers.updateHUD();
           renderPhoneModal(data, helpers);
@@ -2038,9 +2043,13 @@ window.EmpireSystem = (function () {
         .map((txt) => `<div class="social-post">${txt}</div>`)
         .join("");
       const comment = SOCIAL_COMMENTS[Math.floor(Date.now() / 10000) % SOCIAL_COMMENTS.length];
+      const plateBadge = emp.v16 && emp.v16.customPlate
+        ? `<div style="display:inline-block; margin-top:4px; padding:2px 8px; border-radius:6px; background:#090d1a; border:1.5px solid #facc15; color:#fde047; font-size:11.5px; font-weight:900;">TR • ${emp.v16.customPlate}</div>`
+        : "";
       screen.innerHTML = `
         <div class="rep-section" style="margin-bottom:8px; text-align:center;">
           <div style="font-size:13px; color:#f472b6; font-weight:900;">📸 YolGram • @sonistasyon_patron</div>
+          ${plateBadge}
           <div style="font-size:20px; font-weight:900; color:#fff; margin:4px 0;">${emp.socialFollowers} Takipçi</div>
           <button id="btnMakeSocialPost" class="primary-btn" style="padding:10px; font-size:14px;" ${canPost ? "" : "disabled"}>
             ${canPost ? "📸 YENİ PAYLAŞIM YAP (+VIP Akını & İtibar!)" : `⏳ Yeni paylaşım için ${Math.ceil(socialCooldown)}sn`}
@@ -2064,6 +2073,7 @@ window.EmpireSystem = (function () {
           if (emp.socialPosts.length > 8) emp.socialPosts.pop();
           data.reputation = Math.min(100, data.reputation + 5);
           helpers.triggerVipRush(30);
+          if (window.HoldingV16) window.HoldingV16.recordQuestAction(data, "social");
           helpers.sfx.perfectHit();
           helpers.showToast(`📸 Paylaşım tuttu! +${gained} takipçi ve 30 sn VIP Akını!`);
           helpers.saveGame();

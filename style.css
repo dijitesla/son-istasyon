@@ -111,6 +111,13 @@ html, body {
   cursor: pointer;
 }
 
+.icon-btn.reward-ready {
+  background: linear-gradient(180deg, #b45309, #78350f);
+  border-color: #fde047;
+  box-shadow: 0 0 12px rgba(250, 204, 21, 0.7);
+  animation: pulseWarn 1.05s infinite;
+}
+
 .shift-pill {
   background: #0b1324;
   border: 1.5px solid #334155;
@@ -291,7 +298,7 @@ html, body {
   margin-bottom: 10px;
 }
 
-.city-tab-btn, .phone-nav-btn {
+.city-tab-btn, .phone-nav-btn, .hub-tab-btn {
   background: #1e293b;
   color: #cbd5e1;
   border: 1.5px solid #334155;
@@ -306,6 +313,54 @@ html, body {
   background: #0284c7;
   border-color: #7dd3fc;
   color: #fff;
+}
+
+.hub-tab-btn.active {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+  border-color: #fde68a;
+  color: #090d1a;
+}
+
+.pay-choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid #334155;
+  color: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.1s ease;
+}
+.pay-choice-btn:active:not(:disabled) { transform: scale(0.98); }
+.pay-choice-btn.company {
+  background: linear-gradient(180deg, #14532d, #052e16);
+  border-color: #22c55e;
+}
+.pay-choice-btn.personal {
+  background: linear-gradient(180deg, #0c4a6e, #082f49);
+  border-color: #38bdf8;
+}
+.pay-choice-btn.split {
+  background: linear-gradient(180deg, #581c87, #3b0764);
+  border-color: #c084fc;
+}
+.pay-choice-btn:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.pay-choice-btn.hidden { display: none; }
+.pay-choice-btn .pc-title {
+  font-size: 14.5px;
+  font-weight: 900;
+}
+.pay-choice-btn .pc-sub {
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
 }
 
 .sal-btn {

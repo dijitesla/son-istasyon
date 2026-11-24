@@ -717,18 +717,14 @@ window.ExtraLandsSystem = (function () {
     // 1. Arsa satın alma
     if (!st.owned) {
       if (pt.x > 50 && pt.x < 430 && pt.y > 148 && pt.y < 440) {
-        if (data.cash >= lDef.deedCost) {
-          data.cash -= lDef.deedCost;
+        helpers.payForBusiness(lDef.deedCost, `${lDef.name} Tapusu`, () => {
           st.owned = true;
           helpers.sfx.perfectHit();
           helpers.showToast(`🎉 ${lDef.name} tapusu alındı! Şimdi 6 dev projeden birini seç!`);
           helpers.saveGame();
           helpers.updateHUD();
           openExtraLandModal(landId, data, helpers);
-        } else {
-          helpers.sfx.burnFail();
-          helpers.showToast(`${lDef.name} tapusu için ${lDef.deedCost.toLocaleString("tr-TR")} ₺ gerekli!`);
-        }
+        });
       }
       return;
     }
@@ -816,18 +812,15 @@ window.ExtraLandsSystem = (function () {
           const pKey = btn.dataset.proj;
           const pDef = getProjectDef(pKey);
           const buildPrice = Math.round(pDef.buildCost * lDef.mult);
-          if (data.cash < buildPrice) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`${pDef.name} inşaatı için ${buildPrice.toLocaleString("tr-TR")} ₺ gerekli!`);
-          }
-          data.cash -= buildPrice;
-          st.projectKey = pKey;
-          st.floorsLvl = 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🎉 ${pDef.name} inşa edildi! Başlangıçta kayıt ve hazırlıkla sen ilgileniyorsun!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderExtraLandModal(data, helpers);
+          helpers.payForBusiness(buildPrice, `${pDef.name} İnşaatı`, () => {
+            st.projectKey = pKey;
+            st.floorsLvl = 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🎉 ${pDef.name} inşa edildi! Başlangıçta kayıt ve hazırlıkla sen ilgileniyorsun!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderExtraLandModal(data, helpers);
+          });
         });
       });
       return;
@@ -914,51 +907,42 @@ window.ExtraLandsSystem = (function () {
       const fBtn = document.getElementById("btnExtFloor");
       if (fBtn && st.floorsLvl < 5) {
         fBtn.addEventListener("click", () => {
-          if (data.cash < floorCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Yeni kat için ${floorCost.toLocaleString("tr-TR")} ₺ gerekli!`);
-          }
-          data.cash -= floorCost;
-          st.floorsLvl += 1;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🏢 ${proj.name} ${st.floorsLvl}. kata yükseldi (${getMaxUnits(st)} ${proj.unitName})!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderExtraLandModal(data, helpers);
+          helpers.payForBusiness(floorCost, `${proj.name} Yeni Kat`, () => {
+            st.floorsLvl += 1;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🏢 ${proj.name} ${st.floorsLvl}. kata yükseldi (${getMaxUnits(st)} ${proj.unitName})!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderExtraLandModal(data, helpers);
+          });
         });
       }
 
       const vBtn = document.getElementById("btnExtVip");
       if (vBtn && !st.vipUpgrade) {
         vBtn.addEventListener("click", () => {
-          if (data.cash < vipCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`VIP geliştirme için ${vipCost.toLocaleString("tr-TR")} ₺ gerekli!`);
-          }
-          data.cash -= vipCost;
-          st.vipUpgrade = true;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🌟 ${proj.vipLabel} hizmete açıldı!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderExtraLandModal(data, helpers);
+          helpers.payForBusiness(vipCost, proj.vipLabel, () => {
+            st.vipUpgrade = true;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🌟 ${proj.vipLabel} hizmete açıldı!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderExtraLandModal(data, helpers);
+          });
         });
       }
 
       const hBtn = document.getElementById("btnExtHeli");
       if (hBtn && !st.heliUpgrade) {
         hBtn.addEventListener("click", () => {
-          if (data.cash < heliCost) {
-            helpers.sfx.burnFail();
-            return helpers.showToast(`Bu geliştirme için ${heliCost.toLocaleString("tr-TR")} ₺ gerekli!`);
-          }
-          data.cash -= heliCost;
-          st.heliUpgrade = true;
-          helpers.sfx.perfectHit();
-          helpers.showToast(`🚁 ${proj.heliLabel} tamamlandı!`);
-          helpers.saveGame();
-          helpers.updateHUD();
-          renderExtraLandModal(data, helpers);
+          helpers.payForBusiness(heliCost, proj.heliLabel, () => {
+            st.heliUpgrade = true;
+            helpers.sfx.perfectHit();
+            helpers.showToast(`🚁 ${proj.heliLabel} tamamlandı!`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderExtraLandModal(data, helpers);
+          });
         });
       }
       return;
@@ -1020,17 +1004,14 @@ window.ExtraLandsSystem = (function () {
       btn.addEventListener("click", () => {
         const role = btn.dataset.role;
         const cost = sCosts[role];
-        if (data.cash < cost) {
-          helpers.sfx.burnFail();
-          return helpers.showToast(`İşe alım için ${cost.toLocaleString("tr-TR")} ₺ gerekli!`);
-        }
-        data.cash -= cost;
-        st.staff[role] = true;
-        helpers.sfx.perfectHit();
-        helpers.showToast(`👷 ${proj.staffNames[role]} göreve başladı!`);
-        helpers.saveGame();
-        helpers.updateHUD();
-        renderExtraLandModal(data, helpers);
+        helpers.payForBusiness(cost, proj.staffNames[role], () => {
+          st.staff[role] = true;
+          helpers.sfx.perfectHit();
+          helpers.showToast(`👷 ${proj.staffNames[role]} göreve başladı!`);
+          helpers.saveGame();
+          helpers.updateHUD();
+          renderExtraLandModal(data, helpers);
+        });
       });
     });
 

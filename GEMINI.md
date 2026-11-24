@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v15.0 — 10 Arazi Sistemi, Grand Otel & 6 Mega Proje)
+## Proje Özeti: Son İstasyon (v16.0 — Holding Ligi, Görevler, Banka/IPO & Patron Helikopteri)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -29,11 +29,21 @@
    - Her arsa alındığında **6 proje seçeneği** sunulur: **🏨 5 Yıldızlı Grand Otel (`65.000 ₺`)**, **🏥 Özel Hastane**, **🚗 Otomobil Fabrikası**, **🏟️ Stadyum**, **💻 Teknokent Veri Merkezi**, **👑 Kongre & Düğün Sarayı**.
    - Her projede başta müşteri kaydı ve oda/birim temizliğiyle oyuncu ilgilenir; büyüdükçe 4 kademe personel/müdür alınır ve 5 kata kadar çıkılır.
 5. **Ayrıntılı Gün Sonu Muhasebe Tablosu, Şahsi Maaşlar & Telefon (`game.js`, `empire.js`, `story_events.js`, `audio.js`):**
-   - Gün sonunda 1., 2. (AVM dükkanları tek tek dahil), 3. ve 4.–10. arazilerin kazançları ayrı ayrı hesaplanır.
-   - Tüm arazilerden ayrı ayrı **Şahsi Maaş** bağlanabilir; Borsa (6 hisse), YolGram, Emlakçı ve Oto Galeri aktiftir.
+   - Gün sonunda 1., 2. (AVM dükkanları tek tek dahil), 3., 4.–10. araziler ve devralınan rakip holdinglerin kazançları ayrı ayrı hesaplanır.
+   - Tüm arazilerden ayrı ayrı **Şahsi Maaş** bağlanabilir; Borsa (6 hisse + kendi `SONH` hissen), YolGram (özel plaka rozetli), Emlakçı ve Oto Galeri aktiftir.
+6. **v16.0 Holding & Patron Merkezi (`holding_v16.js` — Üst Çubukta `🏆` Butonu):**
+   - **🏆 Holding Ligi & Rakip Şirketleri Satın Alma:** 5 rakip holdingin her birinin altında 3'er adet olmak üzere toplam **15 alt şirket** bulunur; oyuncular rakip şirketleri tek tek satın alıp kendi holdingine katabilir veya kalanları %8 indirimle toplu devralabilir.
+   - **🎯 Günlük Görevler & Patron Rütbesi:** Her gün yenilenen 3 görev, alınabilir ödül parlaması, XP ile 8 farklı Patron Rütbesi (`Çırak Pompacı` -> `Efsane İmparator`).
+   - **🌦️ Büyük Otoyol Günleri:** Dinamik özel günler (`🎉 Bayram Akını`, `❄️ Kar Fırtınası` kar yağışı efektli, `⚽ Derbi & Konser` konfeti efektli, `🌟 VIP Zirvesi`) ve gerçek trafik/gelir çarpanları.
+   - **🏦 Kurumsal Banka & Kendi Holdingini Borsaya Açma (`SONH` IPO):** 3 farklı taksitli ticari kredi + Holding değeri `100.000 ₺`'yi geçince Halka Arz ile toplu fon, telefonda canlı `SONH` hissesi ve günlük şahsi temettü.
+   - **🚁 Patron Prestiji:** Özel Patron Plakası, Lüks Motor Yat, Holding Genel Merkezi (+%15 kalıcı verimlilik) ve arazi değiştirirken haritanın üstünden dönen pervanesiyle uçan **Patron Helikopteri**.
 
-## 📌 Diğer Bilgisayardaki Asistana Devir Notu (24 Kasım — Mac -> Windows)
-- Mac bilgisayarda **v13.0, v14.0 ve v15.0** geliştirmelerinin tamamı bitirildi, sözdizimi/simülasyon testlerinden geçirildi ve `main` dalına yüklendi.
+- **v16.0 Ek Özellikler:**
+  - **Kasadan mı, Şahsi Cüzdandan mı? (`#payChoiceModal`):** Tüm iş büyütme harcamalarında (tesisler, elemanlar, arsalar, rakip devralma, kredi kapama) oyuncuya **Şirket Kasası**, **Şahsi Cüzdan** veya **Kasa + Cüzdan Birlikte Öde** seçeneği sunulur.
+  - **`?kayit=son-durum` Full 10 Arazi Kaydı:** 1'den 10'a kadar tüm araziler tüm yükseltmeleri, katları, dükkanları, 10 tırı, 6 bungalovu ve tam kadrosuyla %100 dolu şekilde açılır.
+
+## 📌 Diğer Bilgisayardaki Asistana Devir Notu (24 Kasım — Windows v16.0)
+- Windows bilgisayarda **v16.0** (`holding_v16.js` + `index.html`, `style.css`, `empire.js`, `game.js` bağlantıları) tamamlandı ve canlı tarayıcıda 0 konsol hatasıyla doğrulandı.
 - **Kullanıcının Önemli Yayın Öncesi Kararı:** Şu an yeni özellik ve arazi geliştirmelerine odaklanıyoruz; mevcut erken aşama para kazanma hızına şimdilik dokunma. Oyun geliştirmesi tamamen bittiğinde yayınlamadan hemen önce:
   1. **Zorluk ve Ekonomi Dengelemesi** (yeni arazi/tesis alımlarının başlangıçtaki tatlı zorluk hissini koruması),
   2. **Son Aşama Genel Grafik Cilası** yapılacak.
