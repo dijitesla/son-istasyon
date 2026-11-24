@@ -2398,12 +2398,100 @@
   }
   requestAnimationFrame(gameLoop);
 
-  el.startGameBtn.addEventListener("click", () => {
-    sfx.startRainAmbience();
-    sfx.tap();
+  function applyFullStationPreset() {
+    const emp = EMP.createDefaultEmpire();
+    emp.managerHired = true;
+    emp.land2Owned = false;
+    emp.personalCash = 1600;
+    emp.dailySalary = 400;
+    emp.managerLogs = [
+      "👔 Kemal Bey: Merhaba patron! 1. İstasyon tam kapasite çalışıyor, Yan Arazi tapusunu almaya hazırız!"
+    ];
+
+    Object.assign(data, {
+      cash: 7500,
+      fuelStock: 7500,
+      tankLevel: 8,
+      autoTanker: true,
+      pumpsUnlocked: 9,
+      pumpSpeedLvl: 10,
+      marketLvl: 8,
+      restaurantUnlocked: true,
+      restaurantLvl: 6,
+      evUnlocked: true,
+      evLvl: 6,
+      motelUnlocked: true,
+      motelLvl: 6,
+      scaleUnlocked: true,
+      scaleLvl: 6,
+      carWashUnlocked: true,
+      carWashLvl: 6,
+      garageUnlocked: true,
+      garageLvl: 6,
+      solarInstalled: true,
+      camerasInstalled: true,
+      billboardInstalled: true,
+      dumanHired: true,
+      staff: {
+        ali: 6,
+        murat: 6,
+        hasan: 6,
+        zeynep: 6,
+        mehmet: 6,
+        kerem: 6,
+        selin: 6,
+        osman: 6,
+        kadir: 6,
+        cemil: 6
+      },
+      reputation: 88,
+      security: 95,
+      dayNumber: 12,
+      totalServed: 210,
+      eventsResolved: 18,
+      daily: createEmptyDailyStats(),
+      empire: emp
+    });
+    saveGame();
+  }
+
+  function launchIntoMap(welcomeMsg) {
     el.startScreen.classList.add("hidden");
     running = true;
     trySpawnStationCar();
     updateHUD();
+    if (welcomeMsg) showToast(welcomeMsg);
+  }
+
+  window.addEventListener("pointerdown", () => sfx.startRainAmbience(), { once: true });
+
+  el.startGameBtn.addEventListener("click", () => {
+    sfx.startRainAmbience();
+    sfx.tap();
+    launchIntoMap();
   });
+
+  const loadPresetBtn = document.getElementById("loadPresetBtn");
+  if (loadPresetBtn) {
+    loadPresetBtn.addEventListener("click", () => {
+      sfx.startRainAmbience();
+      sfx.tap();
+      applyFullStationPreset();
+      launchIntoMap("✅ Son ilerlemen açıldı! Üstten '🛍️ Yan Arazi'ye geçip arsayı alabilirsin!");
+    });
+  }
+
+  // URL parametresi (?kayit=yan-arazi) veya mevcut kayıt varsa açılış ekranını atlayıp doğrudan kaldığı yerden başlat!
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("kayit") === "yan-arazi") {
+      applyFullStationPreset();
+      try {
+        window.history.replaceState({}, "", window.location.pathname);
+      } catch (_) {}
+      launchIntoMap("✅ Son ilerlemen açıldı! Üstten '🛍️ Yan Arazi'ye geçip arsayı alabilirsin!");
+    } else if (data.totalServed > 0 || data.pumpsUnlocked > 1 || data.dayNumber > 1 || (data.empire && data.empire.land2Owned)) {
+      launchIntoMap();
+    }
+  } catch (_) {}
 })();
