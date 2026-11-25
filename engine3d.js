@@ -1,11 +1,26 @@
-// Son İstasyon v21.0 — AAA İzometrik 3D Grafik Motoru (Three.js)
-// 2048px yumuşak gölgeler, dokulu çatı & cam cepheler, 3D yakıt fiyat totemi, kafe şemsiyeleri,
-// metalik jantlı & tavanlı 3D araçlar, kollu yürüyen karakterler, dönen yıkama fırçaları ve 10 arazi!
+// Son İstasyon v22.0 — TEK DEV AÇIK DÜNYA 2×5 ŞEHİR BULVARI 3D MOTORU (Three.js)
+// 10 arazinin tamamı tek bir kesintisiz 3D şehir bulvarında (Üst Sıra 1–5, Alt Sıra 6–10) yan yana & arka arkaya!
+// Parmağınla sürükleyip gez, uzaklaştırıp tüm imparatorluğu gör, istediğin araziye doğrudan dokun!
 
 window.Engine3D = (function () {
   const WORLD_W = 480;
   const WORLD_H = 620;
   const SCALE = 0.1;
+
+  // 2×5 TEK DÜNYA ŞEHİR BULVARI KOORDİNAT HARİTASI
+  const LAND_IDS = ["station", "land2", "land3", "land4", "land5", "land6", "land7", "land8", "land9", "land10"];
+  const LAND_LAYOUT = {
+    station: { ox: -112, oz: -36, title: "1. İSTASYON" },
+    land2:   { ox:  -56, oz: -36, title: "2. GRAND AVM" },
+    land3:   { ox:    0, oz: -36, title: "3. LUNAPARK" },
+    land4:   { ox:   56, oz: -36, title: "4. ARAZİ" },
+    land5:   { ox:  112, oz: -36, title: "5. ARAZİ" },
+    land6:   { ox: -112, oz:  36, title: "6. ARAZİ" },
+    land7:   { ox:  -56, oz:  36, title: "7. ARAZİ" },
+    land8:   { ox:    0, oz:  36, title: "8. ARAZİ" },
+    land9:   { ox:   56, oz:  36, title: "9. ARAZİ" },
+    land10:  { ox:  112, oz:  36, title: "10. ARAZİ" }
+  };
 
   let THREE = null;
   let renderer = null;
@@ -21,12 +36,11 @@ window.Engine3D = (function () {
   let fillLight = null;
   let fog = null;
 
-  // Gerçek SimCity / My Perfect Hotel Tarzı Dar FOV İzometrik Kamera!
-  // 4 İzometrik Yön (45°, 135°, 225°, 315°) + 3 Yükseklik Açısı (İzometrik / Sinematik / Yüksek)
+  // Gerçek SimCity / Açık Dünya İzometrik Kamera (İzometrik / Yakın / İmparatorluk Kuşbakışı!)
   const ELEV_PRESETS = [
     { name: "İzometrik 3D", dist: 92, height: 74, lookZ: 0.5 },
-    { name: "Yakın 3D", dist: 64, height: 46, lookZ: 2.0 },
-    { name: "Yüksek Bakış", dist: 86, height: 102, lookZ: 0.5 }
+    { name: "Yakın 3D", dist: 62, height: 44, lookZ: 2.0 },
+    { name: "İmparatorluk", dist: 196, height: 158, lookZ: 0.0 }
   ];
   let elevIdx = 0;
   let yawIndex = 0; // 0..3 -> 4 İzometrik köşe
@@ -36,21 +50,26 @@ window.Engine3D = (function () {
 
   let camZoom = 1.0;
   let targetZoom = 1.0;
-  let panX = 0;
-  let panZ = 0;
-  let targetPanX = 0;
-  let targetPanZ = 0;
-  const curCamPos = { x: 42, y: 74, z: 82 };
-  const curLookAt = { x: 0, y: 0, z: 0.5 };
+  let panX = LAND_LAYOUT.station.ox;
+  let panZ = LAND_LAYOUT.station.oz;
+  let targetPanX = LAND_LAYOUT.station.ox;
+  let targetPanZ = LAND_LAYOUT.station.oz;
+  const curCamPos = { x: LAND_LAYOUT.station.ox + 42, y: 74, z: LAND_LAYOUT.station.oz + 82 };
+  const curLookAt = { x: LAND_LAYOUT.station.ox, y: 0, z: LAND_LAYOUT.station.oz + 0.5 };
 
   let raycaster = null;
   let groundPlane = null;
   let ndcVec = null;
 
+  let worldBaseGroup = null;
   let staticLandGroup = null;
   let dynamicGroup = null;
   let weatherGroup = null;
-  let lastBuildSig = "";
+
+  const landGroups = {};
+  const landSigs = {};
+  const landAnimRefs = {};
+  const boulevardCars = [];
 
   let animRefs = {
     ferrisWheel: null,
@@ -385,41 +404,72 @@ window.Engine3D = (function () {
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color("#1d3557");
-    fog = new THREE.FogExp2("#1d3557", 0.0028);
+    fog = new THREE.FogExp2("#1d3557", 0.00085);
     scene.fog = fog;
 
-    // DAR FOV (28°) = GERÇEK SİMCİTY İZOMETRİK DİORAMA GÖRÜNÜMÜ (Binalar kameraya çarpıp devleşmez!)
-    camera = new THREE.PerspectiveCamera(28, 1, 1, 320);
+    // DAR FOV (28°) + GENİŞ GÖRÜŞ MESAFESİ (780) = 10 ARAZİNİN TAMAMI TEK DÜNYADA KRİSTAL NET!
+    camera = new THREE.PerspectiveCamera(28, 1, 1, 780);
 
-    // 3 Noktalı Stüdyo Işıklandırması (Sıcak Güneş + Gökyüzü Dolgu + Yumuşak Gölge)
+    // 3 Noktalı Stüdyo Işıklandırması (Kamerayı Takip Eden 2048px Dinamik Güneş Gölgesi!)
     hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x334155, 1.05);
     scene.add(hemiLight);
 
     sunLight = new THREE.DirectionalLight(0xfff5dc, 1.44);
-    sunLight.position.set(38, 64, 30);
+    sunLight.position.set(LAND_LAYOUT.station.ox + 42, 68, LAND_LAYOUT.station.oz + 34);
     sunLight.castShadow = true;
     sunLight.shadow.mapSize.width = 2048;
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 15;
-    sunLight.shadow.camera.far = 190;
-    const sc = 46;
+    sunLight.shadow.camera.far = 260;
+    const sc = 72;
     sunLight.shadow.camera.left = -sc;
     sunLight.shadow.camera.right = sc;
     sunLight.shadow.camera.top = sc;
     sunLight.shadow.camera.bottom = -sc;
     sunLight.shadow.bias = -0.00045;
     scene.add(sunLight);
+    scene.add(sunLight.target);
 
     fillLight = new THREE.DirectionalLight(0x93c5fd, 0.48);
     fillLight.position.set(-32, 34, -26);
     scene.add(fillLight);
 
+    worldBaseGroup = new THREE.Group();
     staticLandGroup = new THREE.Group();
     dynamicGroup = new THREE.Group();
     weatherGroup = new THREE.Group();
+    scene.add(worldBaseGroup);
     scene.add(staticLandGroup);
     scene.add(dynamicGroup);
     scene.add(weatherGroup);
+
+    // 10 Arazi İçin Bağımsız Önbellekli Sahne Grupları (Yalnızca Değişen Arazi Yenilenir!)
+    LAND_IDS.forEach((lid) => {
+      const grp = new THREE.Group();
+      const L = LAND_LAYOUT[lid];
+      grp.position.set(L.ox, 0, L.oz);
+      staticLandGroup.add(grp);
+      landGroups[lid] = grp;
+      landSigs[lid] = "";
+    });
+
+    // Tek 2×5 Şehir Bulvarı Zemin & Otoyol Ağı (1 Kez Kurulur!)
+    buildUnifiedWorldBase();
+
+    // İki Ana Bulvarda Kesintisiz Akan 16 Şehir Trafik Aracı
+    const bCols = ["#ef4444", "#38bdf8", "#f8fafc", "#facc15", "#22c55e", "#f97316", "#a855f7", "#cbd5e1"];
+    for (let i = 0; i < 16; i++) {
+      const row = i % 2;
+      const dir = i % 4 < 2 ? 1 : -1;
+      boulevardCars.push({
+        wx: -165 + i * 22,
+        wz: (row === 0 ? -63 : 9) + (dir > 0 ? 1.85 : -1.85),
+        dir,
+        speed: 14 + (i % 5) * 3.5,
+        color: bCols[i % bCols.length],
+        shape: i % 6 === 0 ? "truck" : i % 4 === 0 ? "sport" : "sedan"
+      });
+    }
 
     raycaster = new THREE.Raycaster();
     groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -449,27 +499,45 @@ window.Engine3D = (function () {
   }
 
   // =========================================================================
-  // KAMERA KONTROLLERİ (DÖNDÜR, YAKINLAŞTIR, KAYDIR, 3D RAYCAST)
+  // KAMERA KONTROLLERİ (DÖNDÜR, YAKINLAŞTIR, KAYDIR, 10 ARAZİ 3D RAYCAST)
   // =========================================================================
-  function screenToLogical(clientX, clientY) {
-    if (!ready || !canvasEl) return { x: 240, y: 310 };
+  function screenToWorldHit(clientX, clientY) {
+    if (!ready || !canvasEl) return { landId: "station", x: 240, y: 310 };
     const rect = canvasEl.getBoundingClientRect();
     ndcVec.x = ((clientX - rect.left) / rect.width) * 2 - 1;
     ndcVec.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(ndcVec, camera);
     const hit = new THREE.Vector3();
     if (raycaster.ray.intersectPlane(groundPlane, hit)) {
+      let bestId = "station";
+      let bestDist = Infinity;
+      for (let i = 0; i < LAND_IDS.length; i++) {
+        const lid = LAND_IDS[i];
+        const L = LAND_LAYOUT[lid];
+        const d = Math.hypot(hit.x - L.ox, hit.z - L.oz);
+        if (d < bestDist) {
+          bestDist = d;
+          bestId = lid;
+        }
+      }
+      const L = LAND_LAYOUT[bestId];
       return {
-        x: Math.max(0, Math.min(WORLD_W, toLogicalX(hit.x))),
-        y: Math.max(0, Math.min(WORLD_H, toLogicalY(hit.z)))
+        landId: bestId,
+        x: Math.max(0, Math.min(WORLD_W, toLogicalX(hit.x - L.ox))),
+        y: Math.max(0, Math.min(WORLD_H, toLogicalY(hit.z - L.oz)))
       };
     }
-    return { x: 240, y: 310 };
+    return { landId: getFocusedLand(), x: 240, y: 310 };
   }
 
-  function worldToScreen(lx, heightY, ly) {
+  function screenToLogical(clientX, clientY) {
+    const h = screenToWorldHit(clientX, clientY);
+    return { x: h.x, y: h.y };
+  }
+
+  function worldPosToScreen(wx, heightY, wz) {
     if (!ready || !canvasEl) return { x: -100, y: -100, visible: false };
-    const v = new THREE.Vector3(to3DX(lx), heightY, to3DZ(ly));
+    const v = new THREE.Vector3(wx, heightY, wz);
     v.project(camera);
     const w = canvasEl.clientWidth || 440;
     const h = canvasEl.clientHeight || 580;
@@ -480,19 +548,53 @@ window.Engine3D = (function () {
     };
   }
 
+  function worldToScreen(lx, heightY, ly, landId = "station") {
+    const L = LAND_LAYOUT[landId] || LAND_LAYOUT.station;
+    return worldPosToScreen(L.ox + to3DX(lx), heightY, L.oz + to3DZ(ly));
+  }
+
   function zoomBy(delta) {
-    targetZoom = Math.max(0.55, Math.min(1.45, targetZoom + delta));
+    targetZoom = Math.max(0.5, Math.min(2.85, targetZoom + delta));
   }
 
   function panBy(dxPx, dyPx) {
-    const f = 0.055 * camZoom;
-    // Kamera dönüş açısına göre doğal kaydırma!
+    const f = 0.068 * camZoom * (ELEV_PRESETS[elevIdx].dist / 92);
+    // Kamera dönüş açısına göre tüm 2×5 şehir haritasında doğal kaydırma!
     const cosY = Math.cos(curYaw);
     const sinY = Math.sin(curYaw);
     const worldDx = (-dxPx * cosY - dyPx * sinY) * f;
     const worldDz = (dxPx * sinY - dyPx * cosY) * f;
-    targetPanX = Math.max(-16, Math.min(16, targetPanX + worldDx));
-    targetPanZ = Math.max(-18, Math.min(18, targetPanZ + worldDz));
+    targetPanX = Math.max(-132, Math.min(132, targetPanX + worldDx));
+    targetPanZ = Math.max(-52, Math.min(56, targetPanZ + worldDz));
+  }
+
+  function focusLand(landId, instant = false) {
+    const L = LAND_LAYOUT[landId] || LAND_LAYOUT.station;
+    targetPanX = L.ox;
+    targetPanZ = L.oz;
+    if (elevIdx === 2) elevIdx = 0; // İmparatorluk kuşbakışındayken özel arazi seçilirse yakına in!
+    if (targetZoom > 1.35) targetZoom = 1.0;
+    if (instant) {
+      panX = L.ox;
+      panZ = L.oz;
+      curLookAt.x = L.ox;
+      curLookAt.z = L.oz + ELEV_PRESETS[elevIdx].lookZ;
+    }
+  }
+
+  function getFocusedLand() {
+    let bestId = "station";
+    let bestDist = Infinity;
+    for (let i = 0; i < LAND_IDS.length; i++) {
+      const lid = LAND_IDS[i];
+      const L = LAND_LAYOUT[lid];
+      const d = Math.hypot(targetPanX - L.ox, targetPanZ - L.oz);
+      if (d < bestDist) {
+        bestDist = d;
+        bestId = lid;
+      }
+    }
+    return bestId;
   }
 
   function rotate90() {
@@ -502,14 +604,22 @@ window.Engine3D = (function () {
     return names[yawIndex];
   }
 
-  function resetCamera() {
-    targetPanX = 0;
-    targetPanZ = 0;
-    targetZoom = 1.0;
+  function resetCamera(landId) {
+    if (landId && LAND_LAYOUT[landId]) {
+      focusLand(landId, false);
+    } else {
+      targetZoom = 1.0;
+    }
   }
 
   function cycleAngle() {
     elevIdx = (elevIdx + 1) % ELEV_PRESETS.length;
+    if (elevIdx === 2) {
+      // İmparatorluk Genel Bakışında kamerayı 2×5 şehrin tam ortasına kaydır!
+      targetPanX = 0;
+      targetPanZ = 0;
+      targetZoom = 1.08;
+    }
     return ELEV_PRESETS[elevIdx].name;
   }
 
@@ -622,26 +732,112 @@ window.Engine3D = (function () {
     return g;
   }
 
-  function addCommonEnvironment(group, theme = "station") {
-    // Dokulu Zümrüt Çim Çevre
-    const grassTex = createNoiseTexture(
-      theme === "vip" ? "#24552a" : "#226038",
-      "rgba(74,222,128,0.06)",
-      "rgba(15,40,22,0.08)",
-      16,
-      16,
-      `grass_${theme}`
+  // =========================================================================
+  // TEK DEV 2×5 ŞEHİR BULVARI ZEMİNİ, OTOYOLLAR, BAĞLANTI CADDELERİ & PEYZAJ
+  // =========================================================================
+  function buildUnifiedWorldBase() {
+    const group = worldBaseGroup;
+    // Geniş Zümrüt Çim Arazi (Tüm 10 araziyi + ufku sarar!)
+    const grassTex = createNoiseTexture("#226038", "rgba(74,222,128,0.06)", "rgba(15,40,22,0.08)", 44, 30, "world_grass_2x5");
+    const terrain = new THREE.Mesh(
+      new THREE.PlaneGeometry(680, 480),
+      getMat("#ffffff", { map: grassTex, texKey: "world_grass_2x5", rough: 0.92, shadow: false })
     );
-    const outerGround = new THREE.Mesh(
-      new THREE.PlaneGeometry(280, 280),
-      getMat("#ffffff", { map: grassTex, texKey: `grass_${theme}`, rough: 0.92, shadow: false })
-    );
-    outerGround.rotation.x = -Math.PI / 2;
-    outerGround.position.y = -0.08;
-    outerGround.receiveShadow = true;
-    group.add(outerGround);
+    terrain.rotation.x = -Math.PI / 2;
+    terrain.position.y = -0.1;
+    terrain.receiveShadow = true;
+    group.add(terrain);
 
-    // Dokulu Ana Parsel Zemini (Asfalt veya Lüks Taş!)
+    // İki Kesintisiz Ana Bulvar (Kuzey Otoyolu z=-63 & Orta Şehir Bulvarı z=+9) + Güney Çevre Yolu z=+73
+    const roadTex = createNoiseTexture("#232d3f", "rgba(255,255,255,0.07)", "rgba(0,0,0,0.22)", 48, 2, "world_blvd_asphalt");
+    const dashMat = getMat("#f8fafc", { rough: 0.45, shadow: false });
+    [-63, 9].forEach((rz) => {
+      const road = box(360, 0.18, 7.8, "#ffffff", { map: roadTex, texKey: "world_blvd_asphalt", rough: 0.88, shadow: false });
+      road.position.set(0, -0.02, rz);
+      road.receiveShadow = true;
+      group.add(road);
+
+      for (let dx = -168; dx <= 168; dx += 6.0) {
+        const dash = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.04, 0.24), dashMat);
+        dash.position.set(dx, 0.08, rz);
+        group.add(dash);
+      }
+      const e1 = box(360, 0.04, 0.16, "#facc15", { shadow: false });
+      e1.position.set(0, 0.08, rz - 3.5);
+      const e2 = box(360, 0.04, 0.16, "#facc15", { shadow: false });
+      e2.position.set(0, 0.08, rz + 3.5);
+      group.add(e1, e2);
+
+      // Kuzey tarafı metal otoyol bariyeri
+      if (rz === -63) {
+        const rail = box(340, 0.34, 0.18, "#cbd5e1", { metal: 0.72, rough: 0.28, shadow: false });
+        rail.position.set(0, 0.55, rz - 4.1);
+        group.add(rail);
+      }
+    });
+
+    // Güney Çevre Yolu (2. sıranın altından tüm şehri bağlar)
+    const southRoad = box(340, 0.16, 5.4, "#ffffff", { map: roadTex, texKey: "world_blvd_asphalt", rough: 0.88, shadow: false });
+    southRoad.position.set(0, -0.03, 73.5);
+    group.add(southRoad);
+
+    // 6 Dikey Bağlantı Caddesi (5 sütunun aralarından Kuzey Otoyolu <-> Orta Bulvar <-> Güney Yolu!)
+    const aveTex = createNoiseTexture("#273246", "rgba(255,255,255,0.06)", "rgba(0,0,0,0.18)", 2, 22, "world_ave_asphalt");
+    [-140, -84, -28, 28, 84, 140].forEach((ax) => {
+      const ave = box(5.4, 0.15, 139, "#ffffff", { map: aveTex, texKey: "world_ave_asphalt", rough: 0.88, shadow: false });
+      ave.position.set(ax, -0.035, 5.5);
+      ave.receiveShadow = true;
+      group.add(ave);
+
+      // Cadde ortası kesikli şeritler + cadde kenarı ağaç & sokak lambaları
+      for (let dz = -56; dz <= 66; dz += 7.5) {
+        if (Math.abs(dz - 9) < 5) continue;
+        const d = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 2.6), dashMat);
+        d.position.set(ax, 0.06, dz);
+        group.add(d);
+      }
+    });
+
+    // Orta Refüj & Dış Çevre Ağaçları + Renkli Çalılar
+    const altTints = ["#16a34a", "#15803d", "#65a30d", "#eab308"];
+    const bushCols = ["#f43f5e", "#facc15", "#c084fc", "#fb923c"];
+    for (let tx = -156; tx <= 156; tx += 13) {
+      const idx = Math.abs(Math.round(tx));
+      // Kuzey otoyolu arkası orman şeridi
+      group.add(idx % 3 === 0 ? createBroadleafTree(tx, -72.5, 1.15, altTints[idx % 4]) : createPineTree(tx, -72.5, 1.15));
+      // Güney çevre yolu arkası ağaçlar
+      group.add(idx % 2 === 0 ? createBroadleafTree(tx, 81.5, 1.08, altTints[(idx + 1) % 4]) : createPineTree(tx, 81.5, 1.08));
+      // 1. sıra ile Orta Bulvar arası yeşil refüj (kavşaklara denk gelmesin)
+      const nearAve = [-140, -84, -28, 28, 84, 140].some((ax) => Math.abs(tx - ax) < 5.5);
+      if (!nearAve) {
+        group.add(idx % 2 === 0 ? createBroadleafTree(tx, -0.2, 0.88, altTints[idx % 4]) : createPineTree(tx, -0.2, 0.88));
+        group.add(createFlowerBush(tx + 4.2, -0.2, bushCols[idx % 4]));
+      }
+    }
+    // Batı & Doğu dış kenar ağaçları
+    for (let tz = -54; tz <= 68; tz += 11) {
+      const idx = Math.abs(Math.round(tz));
+      group.add(idx % 2 === 0 ? createBroadleafTree(-148, tz, 1.05, altTints[idx % 4]) : createPineTree(-148, tz, 1.05));
+      group.add(idx % 2 === 1 ? createBroadleafTree(148, tz, 1.05, altTints[(idx + 1) % 4]) : createPineTree(148, tz, 1.05));
+    }
+
+    // Uzak Ufuk Yeşil Tepeleri (Tüm 4 yönde doğal ufuk!)
+    [
+      [-155, -102, 28, 8.5], [-68, -108, 34, 10.5], [22, -106, 32, 9.5], [115, -104, 30, 9.0], [185, -92, 26, 7.5],
+      [-192, -18, 26, 7.2], [192, 12, 28, 7.8], [-120, 114, 30, 8.2], [18, 118, 34, 9.0], [135, 112, 28, 7.8]
+    ].forEach(([hx, hz, hr, hh]) => {
+      const hill = new THREE.Mesh(
+        new THREE.SphereGeometry(hr, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2),
+        getMat("#1b5130", { rough: 0.95, shadow: false })
+      );
+      hill.scale.set(1.35, hh / hr, 1.0);
+      hill.position.set(hx, -0.25, hz);
+      group.add(hill);
+    });
+  }
+
+  // Her Parsel İçin Komşuyla Çakışmayan Temiz Zemin Pedi + Bordür + Köşe Peyzajı!
+  function addCommonEnvironment(group, theme = "station") {
     const padTexKey = `pad_${theme}`;
     const padTex =
       theme === "vip"
@@ -669,70 +865,39 @@ window.Engine3D = (function () {
       group.add(m);
     });
 
-    // Dokulu 2 Şeritli Otoyol
-    const roadTex = createNoiseTexture("#232d3f", "rgba(255,255,255,0.07)", "rgba(0,0,0,0.22)", 24, 2, "highway_asphalt");
-    const road = box(190, 0.18, 7.8, "#ffffff", { map: roadTex, texKey: "highway_asphalt", rough: 0.88, shadow: false });
-    road.position.set(0, -0.01, -27.0);
-    road.receiveShadow = true;
-    group.add(road);
-
-    // Otoyol Kesikli Beyaz Şeritler + Kenar Sarı Çizgileri
-    const dashMat = getMat("#f8fafc", { rough: 0.45, shadow: false });
-    for (let dx = -72; dx <= 72; dx += 5.2) {
-      const dash = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.04, 0.24), dashMat);
-      dash.position.set(dx, 0.09, -27.0);
-      group.add(dash);
-    }
-    const edgeY1 = box(190, 0.04, 0.16, "#facc15", { shadow: false });
-    edgeY1.position.set(0, 0.09, -30.5);
-    const edgeY2 = box(190, 0.04, 0.16, "#facc15", { shadow: false });
-    edgeY2.position.set(0, 0.09, -23.5);
-    group.add(edgeY1, edgeY2);
-
-    // Otoyol Metal Bariyerleri (İstasyon giriş/çıkışında açık!)
-    [
-      [-55, -31.1, 70], [55, -31.1, 70], [0, -31.1, 44],
-      [-52, -22.9, 64], [52, -22.9, 64], [2, -22.9, 24]
-    ].forEach(([gx, gz, gw]) => {
-      const rail = box(gw, 0.34, 0.18, "#cbd5e1", { metal: 0.72, rough: 0.28, shadow: false });
-      rail.position.set(gx, 0.55, gz);
-      group.add(rail);
-    });
-
-    // Çevre 3D Ağaçları (Çam + Geniş Yapraklı Meşe + Çiçekli Çalılar + Uzak Tepeler!)
+    // Parsel Yan Kenar Şık Ağaç & Çiçek Çalıları (Bağlantı caddesine taşmaz!)
     const treeFn = theme === "vip" ? createPalmTree : createPineTree;
-    const altTints = ["#16a34a", "#15803d", "#65a30d", "#eab308"];
     const bushCols = ["#f43f5e", "#facc15", "#c084fc", "#fb923c"];
-    for (let tz = -18; tz <= 30; tz += 6.6) {
-      const idx = Math.abs(Math.round(tz));
-      const useBroad = theme !== "vip" && idx % 2 === 0;
-      group.add(useBroad ? createBroadleafTree(-25.4, tz, 0.94, altTints[idx % 4]) : treeFn(-25.2, tz, 0.94));
-      group.add(!useBroad && theme !== "vip" ? createBroadleafTree(25.4, tz, 0.96, altTints[(idx + 1) % 4]) : treeFn(25.2, tz, 0.94));
-      if (idx % 2 === 1) {
-        group.add(createFlowerBush(-23.6, tz + 2.2, bushCols[idx % 4]));
-        group.add(createFlowerBush(23.6, tz + 2.2, bushCols[(idx + 2) % 4]));
-      }
-    }
-    for (let tx = -20; tx <= 20; tx += 7.4) {
-      const idx = Math.abs(Math.round(tx));
-      group.add(theme !== "vip" && idx % 2 === 1 ? createBroadleafTree(tx, 33.4, 0.96, altTints[idx % 4]) : treeFn(tx, 33.2, 1.0));
-      group.add(createFlowerBush(tx + 3.2, 31.4, bushCols[idx % 4]));
-    }
-    for (let tx = -42; tx <= 42; tx += 9.5) {
-      const idx = Math.abs(Math.round(tx));
-      group.add(idx % 3 === 0 ? createBroadleafTree(tx, -34.6, 1.12, altTints[idx % 4]) : createPineTree(tx, -34.4, 1.1));
-    }
-
-    // Uzak Ufuk Yeşil Tepeleri (Harita boşlukta kesilmez, derinlik kazanır!)
-    [[-52, -48, 22, 6.5], [14, -54, 28, 8.2], [58, -46, 20, 6.0], [-56, 36, 20, 5.5]].forEach(([hx, hz, hr, hh]) => {
-      const hill = new THREE.Mesh(
-        new THREE.SphereGeometry(hr, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2),
-        getMat("#1b5130", { rough: 0.95, shadow: false })
-      );
-      hill.scale.set(1.3, hh / hr, 1.0);
-      hill.position.set(hx, -0.2, hz);
-      group.add(hill);
+    [-16, 4, 24].forEach((tz, i) => {
+      group.add(treeFn(-23.8, tz, 0.86));
+      group.add(treeFn(23.8, tz, 0.86));
+      group.add(createFlowerBush(-23.6, tz + 3.2, bushCols[i % 4]));
+      group.add(createFlowerBush(23.6, tz + 3.2, bushCols[(i + 2) % 4]));
     });
+  }
+
+  // Henüz Alınmamış Komşu Arsalar İçin Şık 3D "SATILIK ARSA" Görünümü!
+  function buildForSalePlot(group, title, accentCol = "#f59e0b") {
+    const grassPlot = box(42.0, 0.14, 49.0, "#1f6f3f", { rough: 0.9, shadow: false });
+    grassPlot.position.set(0, 0.04, 3.9);
+    group.add(grassPlot);
+    // 4 Kenar Ahşap/Sarı Çit
+    [[42.4, 0.65, 0.25, 0, 0.4, -20.5], [42.4, 0.65, 0.25, 0, 0.4, 28.4], [0.25, 0.65, 49.0, -21.1, 0.4, 3.9], [0.25, 0.65, 49.0, 21.1, 0.4, 3.9]].forEach(([w, h, d, x, y, z]) => {
+      const f = box(w, h, d, "#b45309", { rough: 0.8 });
+      f.position.set(x, y, z);
+      group.add(f);
+    });
+    // Ortada Dev 3D "SATILIK ARSA" Tabelası
+    const p1 = cyl(0.18, 0.22, 4.2, 6, "#64748b", { metal: 0.5 });
+    p1.position.set(-4.2, 2.1, 2);
+    const p2 = cyl(0.18, 0.22, 4.2, 6, "#64748b", { metal: 0.5 });
+    p2.position.set(4.2, 2.1, 2);
+    const tex = createSignTexture(title || "SATILIK ARSA", "#0f172a", "#fef08a", accentCol);
+    const sMat = new THREE.MeshStandardMaterial({ map: tex, emissive: new THREE.Color("#ffffff"), emissiveMap: tex, emissiveIntensity: 0.6 });
+    const board = new THREE.Mesh(new THREE.BoxGeometry(11.6, 2.8, 0.4), sMat);
+    board.position.set(0, 4.4, 2);
+    board.castShadow = true;
+    group.add(p1, p2, board);
   }
 
   // =========================================================================
@@ -1077,9 +1242,7 @@ window.Engine3D = (function () {
     addCommonEnvironment(group, "mall");
     const emp = data.empire;
     if (!emp.land2Owned) {
-      const sign = box(14, 3.0, 0.6, "#1e293b", { emissive: "#f59e0b", emInt: 0.35 });
-      sign.position.set(0, 2.0, 0);
-      group.add(sign);
+      buildForSalePlot(group, "2. ARAZİ • SATILIK", "#38bdf8");
       return;
     }
 
@@ -1221,9 +1384,7 @@ window.Engine3D = (function () {
     addCommonEnvironment(group, "resort");
     const l3 = data.empire.land3;
     if (!l3 || !l3.owned) {
-      const sign = box(14, 3.0, 0.6, "#4c1d95", { emissive: "#a855f7", emInt: 0.45 });
-      sign.position.set(0, 2.0, 0);
-      group.add(sign);
+      buildForSalePlot(group, "3. ARAZİ • SATILIK", "#a855f7");
       return;
     }
 
@@ -1362,9 +1523,8 @@ window.Engine3D = (function () {
     animRefs.hotelRoomMeshes = [];
 
     if (!st || !st.owned) {
-      const sign = box(15, 3.4, 0.7, "#1e293b", { emissive: "#f59e0b", emInt: 0.35 });
-      sign.position.set(0, 2.2, 0);
-      group.add(sign);
+      const lNum = landId.replace("land", "");
+      buildForSalePlot(group, `${lNum}. ARAZİ • SATILIK`, "#facc15");
       return;
     }
 
@@ -1724,25 +1884,46 @@ window.Engine3D = (function () {
     while (grp.children.length > 0) grp.remove(grp.children[0]);
   }
 
-  function rebuildStaticLand(activeLand, data, stMeta) {
-    clearGroup(staticLandGroup);
-    animRefs = { ferrisWheel: null, ferrisCabins: [], entryBarrier: null, exitBarrier: null, fuelFillMesh: null, fountainRings: [], hotelRoomMeshes: [], fireMesh: null, washRollers: [] };
-    if (activeLand === "station") buildStationScene(staticLandGroup, data, stMeta);
-    else if (activeLand === "land2") buildLand2Scene(staticLandGroup, data);
-    else if (activeLand === "land3") buildLand3Scene(staticLandGroup, data);
-    else buildExtraLandScene(staticLandGroup, data, activeLand);
+  function rebuildLandGroup(lid, data, stMeta) {
+    const grp = landGroups[lid];
+    if (!grp) return;
+    clearGroup(grp);
+    animRefs = {
+      ferrisWheel: null,
+      ferrisCabins: [],
+      entryBarrier: null,
+      exitBarrier: null,
+      fuelFillMesh: null,
+      fountainRings: [],
+      hotelRoomMeshes: [],
+      fireMesh: null,
+      washRollers: []
+    };
+    landAnimRefs[lid] = animRefs;
+    if (lid === "station") buildStationScene(grp, data, stMeta);
+    else if (lid === "land2") buildLand2Scene(grp, data);
+    else if (lid === "land3") buildLand3Scene(grp, data);
+    else buildExtraLandScene(grp, data, lid);
   }
 
   // =========================================================================
-  // 60 FPS RENDER DÖNGÜSÜ
+  // 60 FPS TEK DEV AÇIK DÜNYA RENDER DÖNGÜSÜ (10 ARAZİ EŞZAMANLI CANLI!)
   // =========================================================================
+  let lastFrameMs = performance.now();
   function renderFrame(activeLand, phase, data, stMeta) {
     if (!ready) return;
+    const nowMs = performance.now();
+    const dt = Math.min(0.05, Math.max(0.001, (nowMs - lastFrameMs) / 1000));
+    lastFrameMs = nowMs;
 
-    const sig = computeSceneSig(activeLand, data);
-    if (sig !== lastBuildSig) {
-      lastBuildSig = sig;
-      rebuildStaticLand(activeLand, data, stMeta);
+    // 10 Arazinin Tamamını Kontrol Et — Sadece Değişen Arazi Yeniden Kurulur!
+    for (let i = 0; i < LAND_IDS.length; i++) {
+      const lid = LAND_IDS[i];
+      const sig = computeSceneSig(lid, data);
+      if (sig !== landSigs[lid]) {
+        landSigs[lid] = sig;
+        rebuildLandGroup(lid, data, stMeta);
+      }
     }
 
     // Dinamik Gökyüzü & Işık
@@ -1758,11 +1939,11 @@ window.Engine3D = (function () {
     hemiLight.intensity = 0.62 + (1 - n) * 0.6;
     sunLight.color.setHex(n > 0.6 ? 0xbae6fd : n > 0.25 ? 0xfdba74 : 0xfff8e7);
 
-    // Yumuşak 360° Döndürülebilir İzometrik Kamera!
+    // Yumuşak 360° Döndürülebilir Açık Dünya İzometrik Kamera!
     const pr = ELEV_PRESETS[elevIdx];
     camZoom += (targetZoom - camZoom) * 0.14;
-    panX += (targetPanX - panX) * 0.16;
-    panZ += (targetPanZ - panZ) * 0.16;
+    panX += (targetPanX - panX) * 0.14;
+    panZ += (targetPanZ - panZ) * 0.14;
     let dYaw = targetYaw - curYaw;
     while (dYaw > Math.PI) dYaw -= Math.PI * 2;
     while (dYaw < -Math.PI) dYaw += Math.PI * 2;
@@ -1782,157 +1963,205 @@ window.Engine3D = (function () {
     camera.position.set(curCamPos.x, curCamPos.y, curCamPos.z);
     camera.lookAt(curLookAt.x, 0, curLookAt.z);
 
-    // Dinamik Varlıklar
+    // Güneş Gölgesi Kamerayı Takip Eder — Hangi Arazideysen Orası 2048px Kristal Gölgeli!
+    sunLight.target.position.set(curLookAt.x, 0, curLookAt.z);
+    sunLight.position.set(curLookAt.x + 42, 68, curLookAt.z + 34);
+    sunLight.target.updateMatrixWorld();
+
+    // TÜM 10 ARAZİNİN DİNAMİK VARLIKLARINI EŞZAMANLI TOPLA!
     const vehList = [];
     const charList = [];
     const overlayLabels = [];
     const floats = [];
+    const isSkyOverview = elevIdx === 2 || camZoom > 1.75;
 
-    if (activeLand === "station") {
-      if (animRefs.fuelFillMesh) {
+    const pushVeh = (lid, lx, ly, angle, color, shape) => {
+      const L = LAND_LAYOUT[lid];
+      vehList.push({ wx: L.ox + to3DX(lx), wz: L.oz + to3DZ(ly), angle, color, shape });
+    };
+    const pushChar = (lid, lx, ly, shirt, hat, moving, isDog = false) => {
+      const L = LAND_LAYOUT[lid];
+      charList.push({ wx: L.ox + to3DX(lx), wz: L.oz + to3DZ(ly), shirt, hat, moving, isDog });
+    };
+    const pushLbl = (lid, lx, ly, h, opts) => {
+      const L = LAND_LAYOUT[lid];
+      overlayLabels.push(Object.assign({ wx: L.ox + to3DX(lx), wz: L.oz + to3DZ(ly), h }, opts));
+    };
+    const pushFloat = (lid, ft) => {
+      const L = LAND_LAYOUT[lid];
+      floats.push({ wx: L.ox + to3DX(ft.x), wz: L.oz + to3DZ(ft.y), text: ft.text, color: ft.color, life: ft.life });
+    };
+
+    // 0. İki Ana Şehir Bulvarında Kesintisiz Akan Trafik!
+    for (let i = 0; i < boulevardCars.length; i++) {
+      const bc = boulevardCars[i];
+      bc.wx += bc.dir * bc.speed * dt;
+      if (bc.wx > 176) bc.wx = -176;
+      if (bc.wx < -176) bc.wx = 176;
+      vehList.push({
+        wx: bc.wx,
+        wz: bc.wz,
+        angle: bc.dir > 0 ? Math.PI / 2 : -Math.PI / 2,
+        color: bc.color,
+        shape: bc.shape
+      });
+    }
+
+    // 1. ARAZİ (İSTASYON) CANLI VERİLERİ
+    const ar1 = landAnimRefs.station;
+    if (ar1) {
+      if (ar1.fuelFillMesh) {
         const pct = Math.max(0.05, Math.min(1, data.fuelStock / stMeta.maxFuel));
-        animRefs.fuelFillMesh.scale.y = pct;
-        animRefs.fuelFillMesh.position.y = 0.6 + 1.9 * pct;
+        ar1.fuelFillMesh.scale.y = pct;
+        ar1.fuelFillMesh.position.y = 0.6 + 1.9 * pct;
       }
-      if (animRefs.fireMesh) {
-        animRefs.fireMesh.scale.setScalar(0.85 + Math.sin(Date.now() * 0.016) * 0.22);
+      if (ar1.fireMesh) ar1.fireMesh.scale.setScalar(0.85 + Math.sin(nowMs * 0.016) * 0.22);
+      if (ar1.washRollers && ar1.washRollers.length > 0) {
+        ar1.washRollers.forEach((r, idx) => (r.rotation.y += idx % 2 === 0 ? 0.12 : -0.12));
       }
-      if (animRefs.washRollers && animRefs.washRollers.length > 0) {
-        animRefs.washRollers.forEach((r, idx) => (r.rotation.y += idx % 2 === 0 ? 0.12 : -0.12));
-      }
-
-      stMeta.highwayBgCars.forEach((c) => vehList.push({ x: c.x, y: c.y, angle: c.angle, color: c.color, shape: "sedan" }));
-      stMeta.cars.forEach((c) => {
-        vehList.push({ x: c.x, y: c.y, angle: c.angle, color: c.color, shape: c.shape });
-        if (c.state === "story_wait") {
-          overlayLabels.push({ lx: c.x, ly: c.y, h: 3.4, text: "❗ İNCELE!", bg: "#dc2626", brd: "#fef08a" });
-        } else if (!c.isStory && c.pumpIdx >= 0 && (c.state === "waiting_fuel" || c.state === "fueling")) {
-          const pct = Math.min(1, c.fuelFilled / c.fuelNeeded);
-          const noPumper = data.staff.ali === 0 && data.staff.murat === 0 && data.staff.hasan === 0;
-          if (pct < 0.04 && noPumper) {
-            overlayLabels.push({ lx: c.x, ly: c.y, h: 3.0, text: "⛽ DOLDUR", bg: "#16a34a", brd: "#fef08a" });
-          } else if (pct > 0.04 && pct < 0.99) {
-            overlayLabels.push({ lx: c.x, ly: c.y, h: 2.7, pct, barCol: "#4ade80" });
-          }
+    }
+    stMeta.cars.forEach((c) => {
+      pushVeh("station", c.x, c.y, c.angle, c.color, c.shape);
+      if (c.state === "story_wait") {
+        pushLbl("station", c.x, c.y, 3.4, { text: "❗ İNCELE!", bg: "#dc2626", brd: "#fef08a", major: true });
+      } else if (!isSkyOverview && !c.isStory && c.pumpIdx >= 0 && (c.state === "waiting_fuel" || c.state === "fueling")) {
+        const pct = Math.min(1, c.fuelFilled / c.fuelNeeded);
+        const noPumper = data.staff.ali === 0 && data.staff.murat === 0 && data.staff.hasan === 0;
+        if (pct < 0.04 && noPumper) {
+          pushLbl("station", c.x, c.y, 3.0, { text: "⛽ DOLDUR", bg: "#16a34a", brd: "#fef08a" });
+        } else if (pct > 0.04 && pct < 0.99) {
+          pushLbl("station", c.x, c.y, 2.7, { pct, barCol: "#4ade80" });
         }
-      });
-      if (stMeta.tanker) vehList.push({ x: stMeta.tanker.x, y: stMeta.tanker.y, angle: stMeta.tanker.angle, color: "#ea580c", shape: "tanker" });
-      if (stMeta.activeTowTruck) vehList.push({ x: stMeta.activeTowTruck.x, y: stMeta.activeTowTruck.y, angle: stMeta.activeTowTruck.angle, color: "#f59e0b", shape: "tow" });
-      if (stMeta.activeBus) vehList.push({ x: stMeta.activeBus.x, y: stMeta.activeBus.y, angle: stMeta.activeBus.angle, color: stMeta.activeBus.color, shape: "bus" });
-      if (stMeta.policeCruiser) vehList.push({ x: stMeta.policeCruiser.x, y: stMeta.policeCruiser.y, angle: stMeta.policeCruiser.angle, color: "#1e3a8a", shape: "sedan" });
-
-      const wMap = stMeta.workers;
-      ["ali", "murat", "hasan", "zeynep", "mehmet", "selin", "kerem", "kadir", "cemil", "osman"].forEach((k) => {
-        if (data.staff[k] > 0 && wMap[k]) {
-          charList.push({ x: wMap[k].x, y: wMap[k].y, shirt: wMap[k].color, hat: wMap[k].hat, moving: !!wMap[k].moving });
-        }
-      });
-      if (data.dumanHired && wMap.duman) charList.push({ x: wMap.duman.x, y: wMap.duman.y, isDog: true, moving: true });
-      stMeta.shoppers.forEach((sh) => {
-        if (sh.phase !== "inside") charList.push({ x: sh.x, y: sh.y, shirt: sh.shirt, hat: sh.hair, moving: true });
-      });
-      stMeta.floatingTexts.forEach((ft) => floats.push({ x: ft.x, y: ft.y, text: ft.text, color: ft.color, life: ft.life }));
-
-      if (stMeta.powerOutage) {
-        overlayLabels.push({ lx: stMeta.MARKET_POS.doorX, ly: stMeta.MARKET_POS.y + 40, h: 5.5, text: "⚡ SİGORTAYI AÇ!", bg: "#dc2626", brd: "#fde047" });
       }
-    } else if (activeLand === "land2" && window.EmpireSystem && window.EmpireSystem.get3DState) {
+    });
+    if (stMeta.tanker) pushVeh("station", stMeta.tanker.x, stMeta.tanker.y, stMeta.tanker.angle, "#ea580c", "tanker");
+    if (stMeta.activeTowTruck) pushVeh("station", stMeta.activeTowTruck.x, stMeta.activeTowTruck.y, stMeta.activeTowTruck.angle, "#f59e0b", "tow");
+    if (stMeta.activeBus) pushVeh("station", stMeta.activeBus.x, stMeta.activeBus.y, stMeta.activeBus.angle, stMeta.activeBus.color, "bus");
+    if (stMeta.policeCruiser) pushVeh("station", stMeta.policeCruiser.x, stMeta.policeCruiser.y, stMeta.policeCruiser.angle, "#1e3a8a", "sedan");
+
+    const wMap = stMeta.workers;
+    ["ali", "murat", "hasan", "zeynep", "mehmet", "selin", "kerem", "kadir", "cemil", "osman"].forEach((k) => {
+      if (data.staff[k] > 0 && wMap[k]) pushChar("station", wMap[k].x, wMap[k].y, wMap[k].color, wMap[k].hat, !!wMap[k].moving);
+    });
+    if (data.dumanHired && wMap.duman) pushChar("station", wMap.duman.x, wMap.duman.y, "", "", true, true);
+    stMeta.shoppers.forEach((sh) => {
+      if (sh.phase !== "inside") pushChar("station", sh.x, sh.y, sh.shirt, sh.hair, true);
+    });
+    if (!isSkyOverview) stMeta.floatingTexts.forEach((ft) => pushFloat("station", ft));
+    if (stMeta.powerOutage) {
+      pushLbl("station", stMeta.MARKET_POS.doorX, stMeta.MARKET_POS.y + 40, 5.5, { text: "⚡ SİGORTAYI AÇ!", bg: "#dc2626", brd: "#fde047", major: true });
+    }
+    if (isSkyOverview) {
+      pushLbl("station", 240, 260, 7.5, { text: "⛽ 1. İSTASYON", bg: "rgba(153,27,27,0.92)", brd: "#facc15", major: true });
+    }
+
+    // 2. ARAZİ (OTOPARK & GRAND AVM) CANLI VERİLERİ
+    if (window.EmpireSystem && window.EmpireSystem.get3DState) {
       const s2 = window.EmpireSystem.get3DState();
       const emp = data.empire;
-      s2.lotBgHighwayCars.forEach((c) => vehList.push({ x: c.x, y: c.y, angle: -Math.PI / 2, color: c.color, shape: "sedan" }));
-      s2.parkingCars.forEach((c) => {
-        if (!(c.isDeck && c.state === "parked")) vehList.push({ x: c.x, y: c.y, angle: c.angle, color: c.color, shape: c.shape });
-      });
-      s2.lotShoppers.forEach((sh) => charList.push({ x: sh.x, y: sh.y, shirt: sh.shirt, hat: sh.hair, moving: true }));
-      s2.land2Floats.forEach((ft) => floats.push(ft));
-
-      if (animRefs.entryBarrier) animRefs.entryBarrier.rotation.z += ((s2.entryGateOpen ? Math.PI * 0.42 : 0) - animRefs.entryBarrier.rotation.z) * 0.2;
-      if (animRefs.exitBarrier) animRefs.exitBarrier.rotation.z += ((s2.exitGateOpen ? Math.PI * 0.42 : 0) - animRefs.exitBarrier.rotation.z) * 0.2;
-      if (animRefs.fountainRings[0]) animRefs.fountainRings[0].scale.y = 0.85 + Math.sin(Date.now() * 0.008) * 0.22;
-
-      if (!emp.land2Owned) {
-        overlayLabels.push({ lx: 240, ly: 310, h: 4.5, text: `🏗️ 2. ARAZİ TAPUSU AL (${window.EmpireSystem.LAND2_COST}₺)`, bg: "#16a34a", brd: "#fef08a" });
+      const ar2 = landAnimRefs.land2;
+      if (emp.land2Owned) {
+        s2.parkingCars.forEach((c) => {
+          if (!(c.isDeck && c.state === "parked")) pushVeh("land2", c.x, c.y, c.angle, c.color, c.shape);
+        });
+        s2.lotShoppers.forEach((sh) => pushChar("land2", sh.x, sh.y, sh.shirt, sh.hair, true));
+        if (!isSkyOverview) s2.land2Floats.forEach((ft) => pushFloat("land2", ft));
+        if (ar2) {
+          if (ar2.entryBarrier) ar2.entryBarrier.rotation.z += ((s2.entryGateOpen ? Math.PI * 0.42 : 0) - ar2.entryBarrier.rotation.z) * 0.2;
+          if (ar2.exitBarrier) ar2.exitBarrier.rotation.z += ((s2.exitGateOpen ? Math.PI * 0.42 : 0) - ar2.exitBarrier.rotation.z) * 0.2;
+          if (ar2.fountainRings[0]) ar2.fountainRings[0].scale.y = 0.85 + Math.sin(nowMs * 0.008) * 0.22;
+        }
+        if (isSkyOverview) {
+          pushLbl("land2", 240, 360, 12.0, { text: "🏬 2. GRAND AVM", bg: "rgba(124,45,18,0.92)", brd: "#fde047", major: true });
+        } else {
+          pushLbl("land2", 230, 110, 4.0, { text: emp.parkingUnlocked ? `🅿️ OTOPARK (${s2.parkingCars.length})` : `🔒 Otopark`, bg: "rgba(9,13,26,0.88)", brd: "#38bdf8" });
+          pushLbl("land2", 174, 456, 11.6, { text: emp.mallUnlocked ? `🏬 GRAND AVM` : `🔒 AVM Kur`, bg: "rgba(124,45,18,0.92)", brd: "#fde047" });
+        }
       } else {
-        overlayLabels.push({ lx: 230, ly: 110, h: 4.0, text: emp.parkingUnlocked ? `🅿️ OTOPARK (${s2.parkingCars.length} Araç) • Yönet` : `🔒 Otopark Kur`, bg: "rgba(9,13,26,0.88)", brd: "#38bdf8" });
-        overlayLabels.push({ lx: 174, ly: 456, h: 11.6, text: emp.mallUnlocked ? `🏬 GRAND AVM • Dükkanlar` : `🔒 AVM Kur`, bg: "rgba(124,45,18,0.92)", brd: "#fde047" });
+        pushLbl("land2", 240, 310, 6.2, { text: `🏗️ 2. ARAZİ AL (${window.EmpireSystem.LAND2_COST}₺)`, bg: "#16a34a", brd: "#fef08a", major: true });
       }
-    } else if (activeLand === "land3" && window.Land3System && window.Land3System.get3DState) {
+    }
+
+    // 3. ARAZİ (LUNAPARK, RAFİNERİ & TATİL KÖYÜ) CANLI VERİLERİ
+    if (window.Land3System && window.Land3System.get3DState) {
       const s3 = window.Land3System.get3DState();
       const l3 = data.empire.land3 || {};
-      s3.bgCars.forEach((c) => vehList.push({ x: c.x, y: c.y, angle: -Math.PI / 2, color: c.color, shape: "sedan" }));
-      s3.activeFleetTrucks.forEach((tr) => vehList.push({ x: tr.x, y: tr.y, angle: tr.angle, color: tr.color, shape: "truck" }));
-      s3.resortGuests.forEach((g) => charList.push({ x: g.x, y: g.y, shirt: g.shirt, hat: "#18181b", moving: true }));
-      s3.land3Floats.forEach((ft) => floats.push(ft));
-
-      if (l3.themeUnlocked) {
-        s3.karts.forEach((k) => {
-          const p1 = s3.KART_TRACK_PTS[k.seg];
-          const p2 = s3.KART_TRACK_PTS[(k.seg + 1) % s3.KART_TRACK_PTS.length];
-          const kx = p1.x + (p2.x - p1.x) * k.t;
-          const ky = p1.y + (p2.y - p1.y) * k.t;
-          vehList.push({ x: kx, y: ky, angle: Math.atan2(p2.x - p1.x, -(p2.y - p1.y)), color: k.col, shape: "sport" });
-        });
-      }
-      if (animRefs.ferrisWheel) {
-        animRefs.ferrisWheel.rotation.z = s3.wheelAngle;
-        animRefs.ferrisCabins.forEach((cab) => (cab.rotation.z = -s3.wheelAngle));
-      }
-      if (!l3.owned) {
-        overlayLabels.push({ lx: 240, ly: 310, h: 4.5, text: `🎡 3. ARAZİ TAPUSU AL (${window.Land3System.LAND3_COST}₺)`, bg: "#7c3aed", brd: "#fef08a" });
-      } else {
-        overlayLabels.push({ lx: 150, ly: 170, h: 12.2, text: l3.themeUnlocked ? `🎡 LUNAPARK ★${l3.themeLvl}` : `🔒 Lunapark`, bg: "rgba(131,24,67,0.9)", brd: "#f472b6" });
-        overlayLabels.push({ lx: 346, ly: 200, h: 9.0, text: `🏭 RAFİNERİ & ${l3.fleetCount || 0}/10 TIR`, bg: "rgba(15,23,42,0.9)", brd: "#38bdf8" });
-        overlayLabels.push({ lx: 240, ly: 470, h: 4.8, text: l3.resortUnlocked ? `🏖️ TATİL KÖYÜ • Yönet` : `🔒 Tatil Köyü`, bg: "rgba(4,120,87,0.9)", brd: "#4ade80" });
-      }
-    } else if (activeLand.startsWith("land") && window.ExtraLandsSystem && window.ExtraLandsSystem.get3DState) {
-      const rt = window.ExtraLandsSystem.get3DState(activeLand);
-      const lDef = window.ExtraLandsSystem.getLandDef(activeLand);
-      const st = data.empire.extraLands && data.empire.extraLands[activeLand];
-      if (rt) {
-        rt.bgCars.forEach((c) => vehList.push({ x: c.x, y: c.y, angle: -Math.PI / 2, color: c.color, shape: "sedan" }));
-        rt.waitingCars.forEach((c) => vehList.push({ x: c.x, y: c.y, angle: c.angle, color: c.color, shape: c.shape }));
-        rt.walkers.forEach((w) => charList.push({ x: w.x, y: w.y, shirt: w.col, hat: "#18181b", moving: true }));
-        rt.floats.forEach((ft) => floats.push(ft));
-
-        const occU = rt.occupiedTimers.length;
-        const dirtyU = rt.dirtyCount;
-        animRefs.hotelRoomMeshes.forEach((mat, idx) => {
-          if (idx < occU) {
-            mat.color.setHex(0xfef08a);
-            mat.emissive.setHex(0xf59e0b);
-            mat.emissiveIntensity = 1.15;
-          } else if (idx < occU + dirtyU) {
-            mat.color.setHex(0xc2410c);
-            mat.emissive.setHex(0x9a3412);
-            mat.emissiveIntensity = 0.65;
-          } else {
-            mat.color.setHex(0x1e3a5f);
-            mat.emissive.setHex(0x0284c7);
-            mat.emissiveIntensity = 0.3;
-          }
-        });
-
-        if (st && !st.owned) {
-          overlayLabels.push({ lx: 240, ly: 310, h: 4.5, text: `🏞️ ${lDef.name} AL (${lDef.deedCost.toLocaleString("tr-TR")}₺)`, bg: "#16a34a", brd: "#fef08a" });
-        } else if (st && !st.projectKey) {
-          overlayLabels.push({ lx: 240, ly: 360, h: 3.5, text: `🏗️ DOKUN VE 6 PROJEDEN BİRİNİ KUR!`, bg: "#0284c7", brd: "#fef08a" });
-        } else if (st && st.projectKey) {
-          const proj = window.ExtraLandsSystem.getProjectDef(st.projectKey);
-          const maxU = 6 * (st.floorsLvl || 1);
-          const hTop = 5.5 + (st.floorsLvl || 1) * 3.0;
-          overlayLabels.push({
-            lx: 240,
-            ly: 420,
-            h: hTop + 2.2,
-            text: `${proj.emoji} ${proj.name} ★${st.floorsLvl} (${occU}/${maxU} Dolu)`,
-            bg: "rgba(9,13,26,0.9)",
-            brd: proj.accent
+      const ar3 = landAnimRefs.land3;
+      if (l3.owned) {
+        s3.activeFleetTrucks.forEach((tr) => pushVeh("land3", tr.x, tr.y, tr.angle, tr.color, "truck"));
+        s3.resortGuests.forEach((g) => pushChar("land3", g.x, g.y, g.shirt, "#18181b", true));
+        if (!isSkyOverview) s3.land3Floats.forEach((ft) => pushFloat("land3", ft));
+        if (l3.themeUnlocked) {
+          s3.karts.forEach((k) => {
+            const p1 = s3.KART_TRACK_PTS[k.seg];
+            const p2 = s3.KART_TRACK_PTS[(k.seg + 1) % s3.KART_TRACK_PTS.length];
+            const kx = p1.x + (p2.x - p1.x) * k.t;
+            const ky = p1.y + (p2.y - p1.y) * k.t;
+            pushVeh("land3", kx, ky, Math.atan2(p2.x - p1.x, -(p2.y - p1.y)), k.col, "sport");
           });
+        }
+        if (ar3 && ar3.ferrisWheel) {
+          ar3.ferrisWheel.rotation.z = s3.wheelAngle;
+          ar3.ferrisCabins.forEach((cab) => (cab.rotation.z = -s3.wheelAngle));
+        }
+        if (isSkyOverview) {
+          pushLbl("land3", 240, 290, 12.5, { text: "🎡 3. LUNAPARK & KÖY", bg: "rgba(131,24,67,0.92)", brd: "#f472b6", major: true });
+        } else {
+          pushLbl("land3", 150, 170, 12.2, { text: l3.themeUnlocked ? `🎡 LUNAPARK ★${l3.themeLvl}` : `🔒 Lunapark`, bg: "rgba(131,24,67,0.9)", brd: "#f472b6" });
+          pushLbl("land3", 346, 200, 9.0, { text: `🏭 RAFİNERİ & ${l3.fleetCount || 0}/10`, bg: "rgba(15,23,42,0.9)", brd: "#38bdf8" });
+          pushLbl("land3", 240, 470, 4.8, { text: l3.resortUnlocked ? `🏖️ TATİL KÖYÜ` : `🔒 Tatil Köyü`, bg: "rgba(4,120,87,0.9)", brd: "#4ade80" });
+        }
+      } else {
+        pushLbl("land3", 240, 310, 6.2, { text: `🎡 3. ARAZİ AL (${window.Land3System.LAND3_COST}₺)`, bg: "#7c3aed", brd: "#fef08a", major: true });
+      }
+    }
+
+    // 4.–10. ARAZİLERİN TAMAMI EŞZAMANLI CANLI!
+    if (window.ExtraLandsSystem && window.ExtraLandsSystem.get3DState) {
+      for (let idx = 4; idx <= 10; idx++) {
+        const lid = `land${idx}`;
+        const rt = window.ExtraLandsSystem.get3DState(lid);
+        const lDef = window.ExtraLandsSystem.getLandDef(lid);
+        const st = data.empire.extraLands && data.empire.extraLands[lid];
+        const arX = landAnimRefs[lid];
+        if (!rt || !st) continue;
+        if (st.owned) {
+          rt.waitingCars.forEach((c) => pushVeh(lid, c.x, c.y, c.angle, c.color, c.shape));
+          rt.walkers.forEach((w) => pushChar(lid, w.x, w.y, w.col, "#18181b", true));
+          if (!isSkyOverview) rt.floats.forEach((ft) => pushFloat(lid, ft));
+          const occU = rt.occupiedTimers.length;
+          const dirtyU = rt.dirtyCount;
+          if (arX && arX.hotelRoomMeshes) {
+            arX.hotelRoomMeshes.forEach((mat, rIdx) => {
+              if (rIdx < occU) {
+                mat.color.setHex(0xfef08a); mat.emissive.setHex(0xf59e0b); mat.emissiveIntensity = 1.15;
+              } else if (rIdx < occU + dirtyU) {
+                mat.color.setHex(0xc2410c); mat.emissive.setHex(0x9a3412); mat.emissiveIntensity = 0.65;
+              } else {
+                mat.color.setHex(0x1e3a5f); mat.emissive.setHex(0x0284c7); mat.emissiveIntensity = 0.3;
+              }
+            });
+          }
+          if (!st.projectKey) {
+            pushLbl(lid, 240, 360, 4.5, { text: `🏗️ ${idx}. ARAZİ PROJE SEÇ`, bg: "#0284c7", brd: "#fef08a", major: true });
+          } else {
+            const proj = window.ExtraLandsSystem.getProjectDef(st.projectKey);
+            const maxU = 6 * (st.floorsLvl || 1);
+            const hTop = 5.5 + (st.floorsLvl || 1) * 3.0;
+            pushLbl(lid, 240, 420, hTop + 2.2, {
+              text: isSkyOverview ? `${proj.emoji} ${idx}. ${proj.short || proj.name}` : `${proj.emoji} ${proj.name} ★${st.floorsLvl} (${occU}/${maxU})`,
+              bg: "rgba(9,13,26,0.9)",
+              brd: proj.accent,
+              major: true
+            });
+          }
+        } else {
+          pushLbl(lid, 240, 310, 6.2, { text: `🏞️ ${lDef.num}. ARSA (${lDef.deedCost.toLocaleString("tr-TR")}₺)`, bg: "#16a34a", brd: "#fef08a", major: true });
         }
       }
     }
 
-    // Araç Havuzu
+    // Araç Havuzu (Tüm 10 Arazi + İki Şehir Bulvarı!)
     while (vehicleMeshes.length < vehList.length) {
       const m = createVehicle3D("#ef4444", "sedan");
       dynamicGroup.add(m);
@@ -1949,15 +2178,15 @@ window.Engine3D = (function () {
           vehicleMeshes[i] = mesh;
         }
         mesh.visible = true;
-        mesh.position.set(to3DX(v.x), 0.08, to3DZ(v.y));
+        mesh.position.set(v.wx, 0.08, v.wz);
         mesh.rotation.y = -v.angle;
       } else {
         vehicleMeshes[i].visible = false;
       }
     }
 
-    // Karakter Havuzu
-    const walkT = Date.now() * 0.015;
+    // Karakter Havuzu (Tüm 10 Arazi!)
+    const walkT = nowMs * 0.015;
     while (charMeshes.length < charList.length) {
       const cm = createCharacter3D("#38bdf8", "#0f172a");
       dynamicGroup.add(cm);
@@ -1976,7 +2205,7 @@ window.Engine3D = (function () {
         }
         mesh.visible = true;
         const bob = c.moving ? Math.abs(Math.sin(walkT + i)) * 0.14 : 0;
-        mesh.position.set(to3DX(c.x), 0.08 + bob, to3DZ(c.y));
+        mesh.position.set(c.wx, 0.08 + bob, c.wz);
         if (mesh.userData.legL && c.moving) {
           const sw = Math.sin(walkT + i) * 0.58;
           mesh.userData.legL.rotation.x = sw;
@@ -1994,7 +2223,7 @@ window.Engine3D = (function () {
       }
     }
 
-    // Helikopter & Hava
+    // Helikopter & Hava Efektleri (Kameranın Baktığı Arazinin Üstünden Uçar!)
     if (window.HoldingV16 && window.HoldingV16.get3DState) {
       const v16s = window.HoldingV16.get3DState();
       if (v16s.heliFly && v16s.heliFly.active) {
@@ -2003,7 +2232,7 @@ window.Engine3D = (function () {
           scene.add(heliMesh);
         }
         heliMesh.visible = true;
-        heliMesh.position.set(to3DX(v16s.heliFly.x), 15.5, to3DZ(v16s.heliFly.y));
+        heliMesh.position.set(curLookAt.x + to3DX(v16s.heliFly.x), 17.5, curLookAt.z + to3DZ(v16s.heliFly.y));
         heliMesh.rotation.y = -Math.PI * 0.4;
         if (heliMesh.userData.rotorPivot) heliMesh.userData.rotorPivot.rotation.y = v16s.heliFly.rotor;
       } else if (heliMesh) {
@@ -2025,7 +2254,7 @@ window.Engine3D = (function () {
           const p = particles[i];
           const pm = weatherMeshes[i];
           pm.visible = true;
-          pm.position.set(to3DX(p.x), 24 - (p.y / 620) * 23, to3DZ((p.y * 0.9 + i * 17) % 600));
+          pm.position.set(curLookAt.x + to3DX(p.x) * 1.5, 26 - (p.y / 620) * 25, curLookAt.z + to3DZ((p.y * 0.9 + i * 17) % 600) * 1.5);
           if (!isSnow && p.col) pm.material = getMat(p.col, { emissive: p.col, emInt: 0.6, shadow: false });
           else if (isSnow) pm.material = getMat("#ffffff", { emissive: "#bae6fd", emInt: 0.7, shadow: false });
           pm.rotation.y += 0.08;
@@ -2037,7 +2266,7 @@ window.Engine3D = (function () {
 
     renderer.render(scene, camera);
 
-    // Ekran Üstü Net 2D Etiketler & Kazanç Yazıları
+    // Ekran Üstü Net 2D Etiketler & Kazanç Yazıları (Tüm Görünür Araziler İçin!)
     if (overlayCtx && overlayCanvas) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const cw = overlayCanvas.width / dpr;
@@ -2047,7 +2276,8 @@ window.Engine3D = (function () {
       overlayCtx.clearRect(0, 0, cw, ch);
 
       overlayLabels.forEach((lbl) => {
-        const sc = worldToScreen(lbl.lx, lbl.h || 3, lbl.ly);
+        if (isSkyOverview && !lbl.major) return;
+        const sc = worldPosToScreen(lbl.wx, lbl.h || 3, lbl.wz);
         if (!sc.visible || sc.x < -60 || sc.x > cw + 60 || sc.y < -30 || sc.y > ch + 30) return;
 
         if (lbl.pct !== undefined) {
@@ -2061,26 +2291,26 @@ window.Engine3D = (function () {
           overlayCtx.fillStyle = lbl.barCol || "#4ade80";
           overlayCtx.fillRect(sc.x - 20, sc.y - 2.8, 40 * lbl.pct, 4.6);
         } else {
-          overlayCtx.font = "900 10px sans-serif";
-          const tw = overlayCtx.measureText(lbl.text).width + 14;
+          overlayCtx.font = isSkyOverview ? "900 9px sans-serif" : "900 10px sans-serif";
+          const tw = overlayCtx.measureText(lbl.text).width + 12;
           overlayCtx.fillStyle = lbl.bg || "rgba(9, 13, 26, 0.88)";
           overlayCtx.strokeStyle = lbl.brd || "#facc15";
           overlayCtx.lineWidth = 1.5;
           overlayCtx.beginPath();
-          overlayCtx.roundRect(sc.x - tw / 2, sc.y - 11, tw, 20, 999);
+          overlayCtx.roundRect(sc.x - tw / 2, sc.y - 10, tw, 19, 999);
           overlayCtx.fill();
           overlayCtx.stroke();
           overlayCtx.fillStyle = "#ffffff";
           overlayCtx.textAlign = "center";
-          overlayCtx.fillText(lbl.text, sc.x, sc.y + 2.8);
+          overlayCtx.fillText(lbl.text, sc.x, sc.y + 2.6);
         }
       });
 
       floats.forEach((ft) => {
-        const sc = worldToScreen(ft.x, 4.5 + (1.6 - Math.min(1.6, ft.life)) * 2.8, ft.y);
-        if (!sc.visible) return;
+        const sc = worldPosToScreen(ft.wx, 4.5 + (1.6 - Math.min(1.6, ft.life)) * 2.8, ft.wz);
+        if (!sc.visible || sc.x < -40 || sc.x > cw + 40 || sc.y < -20 || sc.y > ch + 20) return;
         overlayCtx.globalAlpha = Math.max(0, Math.min(1, ft.life));
-        overlayCtx.font = "900 13px sans-serif";
+        overlayCtx.font = "900 12.5px sans-serif";
         overlayCtx.textAlign = "center";
         overlayCtx.strokeStyle = "#050811";
         overlayCtx.lineWidth = 3.5;
@@ -2099,9 +2329,12 @@ window.Engine3D = (function () {
     isReady() { return ready; },
     handleResize,
     screenToLogical,
+    screenToWorldHit,
     worldToScreen,
     zoomBy,
     panBy,
+    focusLand,
+    getFocusedLand,
     rotate90,
     resetCamera,
     cycleAngle,

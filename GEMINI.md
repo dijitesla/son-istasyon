@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v21.0 — AAA İzometrik 3D Grafik Motoru — Three.js)
+## Proje Özeti: Son İstasyon (v22.0 — Tek Dev Açık Dünya 2×5 Şehir Bulvarı 3D Motoru — Three.js)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -70,6 +70,11 @@
     - **2048×2048 Yumuşak Gölgeler & Atmosfer:** Gölgeler 4 kat netleştirildi; sokak lambaları ve pompa kanopilerinin altına sıcak zemin ışık haleleri, otoyola metal bariyerler, uzak ufka yeşil tepeler, geniş yapraklı ağaçlar ve çiçekli çalılar eklendi.
     - **Gerçekçi 3D Araçlar & Karakterler:** Araçlara gövde renginde boyalı tavan, krom jantlar, ön krom panjur, rüzgarlık, polis/çekici tepe lambaları ve otobüs panoramik camları eklendi. Karakterlere sallanan 3D kollar, siperlikli şapka, bekçi köpeği Duman'a da sallanan kuyruk, 4 pati ve kırmızı tasma eklendi.
     - **Canlı Bina & Saha Detayları:** Otoyol girişine ışıklı **3D Yakıt Fiyat Totemi (`SON 7/24`)**, yaya geçidi (zebra) çizgileri, dönen köpüklü oto yıkama fırçaları, tamirhane sarı liftleri, Restoran önü açık hava kafe masaları & kırmızı şemsiyeler, Market soğutucu dolabı, Motel uydu çanağı, tüm çatılara dokulu kaplama & ışıklı cam tavan pencereleri (skylight) eklendi. 2., 3. ve 4.–10. arazilere mermer giriş saçağı, köşe LED şeritleri, Go-Kart yarış bordürleri ve çiçek saksıları eklendi.
+
+  - **v22.0 Tek Dev Açık Dünya 2×5 Şehir Bulvarı (`engine3d.js`, `game.js`, `index.html`):**
+    - 10 ayrı ekran yerine **tüm 10 arazi tek bir kesintisiz 3D şehir haritasında** 2 sıra × 5 arazi düzeninde birleşti (Üst sıra: `1. İstasyon`, `2. Grand AVM`, `3. Lunapark`, `4. Grand Otel`, `5. Hastane`; Alt sıra: `6. Fabrika`, `7. Stadyum`, `8. Teknokent`, `9. Kongre Sarayı`, `10. 2. Grand Otel`).
+    - İki ana otoyol bulvarı, 6 dikey bağlantı caddesi, güney çevre yolu, kesintisiz akan şehir trafiği ve henüz alınmamış arsalar için 3D **"SATILIK ARSA"** çitli parselleri kuruldu.
+    - Parmağınla/fareyle sürükleyerek araziler arasında kesintisiz gezilir, üstteki `1..10` butonları kamerayı o araziye akıcı biçimde uçurur, `🎥` kamera moduna eklenen **"İmparatorluk"** kuşbakışı ile tüm 10 arazi tek ekranda görünür ve hangi araziye dokunulursa doğrudan o arazi yönetilir.
 
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — Windows -> Mac, v17.0)
 - **Mevcut Sürüm:** **v17.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.

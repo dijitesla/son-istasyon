@@ -2324,14 +2324,24 @@
       movedDist += Math.hypot(dx, dy);
       if (movedDist > 8) {
         E3D.panBy(dx, dy);
+        if (E3D.getFocusedLand) {
+          const nearLand = E3D.getFocusedLand();
+          if (nearLand && nearLand !== activeLand) syncActiveLandFromCamera(nearLand);
+        }
       }
       lastPos = { x: e.clientX, y: e.clientY };
     });
 
     const finish3DPointer = (e) => {
       if (dragStart && movedDist <= 10 && !reportPaused) {
-        const pt = E3D.screenToLogical(e.clientX, e.clientY);
-        handleLogicalMapTap(pt);
+        if (E3D.screenToWorldHit) {
+          const hit = E3D.screenToWorldHit(e.clientX, e.clientY);
+          if (hit.landId && hit.landId !== activeLand) syncActiveLandFromCamera(hit.landId);
+          handleLogicalMapTap(hit, hit.landId || activeLand);
+        } else {
+          const pt = E3D.screenToLogical(e.clientX, e.clientY);
+          handleLogicalMapTap(pt, activeLand);
+        }
       }
       dragStart = null;
       lastPos = null;
@@ -2383,18 +2393,18 @@
     });
   }
 
-  function handleLogicalMapTap(pt) {
+  function handleLogicalMapTap(pt, targetLand = activeLand) {
 
-    if (activeLand === "land2") {
+    if (targetLand === "land2") {
       EMP.handleLand2Click(pt, data, empireHelpers);
       return;
     }
-    if (activeLand === "land3" && L3) {
+    if (targetLand === "land3" && L3) {
       L3.handleLand3Click(pt, data, empireHelpers);
       return;
     }
-    if (activeLand.startsWith("land") && activeLand !== "land2" && activeLand !== "land3" && XL) {
-      XL.handleExtraLandClick(pt, data, empireHelpers, activeLand);
+    if (targetLand.startsWith("land") && targetLand !== "land2" && targetLand !== "land3" && XL) {
+      XL.handleExtraLandClick(pt, data, empireHelpers, targetLand);
       return;
     }
 
@@ -3063,7 +3073,38 @@
       }
     }
     if (el.quickSettingsPopover) el.quickSettingsPopover.classList.add("hidden");
-    if (is3DActive) E3D.resetCamera();
+    if (is3DActive && E3D.focusLand) E3D.focusLand(land, false);
+  }
+
+  // Tek haritada parmakla başka araziye kaydırınca üst şeridi sessizce senkronize et (kamerayı geri çekmeden!)
+  function syncActiveLandFromCamera(land) {
+    if (!land || land === activeLand) return;
+    activeLand = land;
+    if (land === "land2") {
+      el.liveHintText.textContent = data.empire.land2Owned
+        ? "🅿️ 2. Arazi: Otopark & Grand AVM — dokunup yönet!"
+        : "🏗️ 2. Arazi Satılık — dokunup tapusunu al!";
+    } else if (land === "land3") {
+      const l3Owned = !!(data.empire.land3 && data.empire.land3.owned);
+      el.liveHintText.textContent = l3Owned
+        ? "🎡 3. Arazi: Lunapark, Rafineri & Tatil Köyü!"
+        : "🎡 3. Arazi Satılık — dokunup tapusunu al!";
+    } else if (land.startsWith("land") && XL) {
+      const lDef = XL.getLandDef(land);
+      const st = data.empire.extraLands && data.empire.extraLands[land];
+      el.liveHintText.textContent = !st || !st.owned
+        ? `🏞️ ${lDef.name}: Satılık Arsa — dokunup al!`
+        : `🏙️ ${lDef.num}. Arazi — dokunup yönet veya kaydırarak gez!`;
+    } else {
+      el.liveHintText.textContent = "👆 Pompadaki araca dokun veya sürükleyip tüm 10 araziyi gez!";
+    }
+    updateHUD();
+    if (el.landRibbonTrack) {
+      const activeChip = el.landRibbonTrack.querySelector(`.land-chip[data-land="${land}"]`);
+      if (activeChip && activeChip.scrollIntoView) {
+        activeChip.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      }
+    }
   }
 
   // Tek dokunuşlu 10 Arazi Şeridi & ◀ / ▶ Okları
