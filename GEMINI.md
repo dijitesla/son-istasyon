@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v20.1 — SimCity Tarzı İzometrik 3D Diorama Motoru — Three.js)
+## Proje Özeti: Son İstasyon (v21.0 — AAA İzometrik 3D Grafik Motoru — Three.js)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -65,6 +65,11 @@
   - **v20.1 SimCity Tarzı İzometrik 3D Kamera & Mimari Cilası (`engine3d.js`, `index.html`, `game.js`):**
     - Ön çatıları şişiren geniş açı yerine **dar açılı (28° FOV) dengeli SimCity izometrik maket kamerası** kuruldu; sol alta **🔄 90° döndürme** (4 köşe 360° bakış) eklendi.
     - Ekstra indirme gerektirmeden prosedürel asfalt, çim ve ışıklı cam cephe dokuları üretildi; tüm binalara çatı parapet çerçevesi, klima/havalandırma üniteleri, çift yüzlü ışıklı 3D tabelalar (`★ SON İSTASYON ★`, `MARKET 7/24`, `RESTORAN`, `MİNİ MOTEL`, `OTOYOL GRAND AVM`, `GRAND OTEL` vb.) ve aralarında temiz yaya kaldırımları eklendi.
+
+  - **v21.0 Büyük 3D Grafik & Detay Yükseltmesi (`engine3d.js`, `index.html`):**
+    - **2048×2048 Yumuşak Gölgeler & Atmosfer:** Gölgeler 4 kat netleştirildi; sokak lambaları ve pompa kanopilerinin altına sıcak zemin ışık haleleri, otoyola metal bariyerler, uzak ufka yeşil tepeler, geniş yapraklı ağaçlar ve çiçekli çalılar eklendi.
+    - **Gerçekçi 3D Araçlar & Karakterler:** Araçlara gövde renginde boyalı tavan, krom jantlar, ön krom panjur, rüzgarlık, polis/çekici tepe lambaları ve otobüs panoramik camları eklendi. Karakterlere sallanan 3D kollar, siperlikli şapka, bekçi köpeği Duman'a da sallanan kuyruk, 4 pati ve kırmızı tasma eklendi.
+    - **Canlı Bina & Saha Detayları:** Otoyol girişine ışıklı **3D Yakıt Fiyat Totemi (`SON 7/24`)**, yaya geçidi (zebra) çizgileri, dönen köpüklü oto yıkama fırçaları, tamirhane sarı liftleri, Restoran önü açık hava kafe masaları & kırmızı şemsiyeler, Market soğutucu dolabı, Motel uydu çanağı, tüm çatılara dokulu kaplama & ışıklı cam tavan pencereleri (skylight) eklendi. 2., 3. ve 4.–10. arazilere mermer giriş saçağı, köşe LED şeritleri, Go-Kart yarış bordürleri ve çiçek saksıları eklendi.
 
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — Windows -> Mac, v17.0)
 - **Mevcut Sürüm:** **v17.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.
