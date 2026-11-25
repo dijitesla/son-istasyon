@@ -76,18 +76,18 @@
     - İki ana otoyol bulvarı, 6 dikey bağlantı caddesi, güney çevre yolu, kesintisiz akan şehir trafiği ve henüz alınmamış arsalar için 3D **"SATILIK ARSA"** çitli parselleri kuruldu.
     - Parmağınla/fareyle sürükleyerek araziler arasında kesintisiz gezilir, üstteki `1..10` butonları kamerayı o araziye akıcı biçimde uçurur, `🎥` kamera moduna eklenen **"İmparatorluk"** kuşbakışı ile tüm 10 arazi tek ekranda görünür ve hangi araziye dokunulursa doğrudan o arazi yönetilir.
 
-## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — Windows -> Mac, v17.0)
-- **Mevcut Sürüm:** **v17.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.
-- **Bu Oturumda Tamamlananlar (v16.0 -> v17.0):**
-  1. `holding_v16.js`: Holding Ligi + **5 rakip holdingin altında toplam 15 alt şirketi tek tek satın alma** (veya %8 indirimli toplu devralma), Günlük Görevler & 8 Patron Rütbesi, Büyük Otoyol Günleri (`Bayram`, `Kar`, `Derbi`, `VIP`), Kurumsal Banka & Halka Arz (`SONH`), Özel Plaka, Yat, Genel Merkez ve Uçan Patron Helikopteri.
-  2. **Kasadan mı, Şahsi Cüzdandan mı? (`#payChoiceModal`):** Tüm iş büyütme ve rakip şirket satın alımlarında Şirket Kasası, Şahsi Cüzdan veya Kasa + Cüzdan Birlikte Öde seçeneği.
-  3. **Otomasyon Düzeltmesi:** 4.–10. arazilerdeki araç donma hatası kesin çözüldü; tüm 10 arazi tam otopilotta sorunsuz çalışıyor.
-  4. **Anlık +%1000 Borsa Rallisi:** Tek seferlik `surge1000Applied` bayrağıyla eklendi (kullanıcının mevcut kaydı `SAVE_KEY = "son_istasyon_v12_pro"` bozulmaz!).
-  5. **Görsel & Arayüz Devrimi (v17.0):** 3 yeni 3D arazi zemini (`land2-ground.jpg`, `land3-ground.jpg`, `extra-ground.jpg`), yeni AAA sinematik açılış kapağı (`cover-v17.jpg`), tek satır sade yüzen üst çubuk, tek dokunuşlu kaydırmalı **10 arazi geçiş şeridi (`◀ 1..10 ▶ 🗺️`)** ve sağ kenar yüzen cam butonları (`🏆`, `📱`, `🏙️`, `📊`).
-- **Yarın İçin Sıradaki Olası Adımlar:**
-  1. Kullanıcının v17.0 yeni arayüz ve kapak ekranıyla ilgili geri bildirimlerine göre son görsel ince ayarlar (ör. harita içi bina çizimlerinin daha da 3D/modern hale getirilmesi, ses/müzik cilası),
+## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — v22.0 Son Durum)
+- **Mevcut Sürüm:** **v22.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.
+- **Bu Oturumda Tamamlanan Büyük Dönüşüm (v17.0 -> v22.0):**
+  1. **Gerçek 3D WebGL Motoru (`v20.0`, `lib/three.min.js`, `engine3d.js`):** Düz 2D haritadan gerçek Three.js İzometrik 3D dünyaya geçildi (`empire.js`, `land3.js`, `lands_4_10.js`, `holding_v16.js` içine salt-okunur `get3DState()` eklendi).
+  2. **SimCity Tarzı Kamera & Mimari (`v20.1`):** Dar açılı (`28° FOV`) dengeli izometrik kamera, sol alt kamera kontrolüne **🔄 90° döndürme** (4 köşe 360° bakış), prosedürel dokular, parapet çatılar, klimalar ve çift yüzlü ışıklı 3D bina tabelaları eklendi.
+  3. **AAA 3D Grafik Yükseltmesi (`v21.0`):** **2048×2048** yumuşak dinamik gölgeler, boyalı tavanlı & krom jantlı 3D araçlar, sallanan kollu karakterler + kuyruk sallayan bekçi Duman, otoyol girişinde ışıklı **3D Yakıt Fiyat Totemi (`SON 7/24`)**, dönen yıkama fırçaları, tamirhane liftleri, kafe şemsiyeleri, dokulu çatılar + cam ışıklıklar (skylight), otoyol metal bariyerleri, karma ağaç/çiçek peyzajı ve uzak yeşil tepeler eklendi.
+  4. **Tek Dev Açık Dünya 2×5 Şehir Bulvarı (`v22.0`):** 10 ayrı ekran yerine **10 arazinin tamamı tek 3D şehir haritasında** birleşti (Üst sıra 1–5, Alt sıra 6–10). İki ana bulvar + 6 dikey cadde + kesintisiz şehir trafiği + alınmamış arsalar için 3D **"SATILIK ARSA"** parselleri kuruldu. Parmağınla/fareyle sürükleyerek araziler arasında gezilir, üstteki `1..10` butonları kamerayı akıcı biçimde uçurur, `🎥` ile **"İmparatorluk"** kuşbakışına geçilir ve hangi araziye dokunulursa doğrudan o arazi yönetilir.
+- **Diğer Bilgisayarda Sıradaki Olası Adımlar:**
+  1. Kullanıcının **v22.0 tek harita** deneyimine göre ince ayarlar (ör. gece/gündüz atmosferi, ekstra animasyonlar — yakıt hortumu, yürüyen müşteri detayları, araç sesleri veya binalara özel 3D detaylar),
   2. Yayın öncesi **Zorluk ve Ekonomi Dengelemesi** (erken aşama para kazanma hızına kullanıcı isteyene kadar dokunma; son aşamada dengelenecek),
-  3. **ÖNEMLİ:** `SAVE_KEY = "son_istasyon_v12_pro"` anahtarını değiştirme ki kullanıcının canlı sitedeki kendi ilerlemesi asla sıfırlanmasın.
+  3. Yayın hazırlığı (mobil performans kontrolü, PWA ikonu/açıklaması, mağaza/web yayın adımları).
+- **KRİTİK KURAL:** `game.js` içindeki `SAVE_KEY = "son_istasyon_v12_pro"` anahtarını **ASLA değiştirme** ki kullanıcının canlı sitedeki (`https://dijitesla.github.io/son-istasyon/`) kendi ilerlemesi sıfırlanmasın.
 
 ## İki Bilgisayar Arasında Çalışma Akışı (Mac & Windows)
 - Çalışmaya başlarken son değişiklikleri çek: `git pull origin main`
