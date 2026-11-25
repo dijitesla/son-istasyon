@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v17.0 — Yeni Nesil Sinematik Kapak, Yüzen Cam Arayüz & Tek Dokunuşlu 10 Arazi)
+## Proje Özeti: Son İstasyon (v18.0 — 3D Mimari Cepheler, Cam Yansımaları, Canlı Işıklar & Sade Arayüz)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -50,6 +50,12 @@
   - **v17.0 Büyük Arayüz & Giriş Ekranı Yenilemesi:**
     - Tam ekran sinematik 3D açılış kapağı (`assets/cover-v17.jpg`), yazı kalabalığından tamamen arındırılmış minimalist altın tipografi ve tek dokunuşla `▶ KALDIĞIN YERDEN DEVAM ET` / `▶ OYUNA BAŞLA`.
     - 4 sıkışık üst bar yerine **tek temiz yüzen üst çubuk** (2 ana para birimi kısaltmalı + gün + `⚙️` açılır hızlı durum/ses paneli), **tek dokunuşlu kaydırmalı 10 arazi şeridi (`◀ 1..10 ▶ 🗺️`)** ve haritanın sağ kenarında **yüzen cam aksiyon butonları (`🏆 Holding`, `📱 Telefon`, `🏙️ Şehir`, `📊 Rapor`)** kuruldu.
+
+  - **v18.0 Harita İçi 3D Mimari & Canlı Atmosfer Cilası:**
+    - **1. Arazi (`map_renderer.js`):** 9 pompa kanopisine parlak metalik cam yansıması ve LED durum noktası, Market/Restoran/Motel cephelerine 3D derinlik gradyanı, Taş Fırın'a canlı titreyen odun alevi eklendi.
+    - **2. Arazi (`empire.js`):** Yeni 3D taş meydan zemininin (`land2-ground.jpg`) görünmesi için yarı saydam meydan & otopark entegrasyonu, çift dalgalı mermer fıskiye ve Grand AVM cam kubbesine çapraz güneş yansıması eklendi.
+    - **3. Arazi (`land3.js`):** Yeni 3D zümrüt çim zeminin (`land3-ground.jpg`) alttan parlaması sağlandı; neon ışıklı dönme dolap, SPA buharı ve gölgeli havuz şemsiyeleri eklendi.
+    - **4.–10. Araziler (`lands_4_10.js`):** Düz kahverengi kutu yerine mermer sütunlu 3D mimari cephe, köşe LED ışıklı çatı kornişi, parlak cam yansımalı odalar, altın dubalı kırmızı halı ve 4 köşe fenerli helikopter pisti tasarlandı.
 
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — Windows -> Mac, v17.0)
 - **Mevcut Sürüm:** **v17.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.

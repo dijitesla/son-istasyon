@@ -353,15 +353,25 @@ window.MapRenderer = (function () {
 
     rr(ctx, x - 25, y - 32, 50, 11, 4, "rgba(0,0,0,0.45)", null);
     const roofGrad = ctx.createLinearGradient(x, y - 38, x, y - 25);
-    roofGrad.addColorStop(0, isVip ? "#fef08a" : "#334155");
-    roofGrad.addColorStop(0.4, isVip ? "#ca8a04" : "#1e293b");
-    roofGrad.addColorStop(1, isVip ? "#713f12" : "#0f172a");
-    rr(ctx, x - 26, y - 38, 52, 12, 4, roofGrad, powerOut ? "#475569" : isVip ? "#fde047" : "#fb7185", 1.6);
+    roofGrad.addColorStop(0, isVip ? "#fef08a" : "#475569");
+    roofGrad.addColorStop(0.45, isVip ? "#ca8a04" : "#1e293b");
+    roofGrad.addColorStop(1, isVip ? "#713f12" : "#090d1a");
+    rr(ctx, x - 26, y - 38, 52, 12, 4.5, roofGrad, powerOut ? "#475569" : isVip ? "#fde047" : "#38bdf8", 1.7);
+
+    // Parlak üst cam/metalik yansıma şeridi + canlı LED durum noktası
+    ctx.fillStyle = "rgba(255, 255, 255, 0.26)";
+    ctx.fillRect(x - 22, y - 36.8, 44, 2);
+    if (!powerOut) {
+      ctx.fillStyle = isVip ? "#fef08a" : "#4ade80";
+      ctx.beginPath();
+      ctx.arc(x + 21, y - 32, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.fillStyle = isVip ? "#0f172a" : "#ffffff";
     ctx.font = "900 7.6px sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(`${p.short} ★${pumpSpeedLvl}`, x, y - 30);
+    ctx.fillText(`${p.short} ★${pumpSpeedLvl}`, x, y - 29.8);
   }
 
   // 3D Yakıt Silosu
@@ -509,10 +519,18 @@ window.MapRenderer = (function () {
       ctx.fillRect(x + 8, y - 10, w - 16, 12);
     }
 
-    rr(ctx, x + 3, y + 4, w, h, 9, "rgba(0,0,0,0.48)", null);
-    rr(ctx, x, y + 16, w, h - 16, 8, "#31102f", "#0f172a", 2);
-    // Şık Mor/Pembe Neon Çatı
-    rr(ctx, x - 2, y, w + 4, 24, 7, "#4c1d95", powerOut ? "#64748b" : "#f472b6", 2);
+    rr(ctx, x + 4, y + 5, w, h, 10, "rgba(0,0,0,0.52)", null);
+    const motelBodyG = ctx.createLinearGradient(x, y + 16, x, y + h);
+    motelBodyG.addColorStop(0, "#4a1942");
+    motelBodyG.addColorStop(1, "#1e0b24");
+    rr(ctx, x, y + 16, w, h - 16, 9, motelBodyG, "#0f172a", 2);
+    // Şık Mor/Pembe 3D Neon Çatı + Üst Parlama
+    const motelRoofG = ctx.createLinearGradient(x, y, x, y + 24);
+    motelRoofG.addColorStop(0, "#6d28d9");
+    motelRoofG.addColorStop(1, "#3b0764");
+    rr(ctx, x - 2, y, w + 4, 24, 7.5, motelRoofG, powerOut ? "#64748b" : "#f472b6", 2);
+    ctx.fillStyle = "rgba(255,255,255,0.18)";
+    ctx.fillRect(x + 2, y + 1.5, w - 4, 2);
     rr(ctx, x + 6, y + 4, w - 12, 15, 4, powerOut ? "#1e293b" : "#831843", powerOut ? "#64748b" : "#fbcfe8", 1.4);
     ctx.fillStyle = powerOut ? "#94a3b8" : "#fdf2f8";
     ctx.font = "900 7.8px sans-serif";
@@ -562,9 +580,17 @@ window.MapRenderer = (function () {
       ctx.fillRect(x + 8, y - 10, w - 16, 12);
     }
 
-    rr(ctx, x + 3, y + 4, w, h, 9, "rgba(0,0,0,0.48)", null);
-    rr(ctx, x, y + 16, w, h - 16, 8, "#3b2114", "#0f172a", 2);
-    rr(ctx, x - 2, y, w + 4, 24, 7, "#1e293b", powerOut ? "#ef4444" : "#f59e0b", 2);
+    rr(ctx, x + 4, y + 5, w, h, 10, "rgba(0,0,0,0.52)", null);
+    const mktBodyG = ctx.createLinearGradient(x, y + 16, x, y + h);
+    mktBodyG.addColorStop(0, "#4c2a18");
+    mktBodyG.addColorStop(1, "#23120a");
+    rr(ctx, x, y + 16, w, h - 16, 9, mktBodyG, "#0f172a", 2);
+    const mktRoofG = ctx.createLinearGradient(x, y, x, y + 24);
+    mktRoofG.addColorStop(0, "#334155");
+    mktRoofG.addColorStop(1, "#0f172a");
+    rr(ctx, x - 2, y, w + 4, 24, 7.5, mktRoofG, powerOut ? "#ef4444" : "#f59e0b", 2);
+    ctx.fillStyle = "rgba(255,255,255,0.16)";
+    ctx.fillRect(x + 2, y + 1.5, w - 4, 2);
 
     if (opts.solarInstalled) {
       rr(ctx, x + 3, y + 3, 18, 17, 2, "#0284c7", "#7dd3fc", 1.1);
@@ -657,9 +683,17 @@ window.MapRenderer = (function () {
       ctx.fillRect(x + 8, y - 10, w - 16, 12);
     }
 
-    rr(ctx, x + 3, y + 4, w, h, 9, "rgba(0,0,0,0.48)", null);
-    rr(ctx, x, y + 16, w, h - 16, 8, "#431407", "#0f172a", 2);
-    rr(ctx, x - 2, y, w + 4, 24, 7, "#7c2d12", powerOut ? "#64748b" : "#fb923c", 2);
+    rr(ctx, x + 4, y + 5, w, h, 10, "rgba(0,0,0,0.52)", null);
+    const rstBodyG = ctx.createLinearGradient(x, y + 16, x, y + h);
+    rstBodyG.addColorStop(0, "#5c1d0c");
+    rstBodyG.addColorStop(1, "#2a0c04");
+    rr(ctx, x, y + 16, w, h - 16, 9, rstBodyG, "#0f172a", 2);
+    const rstRoofG = ctx.createLinearGradient(x, y, x, y + 24);
+    rstRoofG.addColorStop(0, "#9a3412");
+    rstRoofG.addColorStop(1, "#431407");
+    rr(ctx, x - 2, y, w + 4, 24, 7.5, rstRoofG, powerOut ? "#64748b" : "#fb923c", 2);
+    ctx.fillStyle = "rgba(255,255,255,0.16)";
+    ctx.fillRect(x + 2, y + 1.5, w - 4, 2);
     for (let sx = x + 4; sx < x + w - 8; sx += 12) {
       ctx.fillStyle = Math.floor(sx / 12) % 2 === 0 ? "#dc2626" : "#fef3c7";
       ctx.fillRect(sx, y + 22, 6, 4.5);
@@ -969,14 +1003,22 @@ window.MapRenderer = (function () {
     ctx.textAlign = "center";
     ctx.fillText("🚌 OTOBÜS MOLA PERONU", x + (w - 68) / 2, y + 16);
 
-    // 2. Sağ Yanda Sıcak Tuğla Taş Fırın & Yöresel Simit Büfesi!
+    // 2. Sağ Yanda Sıcak Tuğla Taş Fırın & Yöresel Simit Büfesi (Canlı Alev Parıltılı!)
     const bx = x + w - 64;
-    rr(ctx, bx, y - 2, 64, h + 4, 6, "#7c2d12", "#fde047", 1.6);
-    // Odun ateşi kemeri
+    const bakG = ctx.createLinearGradient(bx, y - 2, bx, y + h + 2);
+    bakG.addColorStop(0, "#9a3412");
+    bakG.addColorStop(1, "#431407");
+    rr(ctx, bx, y - 2, 64, h + 4, 6.5, bakG, "#fde047", 1.6);
+    // Odun ateşi kemeri (canlı titreyen alev!)
     rr(ctx, bx + 6, y + 5, 16, 13, 6, "#1c1917", "#fb923c", 1);
+    const firePulse = 3.4 + Math.sin(Date.now() * 0.014) * 0.9;
     ctx.fillStyle = "#f97316";
     ctx.beginPath();
-    ctx.arc(bx + 14, y + 13, 4, 0, Math.PI * 2);
+    ctx.arc(bx + 14, y + 13, firePulse, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fef08a";
+    ctx.beginPath();
+    ctx.arc(bx + 14, y + 13.5, firePulse * 0.48, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = "#fef3c7";

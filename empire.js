@@ -876,8 +876,8 @@ window.EmpireSystem = (function () {
       return;
     }
 
-    // 1. Otopark Asfalt Tabanı & Çevre Bordürü
-    MR.rr(ctx, x, y, w, h, 12, "rgba(17, 24, 39, 0.88)", "#475569", 2);
+    // 1. Otopark Asfalt Tabanı & Çevre Bordürü (Yeni 3D zeminle uyumlu şık yarı saydam asfalt!)
+    MR.rr(ctx, x, y, w, h, 13, "rgba(15, 23, 42, 0.72)", "rgba(148, 163, 184, 0.55)", 1.8);
 
     // Orta Sürüş Koridoru Yön Okları
     ctx.fillStyle = "rgba(250, 204, 21, 0.35)";
@@ -936,27 +936,40 @@ window.EmpireSystem = (function () {
   }
 
   function drawPromenadeAndPlaza(ctx, MR, phase) {
-    // Sıcak Taş Yaya Bulvarı & Meydan Zemini (y: 284..592)
-    MR.rr(ctx, 44, 284, 392, 310, 14, "#1e2638", "#475569", 1.8);
+    // Yeni 3D land2-ground.jpg taş meydanı alttan parlasın diye zarif şeffaf çerçeve!
+    MR.rr(ctx, 44, 284, 392, 310, 15, "rgba(15, 23, 42, 0.28)", "rgba(148, 163, 184, 0.36)", 1.5);
 
     // Yaya Geçidi Şeritleri (Otoparktan Bulvara)
-    ctx.fillStyle = "rgba(248, 250, 252, 0.6)";
+    ctx.fillStyle = "rgba(248, 250, 252, 0.72)";
     for (let i = 0; i < 5; i++) {
       ctx.fillRect(156 + i * 9, 282, 5, 12);
       ctx.fillRect(348 + i * 9, 282, 5, 12);
     }
 
-    // Orta Turkuaz Fıskiyeli Süs Havuzu (Canlı Dalgalı!)
+    // Orta Turkuaz Fıskiyeli Süs Havuzu (Çift Dalgalı Mermer Havuz!)
     const fx = 240;
     const fy = 303;
-    MR.rr(ctx, fx - 44, fy - 12, 88, 24, 12, "#0f172a", "#94a3b8", 2);
-    MR.rr(ctx, fx - 40, fy - 9, 80, 18, 9, "#0284c7", "#38bdf8", 1.2);
+    MR.rr(ctx, fx - 46, fy - 12, 92, 26, 13, "rgba(0,0,0,0.38)", null);
+    MR.rr(ctx, fx - 45, fy - 13, 90, 25, 12.5, "#e2e8f0", "#64748b", 1.5);
+    const fntG = ctx.createLinearGradient(fx - 40, fy - 9, fx + 40, fy + 9);
+    fntG.addColorStop(0, "#0284c7");
+    fntG.addColorStop(0.5, "#38bdf8");
+    fntG.addColorStop(1, "#0369a1");
+    MR.rr(ctx, fx - 41, fy - 9.5, 82, 18, 9, fntG, "#7dd3fc", 1.1);
     const ripple = (Date.now() % 1400) / 1400;
-    ctx.strokeStyle = `rgba(224, 242, 254, ${(1 - ripple) * 0.8})`;
-    ctx.lineWidth = 1.4;
+    const ripple2 = ((Date.now() + 700) % 1400) / 1400;
+    [ripple, ripple2].forEach((rp) => {
+      ctx.strokeStyle = `rgba(224, 242, 254, ${(1 - rp) * 0.85})`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(fx, fy, 6 + rp * 26, 2.5 + rp * 6.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+    // Merkez fıskiye su köpüğü
+    ctx.fillStyle = "rgba(255,255,255,0.88)";
     ctx.beginPath();
-    ctx.ellipse(fx, fy, 8 + ripple * 24, 3 + ripple * 6, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.arc(fx, fy, 3.2, 0, Math.PI * 2);
+    ctx.fill();
 
     // Yan Süs Çamları & Sokak Lambaları
     MR.drawStreetLamp(ctx, 64, 294, phase.night, false);
@@ -997,12 +1010,21 @@ window.EmpireSystem = (function () {
     const cycleRent = getMallTotalCycleRent(emp);
 
     // 1. 3D Derin Bina Gölgesi
-    MR.rr(ctx, x + 6, y + 8, w, h, 16, "rgba(0, 0, 0, 0.55)", null);
+    MR.rr(ctx, x + 7, y + 9, w, h, 17, "rgba(0, 0, 0, 0.56)", null);
 
-    // 2. AVM Ana Gövde (Modern Mermer/Antrasit Cephe)
-    MR.rr(ctx, x, y + 16, w, h - 16, 14, "#1e293b", "#090d1a", 2.5);
-    // Üst Kademeli Çatı Katmanı
-    MR.rr(ctx, x - 3, y, w + 6, 36, 12, "#0f172a", "#f59e0b", 2.2);
+    // 2. AVM Ana Gövde (Modern Metalik-Mermer 3D Cephe!)
+    const mallBodyG = ctx.createLinearGradient(x, y + 16, x + w, y + h);
+    mallBodyG.addColorStop(0, "#273549");
+    mallBodyG.addColorStop(0.5, "#172235");
+    mallBodyG.addColorStop(1, "#0f172a");
+    MR.rr(ctx, x, y + 16, w, h - 16, 15, mallBodyG, "#090d1a", 2.4);
+    // Üst Kademeli Çatı Katmanı + Altın Taç Işıltısı
+    const mallRoofG = ctx.createLinearGradient(x, y, x, y + 36);
+    mallRoofG.addColorStop(0, "#1e293b");
+    mallRoofG.addColorStop(1, "#090d1a");
+    MR.rr(ctx, x - 3, y, w + 6, 36, 13, mallRoofG, "#f59e0b", 2.2);
+    ctx.fillStyle = "rgba(254, 240, 138, 0.22)";
+    ctx.fillRect(x + 6, y + 2, w - 12, 2.2);
 
     // Giriş Kırmızı Halı & Cam Döner Kapı Kanopisi (Üst Orta: x + w/2)
     const doorX = x + w / 2;
@@ -1018,12 +1040,34 @@ window.EmpireSystem = (function () {
     ctx.font = "900 11.5px sans-serif";
     ctx.fillText("🏬 OTOYOL GRAND AVM", x + w / 2, y + 25);
 
-    // 3. Merkez Parlak Turkuaz Cam Atrium Kubbesi (Skylight Roof!)
-    const skyGrad = ctx.createLinearGradient(x + 36, y + 42, x + w - 36, y + 102);
-    skyGrad.addColorStop(0, "#0369a1");
-    skyGrad.addColorStop(0.5, "#38bdf8");
+    // 3. Merkez Parlak Turkuaz Cam Atrium Kubbesi (Çapraz Cam Yansımalı Skylight!)
+    const skyGrad = ctx.createLinearGradient(x + 36, y + 40, x + w - 36, y + 98);
+    skyGrad.addColorStop(0, "#0284c7");
+    skyGrad.addColorStop(0.45, "#7dd3fc");
+    skyGrad.addColorStop(0.55, "#38bdf8");
     skyGrad.addColorStop(1, "#0c4a6e");
-    MR.rr(ctx, x + 26, y + 40, w - 52, 56, 12, skyGrad, "#bae6fd", 1.8);
+    MR.rr(ctx, x + 26, y + 40, w - 52, 56, 12, skyGrad, "#e0f2fe", 1.8);
+    // Çapraz cam güneş yansıması
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(x + 26, y + 40, w - 52, 56, 12);
+    ctx.clip();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.24)";
+    ctx.beginPath();
+    ctx.moveTo(x + 56, y + 40);
+    ctx.lineTo(x + 90, y + 40);
+    ctx.lineTo(x + 58, y + 96);
+    ctx.lineTo(x + 24, y + 96);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(x + 128, y + 40);
+    ctx.lineTo(x + 144, y + 40);
+    ctx.lineTo(x + 112, y + 96);
+    ctx.lineTo(x + 96, y + 96);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
 
     // Cam kubbe çelik kayıt çizgileri
     ctx.strokeStyle = "rgba(255,255,255,0.35)";

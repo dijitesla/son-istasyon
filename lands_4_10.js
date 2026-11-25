@@ -585,10 +585,21 @@ window.ExtraLandsSystem = (function () {
     const occU = rt.occupiedTimers.length;
     const dirtyU = rt.dirtyCount;
 
-    // 1. VIP Ön Avlu, Kırmızı Halı / Porte-Cochère Girişi (y: 112..238)
-    MR.rr(ctx, 48, 112, 384, 122, 14, "rgba(15, 23, 42, 0.85)", "#475569", 1.8);
-    // Kırmızı karşılama halısı & altın dubalar
-    MR.rr(ctx, 198, 202, 84, 46, 5, "#991b1b", "#fde047", 1.6);
+    // 1. VIP Ön Avlu (Yarı saydam — yeni 3D mermer/palmiye zemin alttan görünür!)
+    MR.rr(ctx, 48, 112, 384, 122, 16, "rgba(15, 23, 42, 0.34)", "rgba(250, 204, 21, 0.38)", 1.5);
+    // Kırmızı VIP karşılama halısı & parlak altın dubalar
+    const carpetG = ctx.createLinearGradient(198, 202, 198, 248);
+    carpetG.addColorStop(0, "#dc2626");
+    carpetG.addColorStop(1, "#7f1d1d");
+    MR.rr(ctx, 198, 202, 84, 46, 5, carpetG, "#fde047", 1.7);
+    [206, 274].forEach((bxp) => {
+      [212, 232].forEach((byp) => {
+        ctx.fillStyle = "#fef08a";
+        ctx.beginPath();
+        ctx.arc(bxp, byp, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    });
     MR.drawStreetLamp(ctx, 76, 128, phase.night, false);
     MR.drawStreetLamp(ctx, 404, 128, phase.night, false);
 
@@ -601,34 +612,64 @@ window.ExtraLandsSystem = (function () {
       MR.drawCustomerCharacter(ctx, w.x, w.y, w.col, "#18181b", proj.emoji, w.phase);
     });
 
-    // 2. Ana 2.5D Çok Katlı Dev Tesis / Grand Otel Binası (x: 48..432, y: 244..586)
+    // 2. Ana 3D Lüks Çok Katlı Dev Tesis / Grand Otel Binası (x: 48..432, y: 246..588)
     const bx = 48;
     const by = 246;
     const bw = 384;
     const bh = 342;
 
-    // Derin 3D Bina Gölgesi
-    MR.rr(ctx, bx + 7, by + 9, bw, bh, 18, "rgba(0,0,0,0.58)", null);
-    // Cephe Gövdesi
-    MR.rr(ctx, bx, by + 20, bw, bh - 20, 16, proj.color, "#090d1a", 2.6);
-    // Kademeli Çatı & Neon Taç
-    MR.rr(ctx, bx - 3, by, bw + 6, 40, 13, proj.roofCol, proj.accent, 2.4);
+    // Derin Yumuşak 3D Bina Gölgesi
+    MR.rr(ctx, bx + 8, by + 11, bw, bh, 19, "rgba(0,0,0,0.58)", null);
+
+    // Zengin 3D Mimari Cephe Gradyanı (Düz kahverengi kutu yerine mermer/metal derinlik!)
+    const facadeG = ctx.createLinearGradient(bx, by + 20, bx + bw, by + bh);
+    facadeG.addColorStop(0, proj.color);
+    facadeG.addColorStop(0.55, "#151e32");
+    facadeG.addColorStop(1, "#0b1120");
+    MR.rr(ctx, bx, by + 20, bw, bh - 20, 17, facadeG, proj.accent, 2.0);
+
+    // İnce Mimari Mermer Sütun Çizgileri
+    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    for (let col = 1; col < 6; col++) {
+      ctx.fillRect(bx + 22 + col * 56 - 2, by + 102, 2.5, bh - 170);
+    }
+
+    // Kademeli 3D Çatı Kornişi & Parlak Neon Taç
+    const roofG = ctx.createLinearGradient(bx, by, bx, by + 40);
+    roofG.addColorStop(0, "#1e293b");
+    roofG.addColorStop(1, proj.roofCol);
+    MR.rr(ctx, bx - 3, by, bw + 6, 40, 14, roofG, proj.accent, 2.3);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
+    ctx.fillRect(bx + 12, by + 2, bw - 24, 2.2);
+
+    // Çatı Köşe Mimari LED Noktaları
+    const ledBlink = 0.55 + 0.45 * Math.sin(Date.now() * 0.005);
+    ctx.fillStyle = `rgba(254, 240, 138, ${ledBlink.toFixed(2)})`;
+    [bx + 14, bx + 32, bx + bw - 32, bx + bw - 14].forEach((lx) => {
+      ctx.beginPath();
+      ctx.arc(lx, by + 20, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    });
 
     // Üst Tabela
-    MR.rr(ctx, bx + 54, by + 8, bw - 108, 24, 7, "#090d1a", proj.accent, 1.6);
+    MR.rr(ctx, bx + 48, by + 8, bw - 96, 24, 8, "rgba(9, 13, 26, 0.94)", proj.accent, 1.6);
     ctx.fillStyle = "#fef9c3";
-    ctx.font = "900 12px sans-serif";
+    ctx.font = "900 11.5px sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(`${proj.emoji} ${proj.name.toUpperCase()} ★ KAT ${st.floorsLvl}/5`, W / 2, by + 24);
 
     // Çatı Özellikleri: Çatı Sonsuzluk Havuzu (vipUpgrade) & Helikopter Pisti (heliUpgrade)
     const shimmer = 0.5 + 0.5 * Math.sin(Date.now() * 0.004);
     if (st.vipUpgrade) {
-      MR.rr(ctx, bx + 14, by + 48, 146, 48, 9, "#f8fafc", "#fde047", 1.5);
-      MR.rr(ctx, bx + 18, by + 52, 138, 40, 7, "#0ea5e9", null);
-      ctx.fillStyle = `rgba(186, 230, 253, ${0.22 + shimmer * 0.22})`;
-      ctx.fillRect(bx + 24, by + 57, 126, 5);
-      ctx.fillRect(bx + 34, by + 81, 106, 4);
+      MR.rr(ctx, bx + 14, by + 48, 146, 48, 10, "#e2e8f0", "#fde047", 1.6);
+      const rPoolG = ctx.createLinearGradient(bx + 18, by + 52, bx + 156, by + 92);
+      rPoolG.addColorStop(0, "#0284c7");
+      rPoolG.addColorStop(0.5, "#38bdf8");
+      rPoolG.addColorStop(1, "#0369a1");
+      MR.rr(ctx, bx + 18, by + 52, 138, 40, 7.5, rPoolG, null);
+      ctx.fillStyle = `rgba(224, 242, 254, ${0.24 + shimmer * 0.24})`;
+      ctx.fillRect(bx + 24, by + 57, 126, 4.5);
+      ctx.fillRect(bx + 36, by + 82, 104, 3.5);
       ctx.fillStyle = "#ffffff";
       ctx.font = "900 8.2px sans-serif";
       ctx.fillText(proj.key === "hotel" ? "🏊 ÇATI HAVUZU & VIP" : "🌟 VIP ÜNİTE AKTİF", bx + 87, by + 75);
@@ -636,18 +677,25 @@ window.ExtraLandsSystem = (function () {
     if (st.heliUpgrade) {
       const hx = bx + bw - 50;
       const hy = by + 72;
-      MR.rr(ctx, hx - 32, hy - 24, 64, 48, 9, "#1e293b", "#facc15", 1.6);
+      MR.rr(ctx, hx - 32, hy - 24, 64, 48, 10, "#0f172a", "#facc15", 1.6);
       ctx.strokeStyle = "#facc15";
       ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.arc(hx, hy, 15, 0, Math.PI * 2);
       ctx.stroke();
+      // Helikopter pisti 4 köşe fener ışığı
+      ctx.fillStyle = `rgba(74, 222, 128, ${ledBlink.toFixed(2)})`;
+      [[hx - 25, hy - 17], [hx + 25, hy - 17], [hx - 25, hy + 17], [hx + 25, hy + 17]].forEach(([px, py]) => {
+        ctx.beginPath();
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
+        ctx.fill();
+      });
       ctx.fillStyle = "#facc15";
       ctx.font = "900 12px sans-serif";
       ctx.fillText("H", hx, hy + 4.5);
     }
 
-    // 3. Kat Kat Gerçekçi Oda / Birim Pencereleri (Gece Sıcak Işık Parlamalı!)
+    // 3. Kat Kat Cam Yansımalı Lüks Oda / Birim Pencereleri!
     const cols = 6;
     const rows = st.floorsLvl; // 1..5 kat!
     const winW = 48;
@@ -663,20 +711,38 @@ window.ExtraLandsSystem = (function () {
         const isOcc = idx < occU;
         const isDirty = !isOcc && idx < occU + dirtyU;
 
-        if (isOcc && phase.night > 0.25) {
+        if (isOcc) {
           ctx.save();
-          ctx.fillStyle = `rgba(250, 204, 21, ${0.18 * phase.night})`;
-          ctx.fillRect(wx - 3, wy - 3, winW + 6, winH + 6);
+          ctx.fillStyle = `rgba(250, 204, 21, ${(0.14 + 0.14 * phase.night).toFixed(2)})`;
+          ctx.fillRect(wx - 2.5, wy - 2.5, winW + 5, winH + 5);
           ctx.restore();
         }
 
-        const wFill = isOcc ? "#fde047" : isDirty ? "#9a3412" : "#1e293b";
-        const wBrd = isOcc ? "#ca8a04" : isDirty ? "#fb923c" : proj.accent;
-        MR.rr(ctx, wx, wy, winW, winH, 5, wFill, wBrd, 1.4);
+        let wFill;
+        if (isOcc) {
+          wFill = ctx.createLinearGradient(wx, wy, wx, wy + winH);
+          wFill.addColorStop(0, "#fef08a");
+          wFill.addColorStop(1, "#f59e0b");
+        } else if (isDirty) {
+          wFill = ctx.createLinearGradient(wx, wy, wx, wy + winH);
+          wFill.addColorStop(0, "#c2410c");
+          wFill.addColorStop(1, "#7c2d12");
+        } else {
+          wFill = ctx.createLinearGradient(wx, wy, wx + winW, wy + winH);
+          wFill.addColorStop(0, "#1e3a5f");
+          wFill.addColorStop(0.5, "#172554");
+          wFill.addColorStop(1, "#0f172a");
+        }
+        const wBrd = isOcc ? "#fde047" : isDirty ? "#fb923c" : "rgba(125, 211, 252, 0.45)";
+        MR.rr(ctx, wx, wy, winW, winH, 6, wFill, wBrd, 1.3);
 
-        ctx.font = "900 8px sans-serif";
-        ctx.fillStyle = isOcc ? "#090d1a" : isDirty ? "#fed7aa" : "#cbd5e1";
-        ctx.fillText(isOcc ? "DOLU" : isDirty ? "🧹 KİRLİ" : "HAZIR", wx + winW / 2, wy + 16);
+        // Pencere camı üst parlama şeridi
+        ctx.fillStyle = isOcc ? "rgba(255,255,255,0.38)" : "rgba(186,230,253,0.16)";
+        ctx.fillRect(wx + 4, wy + 2.5, winW - 8, 3);
+
+        ctx.font = "900 7.8px sans-serif";
+        ctx.fillStyle = isOcc ? "#090d1a" : isDirty ? "#fed7aa" : "#bae6fd";
+        ctx.fillText(isOcc ? "★ DOLU" : isDirty ? "🧹 KİRLİ" : "HAZIR", wx + winW / 2, wy + 17);
       }
     }
 

@@ -365,9 +365,12 @@ window.Land3System = (function () {
       return;
     }
 
-    // 1. Yeşil Park Çim Tabanı
-    MR.rr(ctx, x, y, w, h, 14, "#064e3b", "#f472b6", 2);
-    MR.rr(ctx, x + 6, y + 6, w - 12, 20, 6, "#831843", "#fde047", 1.4);
+    // 1. Yeni 3D zeminle uyumlu şeffaf yeşil park çerçevesi (çim ve taş yollar alttan görünür!)
+    MR.rr(ctx, x, y, w, h, 14, "rgba(6, 78, 59, 0.34)", "rgba(244, 114, 182, 0.8)", 2);
+    const thHeadG = ctx.createLinearGradient(x + 6, y + 6, x + w - 6, y + 26);
+    thHeadG.addColorStop(0, "#9d174d");
+    thHeadG.addColorStop(1, "#500724");
+    MR.rr(ctx, x + 6, y + 6, w - 12, 20, 6, thHeadG, "#fde047", 1.4);
     ctx.fillStyle = "#fef9c3";
     ctx.font = "900 9.5px sans-serif";
     ctx.textAlign = "center";
@@ -430,16 +433,25 @@ window.Land3System = (function () {
       ctx.restore();
     });
 
-    // 3. Sağ Köşede Dönen Işıklı 2.5D Dönme Dolap!
+    // 3. Sağ Köşede Dönen Neon Işıklı 2.5D Dönme Dolap!
     const wx = x + w - 40;
     const wy = y + 158;
     const wr = 28;
+    // Altın neon ışık halesi
+    const wheelGlow = ctx.createRadialGradient(wx, wy, 4, wx, wy, wr + 16);
+    wheelGlow.addColorStop(0, "rgba(250, 204, 21, 0.28)");
+    wheelGlow.addColorStop(1, "rgba(244, 114, 182, 0)");
+    ctx.fillStyle = wheelGlow;
+    ctx.beginPath();
+    ctx.arc(wx, wy, wr + 16, 0, Math.PI * 2);
+    ctx.fill();
+
     // Zemin gölgesi & Çelik Ayaklar
     ctx.fillStyle = "rgba(0,0,0,0.4)";
     ctx.beginPath();
     ctx.ellipse(wx, wy + 31, 22, 6, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = "#94a3b8";
+    ctx.strokeStyle = "#cbd5e1";
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(wx - 16, wy + 30);
@@ -449,9 +461,14 @@ window.Land3System = (function () {
 
     // Dönen Çember & Teller
     ctx.strokeStyle = "#fde047";
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.arc(wx, wy, wr, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(244, 114, 182, 0.65)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(wx, wy, wr - 6, 0, Math.PI * 2);
     ctx.stroke();
 
     const cabinCols = ["#ef4444", "#38bdf8", "#4ade80", "#f472b6", "#facc15", "#a855f7", "#fb923c", "#2dd4bf"];
@@ -479,7 +496,7 @@ window.Land3System = (function () {
 
   function drawRefineryAndFleetZone(ctx, MR, l3, phase) {
     const { x, y, w, h } = FLEET_BOX;
-    MR.rr(ctx, x, y, w, h, 14, "#1e293b", "#64748b", 2);
+    MR.rr(ctx, x, y, w, h, 14, "rgba(15, 23, 42, 0.72)", "rgba(148, 163, 184, 0.55)", 1.8);
 
     MR.rr(ctx, x + 6, y + 6, w - 12, 20, 6, "#0f172a", "#38bdf8", 1.4);
     ctx.fillStyle = "#7dd3fc";
@@ -584,9 +601,12 @@ window.Land3System = (function () {
       return;
     }
 
-    // 1. Zümrüt Çim Bahçe & Taş Yürüyüş Yolu
-    MR.rr(ctx, x, y, w, h, 16, "#064e3b", "#34d399", 2.2);
-    MR.rr(ctx, x + 12, y + 8, w - 24, 22, 7, "#022c22", "#fde047", 1.5);
+    // 1. Yeni 3D Zümrüt Çim Bahçe & Taş Yürüyüş Yolu Alttan Parlasın!
+    MR.rr(ctx, x, y, w, h, 16, "rgba(6, 78, 59, 0.24)", "rgba(52, 211, 153, 0.75)", 2);
+    const resHeadG = ctx.createLinearGradient(x + 12, y + 8, x + w - 12, y + 30);
+    resHeadG.addColorStop(0, "#065f46");
+    resHeadG.addColorStop(1, "#022c22");
+    MR.rr(ctx, x + 12, y + 8, w - 24, 22, 7, resHeadG, "#fde047", 1.5);
     ctx.fillStyle = "#fef9c3";
     ctx.font = "900 10.5px sans-serif";
     ctx.textAlign = "center";
@@ -611,9 +631,10 @@ window.Land3System = (function () {
     poolG.addColorStop(1, "#0284c7");
     MR.rr(ctx, px + 4, py + 4, pw - 8, ph - 8, 9, poolG, null);
 
-    // Canlı su dalgası parıltıları & şemsiyeler
-    const wave = Math.sin(Date.now() * 0.004) * 5;
-    ctx.strokeStyle = "rgba(255,255,255,0.45)";
+    // Canlı su dalgası parıltıları & Termal SPA buharı & şemsiyeler
+    const nowT = Date.now();
+    const wave = Math.sin(nowT * 0.004) * 5;
+    ctx.strokeStyle = "rgba(255,255,255,0.52)";
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(px + 18, py + 45 + wave);
@@ -622,15 +643,40 @@ window.Land3System = (function () {
     ctx.lineTo(px + pw - 22, py + 98 + wave);
     ctx.stroke();
 
-    // Havuz kenarı güneş şemsiyeleri
+    if (l3.spaUnlocked) {
+      for (let s = 0; s < 3; s++) {
+        const sp = ((nowT * 0.00055) + s * 0.33) % 1;
+        ctx.fillStyle = `rgba(224, 242, 254, ${(1 - sp) * 0.35})`;
+        ctx.beginPath();
+        ctx.arc(px + 26 + s * 30 + Math.sin(sp * 6) * 4, py + 120 - sp * 78, 6 + sp * 7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Havuz kenarı gölgeli lüks güneş şemsiyeleri
     [py + 28, py + 118].forEach((uy) => {
+      ctx.fillStyle = "rgba(0,0,0,0.32)";
+      ctx.beginPath();
+      ctx.arc(px - 3, uy + 2.5, 8.5, 0, Math.PI * 2);
+      ctx.arc(px + pw + 7, uy + 2.5, 8.5, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = "#f43f5e";
       ctx.beginPath();
       ctx.arc(px - 5, uy, 8, 0, Math.PI * 2);
       ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(px - 5, uy, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
       ctx.fillStyle = "#facc15";
       ctx.beginPath();
       ctx.arc(px + pw + 5, uy, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(px + pw + 5, uy, 2.2, 0, Math.PI * 2);
       ctx.fill();
     });
 
