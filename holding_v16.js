@@ -1088,6 +1088,9 @@ window.HoldingV16 = (function () {
     updateV16,
     renderV16Overlay,
     setHubTab,
-    renderHubModal
+    renderHubModal,
+    get3DState() {
+      return { heliFly, snowFlakes, confettiBits };
+    }
   };
 })();

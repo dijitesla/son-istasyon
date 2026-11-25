@@ -1160,6 +1160,20 @@ window.Land3System = (function () {
     hasAnyLand3Business,
     updateLand3,
     renderLand3,
-    handleLand3Click
+    handleLand3Click,
+    get3DState() {
+      return {
+        bgCars,
+        karts,
+        KART_TRACK_PTS,
+        wheelAngle,
+        activeFleetTrucks,
+        resortGuests,
+        land3Floats,
+        THEME_BOX,
+        FLEET_BOX,
+        RESORT_BOX
+      };
+    }
   };
 })();

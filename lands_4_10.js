@@ -1224,6 +1224,9 @@ window.ExtraLandsSystem = (function () {
     renderExtraLand,
     handleExtraLandClick,
     openExtraLandModal,
-    renderLandsDirectory
+    renderLandsDirectory,
+    get3DState(landId) {
+      return runtime[landId] || null;
+    }
   };
 })();

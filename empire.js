@@ -2214,6 +2214,23 @@ window.EmpireSystem = (function () {
     setCityTab(tab) { currentCityTab = tab; },
     setPhoneApp(app) { currentPhoneApp = app; },
     renderCityModal,
-    renderPhoneModal
+    renderPhoneModal,
+    get3DState() {
+      return {
+        lotBgHighwayCars,
+        parkingCars,
+        lotShoppers,
+        land2Floats,
+        entryGateOpen: entryGateTimer > 0,
+        exitGateOpen: exitGateTimer > 0,
+        mallRentProgress,
+        mallDeliveryWaiting,
+        mallNeedsCleaning,
+        sideProgress,
+        PARKING_BAYS,
+        MALL_BOX,
+        PARKING_BOX
+      };
+    }
   };
 })();

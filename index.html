@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#090e1c" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Son İstasyon v18.0 — 3D Mimari &amp; Otoyol Holding İmparatorluğu</title>
+  <title>Son İstasyon v20.0 — Gerçek İzometrik 3D Holding İmparatorluğu</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./assets/app-icon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./assets/app-icon.png" />
-  <link rel="stylesheet" href="./style.css?v=18.0" />
+  <link rel="stylesheet" href="./style.css?v=20.0" />
 </head>
 <body>
   <main class="phone-stage">
@@ -41,7 +41,7 @@
           ⏩ 10 Arazi Full Kayıttan Aç
         </button>
 
-        <div class="splash-meta">v18.0 • Dijitesla Studio</div>
+        <div class="splash-meta">v20.0 Gerçek 3D • Dijitesla Studio</div>
       </div>
     </section>
 
@@ -97,12 +97,21 @@
       <button id="openLandsDirBtn" class="ribbon-map-btn" title="10 Arazi Genel Haritası">🗺️</button>
     </nav>
 
-    <!-- GENİŞ CANLI 3D HARİTA ALANI + YÜZEN CAM AKSİYON BUTONLARI -->
+    <!-- GENİŞ GERÇEK İZOMETRİK 3D HARİTA ALANI + YÜZEN CAM AKSİYON BUTONLARI -->
     <section class="map-wrapper">
-      <canvas id="stationCanvas"></canvas>
+      <canvas id="threeCanvas" class="three-canvas"></canvas>
+      <canvas id="hudOverlayCanvas" class="hud-overlay-canvas"></canvas>
+      <canvas id="stationCanvas" class="fallback-canvas"></canvas>
 
       <!-- Harita Üstü Yüzen Özel Gün Rozeti -->
       <div id="activeEffectBar" class="floating-effect-pill hidden"></div>
+
+      <!-- Sol Alt 3D Kamera Kontrolleri (Yakınlaştır / Uzaklaştır / Açı) -->
+      <div class="cam-controls-pill">
+        <button id="btnCamZoomIn" class="cam-ctrl-btn" title="3D Yakınlaştır">➕</button>
+        <button id="btnCamZoomOut" class="cam-ctrl-btn" title="3D Uzaklaştır">➖</button>
+        <button id="btnCamAngle" class="cam-ctrl-btn" title="3D Kamera Açısını Değiştir">🎥</button>
+      </div>
 
       <!-- Müdür Acil Çağrı Bandı (Yalnızca Acil Krizde Yüzer) -->
       <button id="managerAlertBar" class="manager-alert-bar hidden"></button>
@@ -352,14 +361,16 @@
     </div>
   </main>
 
-  <script src="./audio.js?v=18.0"></script>
-  <script src="./visuals.js?v=18.0"></script>
-  <script src="./map_renderer.js?v=18.0"></script>
-  <script src="./story_events.js?v=18.0"></script>
-  <script src="./land3.js?v=18.0"></script>
-  <script src="./lands_4_10.js?v=18.0"></script>
-  <script src="./holding_v16.js?v=18.0"></script>
-  <script src="./empire.js?v=18.0"></script>
-  <script src="./game.js?v=18.0"></script>
+  <script src="./lib/three.min.js?v=20.0"></script>
+  <script src="./audio.js?v=20.0"></script>
+  <script src="./visuals.js?v=20.0"></script>
+  <script src="./map_renderer.js?v=20.0"></script>
+  <script src="./story_events.js?v=20.0"></script>
+  <script src="./land3.js?v=20.0"></script>
+  <script src="./lands_4_10.js?v=20.0"></script>
+  <script src="./holding_v16.js?v=20.0"></script>
+  <script src="./empire.js?v=20.0"></script>
+  <script src="./engine3d.js?v=20.0"></script>
+  <script src="./game.js?v=20.0"></script>
 </body>
 </html>

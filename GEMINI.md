@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v18.0 — 3D Mimari Cepheler, Cam Yansımaları, Canlı Işıklar & Sade Arayüz)
+## Proje Özeti: Son İstasyon (v20.0 — Gerçek İzometrik 3D WebGL Motoru — Three.js)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -56,6 +56,11 @@
     - **2. Arazi (`empire.js`):** Yeni 3D taş meydan zemininin (`land2-ground.jpg`) görünmesi için yarı saydam meydan & otopark entegrasyonu, çift dalgalı mermer fıskiye ve Grand AVM cam kubbesine çapraz güneş yansıması eklendi.
     - **3. Arazi (`land3.js`):** Yeni 3D zümrüt çim zeminin (`land3-ground.jpg`) alttan parlaması sağlandı; neon ışıklı dönme dolap, SPA buharı ve gölgeli havuz şemsiyeleri eklendi.
     - **4.–10. Araziler (`lands_4_10.js`):** Düz kahverengi kutu yerine mermer sütunlu 3D mimari cephe, köşe LED ışıklı çatı kornişi, parlak cam yansımalı odalar, altın dubalı kırmızı halı ve 4 köşe fenerli helikopter pisti tasarlandı.
+
+  - **v20.0 Gerçek İzometrik 3D WebGL Motoru (`engine3d.js`, `lib/three.min.js`):**
+    - Düz 2D üstten görünüm yerine **gerçek Three.js İzometrik 3D dünya** kuruldu (*SimCity BuildIt* / *My Perfect Hotel* tarzı açılı 3D kamera, gerçek yönlü gölgeler, dinamik gece-gündüz gökyüzü ve sis).
+    - **Tüm 10 arazi 3D sahneye taşındı:** 1. İstasyon (3D 9 pompa kanopisi, LPG silosu, EV, yıkama, tamir, kantar, market+güneş paneli, restoran, 2 katlı motel, taş fırın), 2. Arazi (3D hareketli bariyerli otopark, mermer fıskiye, cam kubbeli Grand AVM, yükselen Plaza gökdeleni), 3. Arazi (3D Go-Kart, dik dönen 3D Dönme Dolap, rafineri, 6 üçgen çatılı A-frame bungalov & havuz), 4.–10. Araziler (kat çıktıkça göğe yükselen 6 farklı 3D mega proje: Grand Otel + çatı havuzu, Hastane, Fabrika, Stadyum + projektörler, Teknokent, Altın Kubbeli Kongre Sarayı).
+    - **Gerçek 3D Araçlar, Yürüyen Karakterler, Uçan 3D Helikopter ve Kamera Kontrolleri:** `➕`/`➖` yakınlaştırma, fare tekerleği, sürükle-kaydır (pan), `🎥` 3 farklı 3D kamera açısı (İzometrik 3D / Yakın Sinematik / Geniş Bakış) ve 3D Raycast ile tüm dokunmalar %100 çalışır.
 
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — Windows -> Mac, v17.0)
 - **Mevcut Sürüm:** **v17.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.

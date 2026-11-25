@@ -8,6 +8,7 @@
   const L3 = window.Land3System;
   const XL = window.ExtraLandsSystem;
   const H16 = window.HoldingV16;
+  const E3D = window.Engine3D;
 
   const SAVE_KEY = "son_istasyon_v12_pro";
   const LEGACY_KEYS = ["son_istasyon_v11_pro", "son_istasyon_v9_pro", "son_istasyon_v8_pro", "son_istasyon_v7_pro"];
@@ -290,6 +291,11 @@
     shiftBadgeText: document.getElementById("shiftBadgeText"),
     activeEffectBar: document.getElementById("activeEffectBar"),
     canvas: document.getElementById("stationCanvas"),
+    threeCanvas: document.getElementById("threeCanvas"),
+    hudOverlayCanvas: document.getElementById("hudOverlayCanvas"),
+    btnCamZoomIn: document.getElementById("btnCamZoomIn"),
+    btnCamZoomOut: document.getElementById("btnCamZoomOut"),
+    btnCamAngle: document.getElementById("btnCamAngle"),
 
     btnCallTanker: document.getElementById("btnCallTanker"),
     tankerCostSub: document.getElementById("tankerCostSub"),
@@ -1899,11 +1905,51 @@
   }
 
   // =========================================================================
-  // YENİ NESİL 3D HARİTA ÇİZİMİ
+  // YENİ NESİL GERÇEK İZOMETRİK 3D WEBGL (THREE.JS) + 2D YEDEK ÇİZİM MOTORU
   // =========================================================================
   const ctx = el.canvas.getContext("2d");
+  const is3DActive = !!(E3D && el.threeCanvas && E3D.init(el.threeCanvas, el.hudOverlayCanvas));
+  if (!is3DActive && el.canvas) {
+    el.canvas.style.display = "block";
+    if (el.threeCanvas) el.threeCanvas.style.display = "none";
+    if (el.hudOverlayCanvas) el.hudOverlayCanvas.style.display = "none";
+  }
+  window.addEventListener("resize", () => {
+    if (is3DActive) E3D.handleResize();
+  });
 
   function renderMap() {
+    const phase = getShiftPhase();
+
+    if (is3DActive) {
+      E3D.renderFrame(activeLand, phase, data, {
+        PUMPS,
+        LPG_POS,
+        TANK_POS,
+        BUS_BAY_POS,
+        EV_POS,
+        WASH_POS,
+        GARAGE_POS,
+        TOW_POS,
+        SCALE_POS,
+        MARKET_POS,
+        RESTAURANT_POS,
+        MOTEL_POS,
+        cars,
+        highwayBgCars,
+        tanker,
+        activeTowTruck,
+        activeBus,
+        policeCruiser,
+        workers,
+        shoppers,
+        floatingTexts,
+        powerOutage,
+        maxFuel: maxFuelCapacity()
+      });
+      return;
+    }
+
     const dpr = window.devicePixelRatio || 1;
     const cw = el.canvas.clientWidth || 440;
     const ch = el.canvas.clientHeight || 580;
@@ -1911,8 +1957,6 @@
       el.canvas.width = Math.round(cw * dpr);
       el.canvas.height = Math.round(ch * dpr);
     }
-
-    const phase = getShiftPhase();
 
     ctx.save();
     ctx.scale((cw * dpr) / WORLD_W, (ch * dpr) / WORLD_H);
@@ -2255,7 +2299,81 @@
   el.canvas.addEventListener("pointerdown", (e) => {
     e.preventDefault();
     if (reportPaused) return;
-    const pt = getLogicalCoords(e);
+    handleLogicalMapTap(getLogicalCoords(e));
+  });
+
+  // Gerçek 3D Sahne Dokunma (Raycast), Sürükle-Kaydır (Pan) ve Yakınlaştırma Kontrolleri!
+  if (el.threeCanvas && is3DActive) {
+    let dragStart = null;
+    let lastPos = null;
+    let movedDist = 0;
+
+    el.threeCanvas.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      if (reportPaused) return;
+      dragStart = { x: e.clientX, y: e.clientY };
+      lastPos = { x: e.clientX, y: e.clientY };
+      movedDist = 0;
+    });
+
+    el.threeCanvas.addEventListener("pointermove", (e) => {
+      if (!lastPos) return;
+      const dx = e.clientX - lastPos.x;
+      const dy = e.clientY - lastPos.y;
+      movedDist += Math.hypot(dx, dy);
+      if (movedDist > 8) {
+        E3D.panBy(dx, dy);
+      }
+      lastPos = { x: e.clientX, y: e.clientY };
+    });
+
+    const finish3DPointer = (e) => {
+      if (dragStart && movedDist <= 10 && !reportPaused) {
+        const pt = E3D.screenToLogical(e.clientX, e.clientY);
+        handleLogicalMapTap(pt);
+      }
+      dragStart = null;
+      lastPos = null;
+      pointerHeldPump = -1;
+      pointerHeldLpg = false;
+    };
+
+    el.threeCanvas.addEventListener("pointerup", finish3DPointer);
+    el.threeCanvas.addEventListener("pointercancel", () => {
+      dragStart = null;
+      lastPos = null;
+      pointerHeldPump = -1;
+      pointerHeldLpg = false;
+    });
+    el.threeCanvas.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      E3D.zoomBy(e.deltaY > 0 ? 0.1 : -0.1);
+    }, { passive: false });
+  }
+
+  if (el.btnCamZoomIn) {
+    el.btnCamZoomIn.addEventListener("click", () => {
+      sfx.tap();
+      if (is3DActive) E3D.zoomBy(-0.18);
+    });
+  }
+  if (el.btnCamZoomOut) {
+    el.btnCamZoomOut.addEventListener("click", () => {
+      sfx.tap();
+      if (is3DActive) E3D.zoomBy(0.18);
+    });
+  }
+  if (el.btnCamAngle) {
+    el.btnCamAngle.addEventListener("click", () => {
+      sfx.tap();
+      if (is3DActive) {
+        const modeName = E3D.cycleAngle();
+        showToast(`🎥 Kamera Açısı: ${modeName}`);
+      }
+    });
+  }
+
+  function handleLogicalMapTap(pt) {
 
     if (activeLand === "land2") {
       EMP.handleLand2Click(pt, data, empireHelpers);
@@ -2530,7 +2648,7 @@
       if (motelQueue.length > 0) checkInOneMotelGuest();
       else openUpgradesModal();
     }
-  });
+  }
 
   window.addEventListener("pointerup", () => {
     pointerHeldPump = -1;
@@ -2935,6 +3053,7 @@
       }
     }
     if (el.quickSettingsPopover) el.quickSettingsPopover.classList.add("hidden");
+    if (is3DActive) E3D.resetCamera();
   }
 
   // Tek dokunuşlu 10 Arazi Şeridi & ◀ / ▶ Okları
@@ -3321,6 +3440,7 @@
   function launchIntoMap(welcomeMsg) {
     el.startScreen.classList.add("hidden");
     running = true;
+    if (is3DActive) E3D.handleResize();
     trySpawnStationCar();
     updateHUD();
     if (welcomeMsg) showToast(welcomeMsg);

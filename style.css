@@ -714,7 +714,7 @@ html, body {
   gap: 8px;
 }
 
-/* CANLI İSTASYON HARİTASI ALANI */
+/* CANLI İZOMETRİK 3D HARİTA ALANI */
 .map-wrapper {
   position: relative;
   flex: 1;
@@ -723,12 +723,62 @@ html, body {
   overflow: hidden;
 }
 
-#stationCanvas {
+.three-canvas {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
   touch-action: none;
+  cursor: grab;
 }
+.three-canvas:active { cursor: grabbing; }
+
+.hud-overlay-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.fallback-canvas {
+  width: 100%;
+  height: 100%;
+  display: none;
+  touch-action: none;
+}
+
+.cam-controls-pill {
+  position: absolute;
+  left: 8px;
+  bottom: 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 16;
+}
+
+.cam-ctrl-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  background: rgba(11, 18, 34, 0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(148, 163, 184, 0.4);
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+.cam-ctrl-btn:active { transform: scale(0.92); }
 
 /* MODERN YÜZEN ALT KONTROL KAPSÜLÜ */
 .bottom-dock {
