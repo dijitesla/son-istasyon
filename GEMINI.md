@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v20.0 — Gerçek İzometrik 3D WebGL Motoru — Three.js)
+## Proje Özeti: Son İstasyon (v20.1 — SimCity Tarzı İzometrik 3D Diorama Motoru — Three.js)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -61,6 +61,10 @@
     - Düz 2D üstten görünüm yerine **gerçek Three.js İzometrik 3D dünya** kuruldu (*SimCity BuildIt* / *My Perfect Hotel* tarzı açılı 3D kamera, gerçek yönlü gölgeler, dinamik gece-gündüz gökyüzü ve sis).
     - **Tüm 10 arazi 3D sahneye taşındı:** 1. İstasyon (3D 9 pompa kanopisi, LPG silosu, EV, yıkama, tamir, kantar, market+güneş paneli, restoran, 2 katlı motel, taş fırın), 2. Arazi (3D hareketli bariyerli otopark, mermer fıskiye, cam kubbeli Grand AVM, yükselen Plaza gökdeleni), 3. Arazi (3D Go-Kart, dik dönen 3D Dönme Dolap, rafineri, 6 üçgen çatılı A-frame bungalov & havuz), 4.–10. Araziler (kat çıktıkça göğe yükselen 6 farklı 3D mega proje: Grand Otel + çatı havuzu, Hastane, Fabrika, Stadyum + projektörler, Teknokent, Altın Kubbeli Kongre Sarayı).
     - **Gerçek 3D Araçlar, Yürüyen Karakterler, Uçan 3D Helikopter ve Kamera Kontrolleri:** `➕`/`➖` yakınlaştırma, fare tekerleği, sürükle-kaydır (pan), `🎥` 3 farklı 3D kamera açısı (İzometrik 3D / Yakın Sinematik / Geniş Bakış) ve 3D Raycast ile tüm dokunmalar %100 çalışır.
+
+  - **v20.1 SimCity Tarzı İzometrik 3D Kamera & Mimari Cilası (`engine3d.js`, `index.html`, `game.js`):**
+    - Ön çatıları şişiren geniş açı yerine **dar açılı (28° FOV) dengeli SimCity izometrik maket kamerası** kuruldu; sol alta **🔄 90° döndürme** (4 köşe 360° bakış) eklendi.
+    - Ekstra indirme gerektirmeden prosedürel asfalt, çim ve ışıklı cam cephe dokuları üretildi; tüm binalara çatı parapet çerçevesi, klima/havalandırma üniteleri, çift yüzlü ışıklı 3D tabelalar (`★ SON İSTASYON ★`, `MARKET 7/24`, `RESTORAN`, `MİNİ MOTEL`, `OTOYOL GRAND AVM`, `GRAND OTEL` vb.) ve aralarında temiz yaya kaldırımları eklendi.
 
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — Windows -> Mac, v17.0)
 - **Mevcut Sürüm:** **v17.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.

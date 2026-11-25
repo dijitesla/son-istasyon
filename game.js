@@ -295,6 +295,7 @@
     hudOverlayCanvas: document.getElementById("hudOverlayCanvas"),
     btnCamZoomIn: document.getElementById("btnCamZoomIn"),
     btnCamZoomOut: document.getElementById("btnCamZoomOut"),
+    btnCamRotate: document.getElementById("btnCamRotate"),
     btnCamAngle: document.getElementById("btnCamAngle"),
 
     btnCallTanker: document.getElementById("btnCallTanker"),
@@ -2361,6 +2362,15 @@
     el.btnCamZoomOut.addEventListener("click", () => {
       sfx.tap();
       if (is3DActive) E3D.zoomBy(0.18);
+    });
+  }
+  if (el.btnCamRotate) {
+    el.btnCamRotate.addEventListener("click", () => {
+      sfx.tap();
+      if (is3DActive && E3D.rotate90) {
+        const dirName = E3D.rotate90();
+        showToast(`🔄 Kamera Yönü: ${dirName}`);
+      }
     });
   }
   if (el.btnCamAngle) {
