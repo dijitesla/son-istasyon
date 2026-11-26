@@ -240,6 +240,7 @@ window.EmpireSystem = (function () {
       extraLands: window.ExtraLandsSystem ? window.ExtraLandsSystem.createDefaultExtraLands() : null,
       v16: window.HoldingV16 ? window.HoldingV16.createDefaultV16() : null,
       v23: window.MechanicsV23 ? window.MechanicsV23.createDefaultV23() : null,
+      v24: window.CityV24 ? window.CityV24.createDefaultV24() : null,
 
       // Çok Kaynaklı Şahsi Maaş Sistemi!
       personalCash: 0,
@@ -309,6 +310,9 @@ window.EmpireSystem = (function () {
     }
     if (window.MechanicsV23) {
       out.v23 = window.MechanicsV23.mergeV23(saved.v23);
+    }
+    if (window.CityV24) {
+      out.v24 = window.CityV24.mergeV24(saved.v24);
     }
 
     out.electronics = Object.assign({}, saved.electronics || {});
@@ -408,6 +412,9 @@ window.EmpireSystem = (function () {
     let total = PROPERTIES.reduce((sum, p) => sum + (emp.properties[p.key] ? p.dailyRent : 0), 0);
     if (window.HoldingV16 && emp.v16) {
       total += window.HoldingV16.calcVipDailyRent(emp.v16);
+    }
+    if (window.CityV24 && emp.v24) {
+      total += window.CityV24.calcMansionDailyBonus(emp.v24);
     }
     return total;
   }

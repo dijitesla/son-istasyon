@@ -9,6 +9,7 @@
   const XL = window.ExtraLandsSystem;
   const H16 = window.HoldingV16;
   const M23 = window.MechanicsV23;
+  const C24 = window.CityV24;
   const E3D = window.Engine3D;
 
   const SAVE_KEY = "son_istasyon_v12_pro";
@@ -57,6 +58,9 @@
       rivalIncome: 0,
       tenderIncome: 0,
       emergencyIncome: 0,
+      taxiIncome: 0,
+      portIncome: 0,
+      clubIncome: 0,
       eventIncome: 0,
       tankerCost: 0,
       eventLoss: 0,
@@ -271,6 +275,9 @@
     commandV23Btn: document.getElementById("commandV23Btn"),
     commandV23Modal: document.getElementById("commandV23Modal"),
     closeCommandV23Btn: document.getElementById("closeCommandV23Btn"),
+    cityDistrictBtn: document.getElementById("cityDistrictBtn"),
+    cityDistrictModal: document.getElementById("cityDistrictModal"),
+    closeCityDistrictBtn: document.getElementById("closeCityDistrictBtn"),
     btnDriveBossCar: document.getElementById("btnDriveBossCar"),
     cityEmergencyBar: document.getElementById("cityEmergencyBar"),
     holdingHubBtn: document.getElementById("holdingHubBtn"),
@@ -517,7 +524,7 @@
     return cost;
   }
 
-  const LAND_ORDER = ["station", "land2", "land3", "land4", "land5", "land6", "land7", "land8", "land9", "land10"];
+  const LAND_ORDER = ["mansion", "station", "land2", "land3", "land4", "land5", "land6", "land7", "land8", "land9", "land10", "port"];
 
   function formatCompactMoney(val) {
     const n = Math.round(val || 0);
@@ -602,7 +609,17 @@
         const lid = chip.dataset.land;
         const isActive = activeLand === lid;
         chip.classList.toggle("active", isActive);
-        if (lid === "station") {
+        if (lid === "mansion") {
+          const hasHome = !!(data.empire.properties && (data.empire.properties.villa || data.empire.properties.residence || data.empire.properties.city2p1 || data.empire.properties.studio));
+          chip.classList.toggle("owned", hasHome);
+          chip.classList.toggle("locked", !hasHome);
+          chip.textContent = "🏡 Tepe";
+        } else if (lid === "port") {
+          const owned = !!(data.empire.v24 && data.empire.v24.port && data.empire.v24.port.unlocked);
+          chip.classList.toggle("owned", owned);
+          chip.classList.toggle("locked", !owned);
+          chip.textContent = owned ? "⚓ Liman" : "🔒 Liman";
+        } else if (lid === "station") {
           chip.classList.add("owned");
           chip.classList.remove("locked");
           chip.textContent = "⛽ 1";
@@ -980,7 +997,10 @@
     const rivalRev = d.rivalIncome || 0;
     const tenderRev = d.tenderIncome || 0;
     const emergRev = d.emergencyIncome || 0;
-    const totalRev = stationSubTotal + land2SubTotal + land3SubTotal + extraSubTotal + rivalRev + tenderRev + emergRev;
+    const taxiRev = d.taxiIncome || 0;
+    const portRev = d.portIncome || 0;
+    const clubRev = d.clubIncome || 0;
+    const totalRev = stationSubTotal + land2SubTotal + land3SubTotal + extraSubTotal + rivalRev + tenderRev + emergRev + taxiRev + portRev + clubRev;
     let loanPayAmt = 0;
     if (!isDayEnd && data.empire.v16 && data.empire.v16.activeLoan) {
       loanPayAmt = data.empire.v16.activeLoan.dailyPay || 0;
@@ -1075,6 +1095,9 @@
         ${rivalRev > 0 ? `<div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:4px;"><span>🏆 Devralınan Rakip Holdingler</span><span class="val-pos">+${Math.round(rivalRev)} ₺</span></div>` : ""}
         ${tenderRev > 0 ? `<div class="rep-row"><span>🔨 Kazanılan İhale Sözleşmeleri</span><span class="val-pos">+${Math.round(tenderRev)} ₺</span></div>` : ""}
         ${emergRev > 0 ? `<div class="rep-row"><span>🚑 Şehir Acil Müdahale Ödülleri</span><span class="val-pos">+${Math.round(emergRev)} ₺</span></div>` : ""}
+        ${taxiRev > 0 ? `<div class="rep-row"><span>🚕 Şehir İçi Taksi &amp; Dolmuş Hattı</span><span class="val-pos">+${Math.round(taxiRev)} ₺</span></div>` : ""}
+        ${portRev > 0 ? `<div class="rep-row"><span>⚓ Uluslararası Liman İhracatı</span><span class="val-pos">+${Math.round(portRev)} ₺</span></div>` : ""}
+        ${clubRev > 0 ? `<div class="rep-row"><span>⚽ Futbol Kulübü Maç &amp; Yayın Geliri</span><span class="val-pos">+${Math.round(clubRev)} ₺</span></div>` : ""}
       </div>
 
       <!-- GİDERLER -->
@@ -1179,9 +1202,10 @@
       callFuelTanker(true);
     }
 
-    // 2. Arazi & Borsa Canlı Güncellemesi + v16 Holding Ligi + v23 Yeni Mekanikler
+    // 2. Arazi & Borsa Canlı Güncellemesi + v16 Holding + v23 + v24 Şehir Bölgeleri
     if (H16) H16.updateV16(dt, data);
     if (M23) M23.updateV23(dt, data, v23Helpers);
+    if (C24) C24.updateV24(dt, data, v24Helpers);
     EMP.updateEmpire(dt, data, {
       onStockTick() {
         if (!el.phoneModal.classList.contains("hidden")) {
@@ -2424,6 +2448,14 @@
   }
 
   function handleLogicalMapTap(pt, targetLand = activeLand) {
+    if (targetLand === "mansion" && C24) {
+      C24.openDistrictModal("mansion", data, v24Helpers);
+      return;
+    }
+    if (targetLand === "port" && C24) {
+      C24.openDistrictModal("port", data, v24Helpers);
+      return;
+    }
 
     if (targetLand === "land2") {
       EMP.handleLand2Click(pt, data, empireHelpers);
@@ -3068,6 +3100,20 @@
     }
   };
 
+  const v24Helpers = {
+    sfx,
+    showToast,
+    saveGame,
+    updateHUD,
+    payForBusiness,
+    triggerVipRush(sec) {
+      vipRushTimer = Math.max(vipRushTimer, sec || 30);
+    },
+    focusZone(zoneId) {
+      switchLand(zoneId);
+    }
+  };
+
   function switchLand(land) {
     if (M23 && M23.isDriving()) M23.stopDriving();
     const prevLand = activeLand;
@@ -3085,7 +3131,11 @@
         }
       });
     }
-    if (land === "land2") {
+    if (land === "mansion") {
+      el.liveHintText.textContent = "🏡 Kuzey Malikane Tepesi: Dokunup Havuz, VIP Davet ve Garajını yönet!";
+    } else if (land === "port") {
+      el.liveHintText.textContent = "⚓ Güney Deniz Limanı: Dokunup 3D İhracat Gemisi yükle & Marina'yı gör!";
+    } else if (land === "land2") {
       el.liveHintText.textContent = data.empire.land2Owned
         ? "🅿️ Otopark (20->150) & 🏬 AVM Dükkanları: Dokun kur ve kiraya ver!"
         : "🏗️ 2. Arazi tapusunu alıp Otopark ve AVM kur!";
@@ -3123,7 +3173,11 @@
   function syncActiveLandFromCamera(land) {
     if (!land || land === activeLand) return;
     activeLand = land;
-    if (land === "land2") {
+    if (land === "mansion") {
+      el.liveHintText.textContent = "🏡 Patron Malikanesi Tepesi — dokunup yönet!";
+    } else if (land === "port") {
+      el.liveHintText.textContent = "⚓ Uluslararası İhracat Limanı — dokunup gemi gönder!";
+    } else if (land === "land2") {
       el.liveHintText.textContent = data.empire.land2Owned
         ? "🅿️ 2. Arazi: Otopark & Grand AVM — dokunup yönet!"
         : "🏗️ 2. Arazi Satılık — dokunup tapusunu al!";
@@ -3303,6 +3357,37 @@
   const drvExitBtn = document.getElementById("drvExitBtn");
   if (drvExitBtn && M23) {
     drvExitBtn.addEventListener("click", () => M23.stopDriving(v23Helpers));
+  }
+
+  // v24.0 — ⚓ Malikane, Futbol Kulübü, Taksi Hattı, Liman & Köşe Mini Radar!
+  if (el.cityDistrictBtn && C24) {
+    el.cityDistrictBtn.addEventListener("click", () => {
+      sfx.tap();
+      C24.openDistrictModal(null, data, v24Helpers);
+      const box = el.cityDistrictModal.querySelector(".modal-box");
+      if (box) box.scrollTop = 0;
+    });
+  }
+  if (el.closeCityDistrictBtn) {
+    el.closeCityDistrictBtn.addEventListener("click", () => el.cityDistrictModal.classList.add("hidden"));
+  }
+  document.querySelectorAll(".dist24-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!C24) return;
+      sfx.tap();
+      C24.setDistrictTab(btn.dataset.disttab);
+      C24.renderDistrictModal(data, v24Helpers);
+    });
+  });
+  if (C24 && C24.bindMiniRadar) {
+    C24.bindMiniRadar((zoneId) => {
+      if (zoneId === "taxi_hq") {
+        sfx.tap();
+        C24.openDistrictModal("taxi", data, v24Helpers);
+      } else {
+        switchLand(zoneId);
+      }
+    });
   }
 
   el.managerAlertBar.addEventListener("click", () => {
@@ -3713,6 +3798,17 @@
         { id: 1, emoji: "✈️", name: "Havalimanı VIP Transfer & Yakıt İhalesi", cycleIncome: 2650, daysLeft: 4 }
       ];
       M23.applyBrandThemeToDOM(data);
+    }
+    if (C24) {
+      emp.v24 = {
+        mansion: { infinityPool: true, securityTeam: true, vipGuesthouse: true },
+        club: { founded: true, transfers: { keeper: true, midfielder: true, striker: true, coach: true }, wins: 12, draws: 2, losses: 1 },
+        taxi: { unlocked: true, fleetCount: 8, dispatchLvl: 5 },
+        port: { unlocked: true, craneLvl: 5, roroUnlocked: true, portManager: true, shipmentsDone: 18 }
+      };
+    }
+    if (emp.v16) {
+      emp.v16.vipAssets = { yacht: true, helicopter: true, hq: true };
     }
     saveGame();
   }

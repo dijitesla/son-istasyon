@@ -877,7 +877,7 @@ window.MechanicsV23 = (function () {
       }
 
       bossDrive.wx = Math.max(-152, Math.min(152, bossDrive.wx + Math.sin(bossDrive.angle) * bossDrive.speed * dt));
-      bossDrive.wz = Math.max(-68, Math.min(76, bossDrive.wz + Math.cos(bossDrive.angle) * bossDrive.speed * dt));
+      bossDrive.wz = Math.max(-106, Math.min(102, bossDrive.wz + Math.cos(bossDrive.angle) * bossDrive.speed * dt));
 
       if (window.Engine3D && window.Engine3D.followWorldPos) {
         window.Engine3D.followWorldPos(bossDrive.wx, bossDrive.wz);

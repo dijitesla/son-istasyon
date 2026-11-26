@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#090e1c" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Son İstasyon v23.0 — 3D Sürüş, İhaleler, Acil Müdahale &amp; 10 Arazi İmparatorluk</title>
+  <title>Son İstasyon v24.0 — Tam Ekran 3D Şehir, Malikane, Liman, Futbol Kulübü &amp; Mini Radar</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./assets/app-icon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./assets/app-icon.png" />
-  <link rel="stylesheet" href="./style.css?v=23.0" />
+  <link rel="stylesheet" href="./style.css?v=24.0" />
 </head>
 <body>
   <main class="phone-stage">
@@ -41,7 +41,7 @@
           ⏩ 10 Arazi Full Kayıttan Aç
         </button>
 
-        <div class="splash-meta">v23.0 3D Sürüş, İhale &amp; Yaşayan Şehir • Dijitesla Studio</div>
+        <div class="splash-meta">v24.0 Tam Ekran 3D Şehir, Liman &amp; Malikane • Dijitesla Studio</div>
       </div>
     </section>
 
@@ -82,6 +82,7 @@
     <nav class="land-ribbon" aria-label="10 Arazi Hızlı Geçiş">
       <button id="btnPrevLand" class="ribbon-arrow" title="Önceki Arazi">◀</button>
       <div id="landRibbonTrack" class="land-ribbon-track">
+        <button class="land-chip" data-land="mansion">🏡 Tepe</button>
         <button id="tabStationBtn" class="land-chip active" data-land="station">⛽ 1</button>
         <button id="tabLand2Btn" class="land-chip" data-land="land2">🏬 2</button>
         <button id="tabLand3Btn" class="land-chip" data-land="land3">🎡 3</button>
@@ -92,6 +93,7 @@
         <button class="land-chip extra-land-chip" data-land="land8">💻 8</button>
         <button class="land-chip extra-land-chip" data-land="land9">👑 9</button>
         <button class="land-chip extra-land-chip" data-land="land10">🌟 10</button>
+        <button class="land-chip" data-land="port">⚓ Liman</button>
       </div>
       <button id="btnNextLand" class="ribbon-arrow" title="Sonraki Arazi">▶</button>
       <button id="openLandsDirBtn" class="ribbon-map-btn" title="10 Arazi Genel Haritası">🗺️</button>
@@ -102,6 +104,15 @@
       <canvas id="threeCanvas" class="three-canvas"></canvas>
       <canvas id="hudOverlayCanvas" class="hud-overlay-canvas"></canvas>
       <canvas id="stationCanvas" class="fallback-canvas"></canvas>
+
+      <!-- Sol Üst Kuşbakışı Şehir Radarı (Mini Harita — Tek Dokunuşla Bölgeye Uçuş!) -->
+      <div id="miniRadarBox" class="mini-radar-box">
+        <div class="mini-radar-head">
+          <span>🗺️ Şehir Radarı</span>
+          <button id="miniRadarToggleBtn" class="mini-radar-toggle" title="Radarı Küçült / Aç">➖</button>
+        </div>
+        <canvas id="miniRadarCanvas" width="156" height="114"></canvas>
+      </div>
 
       <!-- Harita Üstü Yüzen Özel Gün Rozeti -->
       <div id="activeEffectBar" class="floating-effect-pill hidden"></div>
@@ -123,6 +134,10 @@
 
       <!-- Sağ Kenar Yüzen Modern Aksiyon Menüsü (Başparmak Erişimi!) -->
       <div class="map-fab-stack">
+        <button id="cityDistrictBtn" class="fab-btn fab-blue" title="Malikane Tepesi, Futbol Kulübüm, Şehir Taksi Hattı &amp; İhracat Limanı">
+          <span class="fab-ico">⚓</span>
+          <span class="fab-lbl">Liman/SK</span>
+        </button>
         <button id="commandV23Btn" class="fab-btn fab-red" title="Fiyat Politikası, Marka &amp; Neon, Canlı İhaleler &amp; Ekip Morali">
           <span class="fab-ico">⚡</span>
           <span class="fab-lbl">Komuta</span>
@@ -403,19 +418,37 @@
         <button id="closeCommandV23Btn" class="primary-btn" style="margin-top:10px;">Haritaya Dön</button>
       </div>
     </div>
+    <!-- MODAL 14: ⚓ YENİ ŞEHİR BÖLGELERİ (MALİKANE • FUTBOL KULÜBÜ • TAKSİ HATTI • LİMAN) -->
+    <div id="cityDistrictModal" class="overlay-modal hidden">
+      <div class="modal-box" style="border-color:#0ea5e9;">
+        <div class="modal-header">
+          <h2>⚓ Malikane, Kulüp, Taksi &amp; Liman</h2>
+          <span class="shift-pill" style="color:#7dd3fc;">v24.0 Şehir</span>
+        </div>
+        <div class="subtab-row">
+          <button class="dist24-tab-btn city-tab-btn active" data-disttab="mansion">🏡 Malikane</button>
+          <button class="dist24-tab-btn city-tab-btn" data-disttab="club">⚽ Kulübüm</button>
+          <button class="dist24-tab-btn city-tab-btn" data-disttab="taxi">🚕 Taksi</button>
+          <button class="dist24-tab-btn city-tab-btn" data-disttab="port">⚓ Liman</button>
+        </div>
+        <div id="cityDistrictBody"></div>
+        <button id="closeCityDistrictBtn" class="primary-btn" style="margin-top:10px;">Haritaya Dön</button>
+      </div>
+    </div>
   </main>
 
-  <script src="./lib/three.min.js?v=23.0"></script>
-  <script src="./audio.js?v=23.0"></script>
-  <script src="./visuals.js?v=23.0"></script>
-  <script src="./map_renderer.js?v=23.0"></script>
-  <script src="./story_events.js?v=23.0"></script>
-  <script src="./land3.js?v=23.0"></script>
-  <script src="./lands_4_10.js?v=23.0"></script>
-  <script src="./holding_v16.js?v=23.0"></script>
-  <script src="./mechanics_v23.js?v=23.0"></script>
-  <script src="./empire.js?v=23.0"></script>
-  <script src="./engine3d.js?v=23.0"></script>
-  <script src="./game.js?v=23.0"></script>
+  <script src="./lib/three.min.js?v=24.0"></script>
+  <script src="./audio.js?v=24.0"></script>
+  <script src="./visuals.js?v=24.0"></script>
+  <script src="./map_renderer.js?v=24.0"></script>
+  <script src="./story_events.js?v=24.0"></script>
+  <script src="./land3.js?v=24.0"></script>
+  <script src="./lands_4_10.js?v=24.0"></script>
+  <script src="./holding_v16.js?v=24.0"></script>
+  <script src="./mechanics_v23.js?v=24.0"></script>
+  <script src="./city_v24.js?v=24.0"></script>
+  <script src="./empire.js?v=24.0"></script>
+  <script src="./engine3d.js?v=24.0"></script>
+  <script src="./game.js?v=24.0"></script>
 </body>
 </html>

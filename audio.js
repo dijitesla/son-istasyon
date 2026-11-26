@@ -209,6 +209,28 @@ class SoundEngine {
     this.softTone(370, 0.22, 0.045, 0.16);
     this.softTone(466.16, 0.22, 0.04, 0.16);
   }
+
+  shipHorn() {
+    // Limana yanaşan ihracat gemisi için derin ve tok gemi düdüğü
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    this.vibrate(25);
+    this.softTone(110, 0.55, 0.048, 0, 106);
+    this.softTone(164.81, 0.55, 0.036, 0.02, 160);
+  }
+
+  stadiumGoal() {
+    // Gol sevinci / stadyum zafer akoru
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    this.vibrate(30);
+    this.softTone(523.25, 0.16, 0.042, 0);
+    this.softTone(659.25, 0.16, 0.042, 0.1);
+    this.softTone(783.99, 0.18, 0.042, 0.2);
+    this.softTone(1046.5, 0.36, 0.045, 0.3);
+  }
 }
 
 window.sfx = new SoundEngine();

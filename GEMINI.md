@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v23.0 — 3D Patron Sürüşü, Canlı İhaleler, Acil Müdahale & 10 Arazi İmparatorluk)
+## Proje Özeti: Son İstasyon (v24.0 — Tam Ekran 3D Şehir Planı, Mini Radar, Malikane, Futbol Kulübü, Taksi & Liman)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -84,8 +84,15 @@
     5. **🪧 Kendi Marka Adını & Neon Rengini Basma:** Oyuncunun yazdığı marka adı (ör. `DİJİTESLA`) ve seçtiği 5 kurumsal neon rengi **3D Yakıt Totemi, Otoyol Dev Tabelası, Market, Grand AVM, Grand Otel, Açılış Logosu ve Holding Ligi** tabelalarına anında işlenir!
     6. **🏅 Çalışan Morali, Kahve İkramı, Bayram İkramiyesi & Sosyal Tesis:** Tüm 10 araziyi etkileyen moral çubuğu (`0–150%`), Sıcak Kahve & Tatlı ikramı, **%150 Süper Coşku (1.5x Turbo Hız)** veren Bayram İkramiyesi ve yorulmayı %65 azaltan kalıcı **Personel Dinlenme & Kafe Salonu**.
 
-## 📌 Diğer Bilgisayardaki Asistana Devir Notu (26 Kasım — v23.0 Son Durum)
-- **Mevcut Sürüm:** **v23.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
+  - **v24.0 Tam Ekran Geniş Görünüm, Şehir Coğrafyası, Köşe Mini Radar & 4 Yeni Bölge (`city_v24.js`, `engine3d.js`, `style.css`, `index.html`, `game.js`):**
+    1. **🖥️ Tam Ekran Geniş Görünüm & Köşe Şehir Radarı (`#miniRadarBox`):** Bilgisayar (Mac/Windows), tablet ve yatay/dikey telefonlarda eski dar `450px` telefon çerçevesi kaldırılıp **100% tam ekran geniş 3D şehir görünümü** açıldı. Sol üste tüm bölgeleri, gemiyi, taksileri ve patron aracını canlı gösteren, tek dokunuşla istenen bölgeye uçuran **Kuşbakışı Şehir Radarı** eklendi.
+    2. **🏡 Kuzey Manzaralı 3D Patron Malikanesi & Özel Garaj (`mansion`):** Kuzeydeki yüksek teras tepede oyuncunun aldığı Villa, Sonsuzluk Havuzu, Misafir Köşkü, Helikopteri ve 4 Koleksiyon Arabası canlı 3D sergilenir; **VIP Yatırımcı Daveti** düzenlenebilir.
+    3. **⚽ Stadyumda Kendi Futbol Kulübün (`<MARKA> SK`):** Yıldız kaleci, 10 numara, golcü forvet ve teknik direktör transferleriyle takım gücü artırılır; canlı 90 dakika maç simülasyonu, 3D stadyum üstü canlı skor tabelası ve yüksek bilet/yayın geliri sağlar.
+    4. **🚕 Şehir İçi Taksi & Dolmuş Hattı:** Batı kavşağındaki merkez duraktan çıkan 8'e kadar **3D Sarı Taksi ve Şehir Dolmuşu**, tüm bulvarlarda dolaşarak düzenli taksimetre kazancı bırakır.
+    5. **⚓ Güney Deniz Kıyısı, Marina & İhracat Limanı (`port`):** Şehrin güneyi kumsal, palmiyeli kordon, deniz feneri ve masmavi denize açıldı. Lüks Yat marinada yüzer; dev **3D İhracat Kargo Gemisi** rıhtım vinçlerinin altına yanaşıp Rafineri, Oto Fabrika ve Teknokent ürünlerini yurt dışına ihraç eder.
+
+## 📌 Diğer Bilgisayardaki Asistana Devir Notu (26 Kasım — v24.0 Son Durum)
+- **Mevcut Sürüm:** **v24.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
 - **Bu Oturumda Tamamlanan Büyük Dönüşüm (v17.0 -> v22.0):**
   1. **Gerçek 3D WebGL Motoru (`v20.0`, `lib/three.min.js`, `engine3d.js`):** Düz 2D haritadan gerçek Three.js İzometrik 3D dünyaya geçildi (`empire.js`, `land3.js`, `lands_4_10.js`, `holding_v16.js` içine salt-okunur `get3DState()` eklendi).
   2. **SimCity Tarzı Kamera & Mimari (`v20.1`):** Dar açılı (`28° FOV`) dengeli izometrik kamera, sol alt kamera kontrolüne **🔄 90° döndürme** (4 köşe 360° bakış), prosedürel dokular, parapet çatılar, klimalar ve çift yüzlü ışıklı 3D bina tabelaları eklendi.

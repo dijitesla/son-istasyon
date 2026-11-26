@@ -7,19 +7,21 @@ window.Engine3D = (function () {
   const WORLD_H = 620;
   const SCALE = 0.1;
 
-  // 2×5 TEK DÜNYA ŞEHİR BULVARI KOORDİNAT HARİTASI
-  const LAND_IDS = ["station", "land2", "land3", "land4", "land5", "land6", "land7", "land8", "land9", "land10"];
+  // v24.0 GERÇEK ŞEHİR HARİTASI: Kuzey VIP Malikane Tepesi + 10 Arazi Ticaret Bulvarı + Güney Deniz & İhracat Limanı!
+  const LAND_IDS = ["mansion", "station", "land2", "land3", "land4", "land5", "land6", "land7", "land8", "land9", "land10", "port"];
   const LAND_LAYOUT = {
-    station: { ox: -112, oz: -36, title: "1. İSTASYON" },
-    land2:   { ox:  -56, oz: -36, title: "2. GRAND AVM" },
-    land3:   { ox:    0, oz: -36, title: "3. LUNAPARK" },
-    land4:   { ox:   56, oz: -36, title: "4. ARAZİ" },
-    land5:   { ox:  112, oz: -36, title: "5. ARAZİ" },
-    land6:   { ox: -112, oz:  36, title: "6. ARAZİ" },
-    land7:   { ox:  -56, oz:  36, title: "7. ARAZİ" },
-    land8:   { ox:    0, oz:  36, title: "8. ARAZİ" },
-    land9:   { ox:   56, oz:  36, title: "9. ARAZİ" },
-    land10:  { ox:  112, oz:  36, title: "10. ARAZİ" }
+    mansion: { ox:    0, oz: -104, title: "PATRON MALİKANESİ" },
+    station: { ox: -112, oz:  -36, title: "1. İSTASYON" },
+    land2:   { ox:  -56, oz:  -36, title: "2. GRAND AVM" },
+    land3:   { ox:    0, oz:  -36, title: "3. LUNAPARK" },
+    land4:   { ox:   56, oz:  -36, title: "4. ARAZİ" },
+    land5:   { ox:  112, oz:  -36, title: "5. ARAZİ" },
+    land6:   { ox: -112, oz:   36, title: "6. ARAZİ" },
+    land7:   { ox:  -56, oz:   36, title: "7. ARAZİ" },
+    land8:   { ox:    0, oz:   36, title: "8. ARAZİ" },
+    land9:   { ox:   56, oz:   36, title: "9. ARAZİ" },
+    land10:  { ox:  112, oz:   36, title: "10. ARAZİ" },
+    port:    { ox:    0, oz:   98, title: "İHRACAT LİMANI" }
   };
 
   let THREE = null;
@@ -40,7 +42,7 @@ window.Engine3D = (function () {
   const ELEV_PRESETS = [
     { name: "İzometrik 3D", dist: 92, height: 74, lookZ: 0.5 },
     { name: "Yakın 3D", dist: 62, height: 44, lookZ: 2.0 },
-    { name: "İmparatorluk", dist: 196, height: 158, lookZ: 0.0 }
+    { name: "Tüm Şehir", dist: 238, height: 188, lookZ: -2.0 }
   ];
   let elevIdx = 0;
   let yawIndex = 0; // 0..3 -> 4 İzometrik köşe
@@ -86,6 +88,8 @@ window.Engine3D = (function () {
   let vehicleMeshes = [];
   let charMeshes = [];
   let heliMesh = null;
+  let cargoShipMesh = null;
+  let seaWaterMat = null;
   let weatherMeshes = [];
 
   // =========================================================================
@@ -414,8 +418,8 @@ window.Engine3D = (function () {
     fog = new THREE.FogExp2("#1d3557", 0.00085);
     scene.fog = fog;
 
-    // DAR FOV (28°) + GENİŞ GÖRÜŞ MESAFESİ (780) = 10 ARAZİNİN TAMAMI TEK DÜNYADA KRİSTAL NET!
-    camera = new THREE.PerspectiveCamera(28, 1, 1, 780);
+    // DAR FOV (28°) + GENİŞ GÖRÜŞ MESAFESİ (980) = KUZEY MALİKANE + 10 ARAZİ + GÜNEY DENİZ TEK EKRANDA NET!
+    camera = new THREE.PerspectiveCamera(28, 1, 1, 980);
 
     // 3 Noktalı Stüdyo Işıklandırması (Kamerayı Takip Eden 2048px Dinamik Güneş Gölgesi!)
     hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x334155, 1.05);
@@ -566,13 +570,13 @@ window.Engine3D = (function () {
 
   function panBy(dxPx, dyPx) {
     const f = 0.068 * camZoom * (ELEV_PRESETS[elevIdx].dist / 92);
-    // Kamera dönüş açısına göre tüm 2×5 şehir haritasında doğal kaydırma!
+    // Kamera dönüş açısına göre tüm şehir haritasında (Malikane Tepesi <-> 10 Arazi <-> Deniz & Liman) kaydırma!
     const cosY = Math.cos(curYaw);
     const sinY = Math.sin(curYaw);
     const worldDx = (-dxPx * cosY - dyPx * sinY) * f;
     const worldDz = (dxPx * sinY - dyPx * cosY) * f;
-    targetPanX = Math.max(-132, Math.min(132, targetPanX + worldDx));
-    targetPanZ = Math.max(-52, Math.min(56, targetPanZ + worldDz));
+    targetPanX = Math.max(-145, Math.min(145, targetPanX + worldDx));
+    targetPanZ = Math.max(-114, Math.min(108, targetPanZ + worldDz));
   }
 
   function focusLand(landId, instant = false) {
@@ -590,8 +594,8 @@ window.Engine3D = (function () {
   }
 
   function followWorldPos(wx, wz) {
-    targetPanX = Math.max(-145, Math.min(145, wx));
-    targetPanZ = Math.max(-64, Math.min(68, wz));
+    targetPanX = Math.max(-150, Math.min(150, wx));
+    targetPanZ = Math.max(-112, Math.min(104, wz));
     if (elevIdx === 2) elevIdx = 0;
     if (targetZoom > 1.15) targetZoom = 0.88;
   }
@@ -782,20 +786,22 @@ window.Engine3D = (function () {
       e2.position.set(0, 0.08, rz + 3.5);
       group.add(e1, e2);
 
-      // Kuzey tarafı metal otoyol bariyeri
+      // Kuzey tarafı metal otoyol bariyeri (Malikane Tepesi yolu hizasında temiz geçiş boşluğu!)
       if (rz === -63) {
-        const rail = box(340, 0.34, 0.18, "#cbd5e1", { metal: 0.72, rough: 0.28, shadow: false });
-        rail.position.set(0, 0.55, rz - 4.1);
-        group.add(rail);
+        const railL = box(142, 0.34, 0.18, "#cbd5e1", { metal: 0.72, rough: 0.28, shadow: false });
+        railL.position.set(-102, 0.55, rz - 4.1);
+        const railR = box(142, 0.34, 0.18, "#cbd5e1", { metal: 0.72, rough: 0.28, shadow: false });
+        railR.position.set(102, 0.55, rz - 4.1);
+        group.add(railL, railR);
       }
     });
 
-    // Güney Çevre Yolu (2. sıranın altından tüm şehri bağlar)
+    // Güney Sahil Kordon Yolu (Deniz Kıyısı & Liman Bağlantısı)
     const southRoad = box(340, 0.16, 5.4, "#ffffff", { map: roadTex, texKey: "world_blvd_asphalt", rough: 0.88, shadow: false });
     southRoad.position.set(0, -0.03, 73.5);
     group.add(southRoad);
 
-    // 6 Dikey Bağlantı Caddesi (5 sütunun aralarından Kuzey Otoyolu <-> Orta Bulvar <-> Güney Yolu!)
+    // 6 Dikey Bağlantı Caddesi + Kuzey Malikane Yolu!
     const aveTex = createNoiseTexture("#273246", "rgba(255,255,255,0.06)", "rgba(0,0,0,0.18)", 2, 22, "world_ave_asphalt");
     [-140, -84, -28, 28, 84, 140].forEach((ax) => {
       const ave = box(5.4, 0.15, 139, "#ffffff", { map: aveTex, texKey: "world_ave_asphalt", rough: 0.88, shadow: false });
@@ -803,7 +809,6 @@ window.Engine3D = (function () {
       ave.receiveShadow = true;
       group.add(ave);
 
-      // Cadde ortası kesikli şeritler + cadde kenarı ağaç & sokak lambaları
       for (let dz = -56; dz <= 66; dz += 7.5) {
         if (Math.abs(dz - 9) < 5) continue;
         const d = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.04, 2.6), dashMat);
@@ -812,15 +817,44 @@ window.Engine3D = (function () {
       }
     });
 
-    // Orta Refüj & Dış Çevre Ağaçları + Renkli Çalılar
+    // Kuzey Malikane Tepesi Panoramik Yokuş Yolu (Kuzey Otoyolu z=-63 -> Malikane Tepesi z=-90)
+    const hillRoad = box(6.8, 0.22, 27, "#ffffff", { map: aveTex, texKey: "world_ave_asphalt", rough: 0.85, shadow: false });
+    hillRoad.position.set(0, 1.35, -76.5);
+    hillRoad.rotation.x = 0.11;
+    group.add(hillRoad);
+
+    // Güney Altın Kumsal Şeridi + Sahil Taş Kordonu + Masmavi Deniz!
+    const promenade = box(350, 0.22, 2.8, "#e2e8f0", { rough: 0.65, shadow: false });
+    promenade.position.set(0, 0.05, 77.6);
+    const sandBeach = box(680, 0.14, 7.5, "#fde68a", { rough: 0.92, shadow: false });
+    sandBeach.position.set(0, -0.04, 81.2);
+    const seaTex = createNoiseTexture("#0284c7", "rgba(186,230,253,0.22)", "rgba(3,105,161,0.32)", 28, 18, "world_sea_v24");
+    seaWaterMat = new THREE.MeshStandardMaterial({
+      map: seaTex,
+      color: new THREE.Color("#0ea5e9"),
+      emissive: new THREE.Color("#0369a1"),
+      emissiveIntensity: 0.28,
+      roughness: 0.16,
+      metalness: 0.45
+    });
+    const seaMesh = new THREE.Mesh(new THREE.PlaneGeometry(680, 220), seaWaterMat);
+    seaMesh.rotation.x = -Math.PI / 2;
+    seaMesh.position.set(0, -0.05, 192);
+    group.add(promenade, sandBeach, seaMesh);
+
+    // Orta Refüj, Kuzey Orman & Güney Palmiyeli Sahil Kordonu!
     const altTints = ["#16a34a", "#15803d", "#65a30d", "#eab308"];
     const bushCols = ["#f43f5e", "#facc15", "#c084fc", "#fb923c"];
     for (let tx = -156; tx <= 156; tx += 13) {
       const idx = Math.abs(Math.round(tx));
-      // Kuzey otoyolu arkası orman şeridi
-      group.add(idx % 3 === 0 ? createBroadleafTree(tx, -72.5, 1.15, altTints[idx % 4]) : createPineTree(tx, -72.5, 1.15));
-      // Güney çevre yolu arkası ağaçlar
-      group.add(idx % 2 === 0 ? createBroadleafTree(tx, 81.5, 1.08, altTints[(idx + 1) % 4]) : createPineTree(tx, 81.5, 1.08));
+      // Kuzey otoyolu arkası ağaçlar (Malikane tepesi önü hariç!)
+      if (Math.abs(tx) > 40) {
+        group.add(idx % 3 === 0 ? createBroadleafTree(tx, -72.5, 1.15, altTints[idx % 4]) : createPineTree(tx, -72.5, 1.15));
+      }
+      // Güney sahil kordonu palmiye ağaçları (Liman iskelesi önü hariç!)
+      if (Math.abs(tx) > 50) {
+        group.add(createPalmTree(tx, 78.2, 0.96));
+      }
       // 1. sıra ile Orta Bulvar arası yeşil refüj (kavşaklara denk gelmesin)
       const nearAve = [-140, -84, -28, 28, 84, 140].some((ax) => Math.abs(tx - ax) < 5.5);
       if (!nearAve) {
@@ -835,10 +869,18 @@ window.Engine3D = (function () {
       group.add(idx % 2 === 1 ? createBroadleafTree(148, tz, 1.05, altTints[(idx + 1) % 4]) : createPineTree(148, tz, 1.05));
     }
 
-    // Uzak Ufuk Yeşil Tepeleri (Tüm 4 yönde doğal ufuk!)
+    // Batı Kavşağında Merkez Taksi & Dolmuş Terminali Platformu
+    const taxiPad = box(11.5, 0.2, 13.5, "#334155", { rough: 0.8, shadow: false });
+    taxiPad.position.set(-140, 0.08, -26);
+    const taxiBooth = box(4.2, 2.6, 3.6, "#facc15", { rough: 0.45 });
+    taxiBooth.position.set(-143, 1.4, -26);
+    addDetailedRoof(group, -143, 2.75, -26, 4.4, 3.8, "#0f172a", "#fde047", "TAKSİ", "#ca8a04");
+    group.add(taxiPad, taxiBooth);
+
+    // Kuzey ve Yan Ufuk Yeşil Tepeleri (Güney tarafı açık deniz manzaralı!)
     [
-      [-155, -102, 28, 8.5], [-68, -108, 34, 10.5], [22, -106, 32, 9.5], [115, -104, 30, 9.0], [185, -92, 26, 7.5],
-      [-192, -18, 26, 7.2], [192, 12, 28, 7.8], [-120, 114, 30, 8.2], [18, 118, 34, 9.0], [135, 112, 28, 7.8]
+      [-155, -116, 28, 9.0], [-78, -138, 34, 11.5], [0, -148, 38, 12.5], [78, -138, 34, 11.5], [155, -116, 30, 9.5],
+      [-192, -18, 26, 7.2], [192, 12, 28, 7.8]
     ].forEach(([hx, hz, hr, hh]) => {
       const hill = new THREE.Mesh(
         new THREE.SphereGeometry(hr, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2),
@@ -1917,9 +1959,235 @@ window.Engine3D = (function () {
     return g;
   }
 
+  function createCargoShip3D() {
+    const g = new THREE.Group();
+    // 26m Kırmızı/Lacivert Okyanus İhracat Kargo Gemisi Gövdesi
+    const lowerHull = box(6.8, 1.8, 25.0, "#991b1b", { rough: 0.48 });
+    lowerHull.position.y = 0.85;
+    const upperHull = box(7.2, 1.6, 26.2, "#0f172a", { metal: 0.35, rough: 0.38 });
+    upperHull.position.y = 2.45;
+    const deck = box(6.8, 0.25, 25.4, "#334155");
+    deck.position.y = 3.35;
+    g.add(lowerHull, upperHull, deck);
+
+    // Kıç Köprüüstü Kulesi & Baca
+    const bridge = box(5.8, 4.4, 4.4, "#f8fafc", { rough: 0.28 });
+    bridge.position.set(0, 5.5, -8.8);
+    const bridgeGlass = box(6.0, 0.75, 4.6, "#38bdf8", { emissive: "#0284c7", emInt: 0.55, metal: 0.8 });
+    bridgeGlass.position.set(0, 6.85, -8.8);
+    const funnel = cyl(0.72, 0.92, 2.8, 10, "#f59e0b");
+    funnel.position.set(0, 8.6, -9.6);
+    g.add(bridge, bridgeGlass, funnel);
+
+    // Güverte Üstü Renkli İhracat Konteyner Yığınları
+    const cCols = ["#ef4444", "#2563eb", "#16a34a", "#f59e0b", "#06b6d4", "#a855f7"];
+    let ci = 0;
+    for (let cz = -3.5; cz <= 8.5; cz += 4.2) {
+      for (let cx = -1.7; cx <= 1.7; cx += 3.4) {
+        for (let lv = 0; lv < 2; lv++) {
+          const cont = box(2.8, 1.45, 3.8, cCols[ci % cCols.length], { metal: 0.25, rough: 0.5 });
+          cont.position.set(cx, 4.2 + lv * 1.5, cz);
+          g.add(cont);
+          ci++;
+        }
+      }
+    }
+    g.rotation.y = Math.PI / 2; // Batı -> Doğu yönünde yüzer
+    return g;
+  }
+
+  // =========================================================================
+  // KUZEY TEPESİ — 🏡 3D PATRON MALİKANESİ, SONSUZLUK HAVUZU & ÖZEL GARAJ
+  // =========================================================================
+  function buildMansionScene(group, data) {
+    const emp = data.empire || {};
+    const v24 = (emp.v24 && emp.v24.mansion) || {};
+    const props = emp.properties || {};
+    const carsMap = emp.cars || {};
+    const hasHeli = !!(emp.v16 && emp.v16.vipAssets && emp.v16.vipAssets.helicopter);
+    const hasVilla = !!props.villa;
+    const hasAnyHome = !!(props.villa || props.residence || props.city2p1 || props.studio);
+
+    // Yükseltilmiş Manzaralı Yeşil Teras Tepesi + Taş İstinat Duvarı
+    const cliffWall = box(72, 3.1, 34, "#475569", { rough: 0.85 });
+    cliffWall.position.set(0, 1.45, 0);
+    const lawnTop = box(70, 0.35, 32, "#15803d", { rough: 0.88 });
+    lawnTop.position.set(0, 3.1, 0);
+    const marbleCourt = box(46, 0.2, 22, "#f1f5f9", { rough: 0.35 });
+    marbleCourt.position.set(0, 3.3, 1.5);
+    group.add(cliffWall, lawnTop, marbleCourt);
+
+    // Altın Ferforje Korkuluklar & Palmiyeler
+    [-31, -22, 22, 31].forEach((px) => {
+      const palm = createPalmTree(px, -10, 1.05);
+      palm.position.y = 3.2;
+      group.add(palm);
+    });
+
+    const baseY = 3.35;
+    if (!hasAnyHome) {
+      // Henüz ev alınmadıysa şık 3D "VİLLA TEPESİ" tabelası
+      const tex = createSignTexture("🏡 PATRON VİLLA TEPESİ", "#0f172a", "#fde047", "#22c55e");
+      const sMat = new THREE.MeshStandardMaterial({ map: tex, emissive: new THREE.Color("#ffffff"), emissiveMap: tex, emissiveIntensity: 0.6 });
+      const brd = new THREE.Mesh(new THREE.BoxGeometry(14, 3.0, 0.45), sMat);
+      brd.position.set(0, baseY + 3.2, -2);
+      group.add(brd);
+    } else {
+      // Lüks 2 Katlı Boğaz Villası / Konutu
+      const vw = hasVilla ? 22 : 15;
+      const vh = hasVilla ? 6.6 : 4.6;
+      const vd = hasVilla ? 11 : 9;
+      const winTex = createWindowFacadeTexture("#f8fafc", "#0284c7", "#fef08a", 4, 2, true);
+      const frontMat = new THREE.MeshStandardMaterial({ map: winTex, emissive: new THREE.Color("#fde68a"), emissiveMap: winTex, emissiveIntensity: 0.35, roughness: 0.28 });
+      const sideMat = getMat("#f8fafc", { rough: 0.32 });
+      const villaMesh = new THREE.Mesh(new THREE.BoxGeometry(vw, vh, vd), [sideMat, sideMat, sideMat, sideMat, frontMat, frontMat]);
+      villaMesh.position.set(0, baseY + vh / 2, -4.5);
+      villaMesh.castShadow = true;
+      group.add(villaMesh);
+
+      const bShort = window.MechanicsV23 ? window.MechanicsV23.getBrandShort(data) : "PATRON";
+      addDetailedRoof(group, 0, baseY + vh + 0.15, -4.5, vw, vd, "#7c2d12", "#facc15", `${bShort} MALİKANE`, "#9a3412");
+    }
+
+    // Sonsuzluk Havuzu (Villa veya Havuz Yükseltmesi Varsa)
+    if (hasVilla || v24.infinityPool) {
+      const poolRim = box(14.5, 0.38, 6.2, "#ffffff", { rough: 0.25 });
+      poolRim.position.set(0, baseY + 0.18, 6.2);
+      const poolWater = box(13.2, 0.42, 5.0, "#38bdf8", { emissive: "#0ea5e9", emInt: 0.78, rough: 0.08 });
+      poolWater.position.set(0, baseY + 0.22, 6.2);
+      group.add(poolRim, poolWater);
+    }
+
+    // VIP Misafir Köşkü
+    if (v24.vipGuesthouse) {
+      const gh = box(8.5, 3.8, 7.5, "#fef3c7", { rough: 0.4 });
+      gh.position.set(-17.5, baseY + 1.9, -3.5);
+      addDetailedRoof(group, -17.5, baseY + 3.9, -3.5, 8.8, 7.8, "#78350f", "#facc15", "VIP KÖŞK", "#92400e");
+      group.add(gh);
+    }
+
+    // Özel Koleksiyon Garajı — Sahip Olunan Tüm Arabalar Park Halinde!
+    const carSlots = [
+      { key: "hatchback", x: 12.5, z: 5.5, col: "#22c55e", shape: "sedan" },
+      { key: "sedan_lux", x: 16.0, z: 5.5, col: "#f8fafc", shape: "sedan" },
+      { key: "ev_suv",    x: 19.5, z: 5.5, col: "#38bdf8", shape: "ev" },
+      { key: "supercar",  x: 16.0, z: 10.2, col: "#ef4444", shape: "sport" }
+    ];
+    carSlots.forEach((cs) => {
+      if (carsMap[cs.key]) {
+        const cm = createVehicle3D(cs.col, cs.shape);
+        cm.position.set(cs.x, baseY, cs.z);
+        group.add(cm);
+      }
+    });
+
+    // Özel Helikopter Pisti & Park Halinde Patron Helikopteri
+    if (hasHeli) {
+      const hPad = cyl(4.6, 4.8, 0.3, 20, "#1e293b");
+      hPad.position.set(18.5, baseY + 0.15, -4.5);
+      const hRing = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.2, 8, 24), getMat("#facc15", { emissive: "#fde047", emInt: 1.0 }));
+      hRing.rotation.x = Math.PI / 2;
+      hRing.position.set(18.5, baseY + 0.35, -4.5);
+      const parkedHeli = createHelicopter3D();
+      parkedHeli.position.set(18.5, baseY + 1.15, -4.5);
+      parkedHeli.rotation.y = 0.5;
+      group.add(hPad, hRing, parkedHeli);
+    }
+  }
+
+  // =========================================================================
+  // GÜNEY DENİZ KIYISI — ⚓ ULUSLARARASI TİCARET LİMANI, DENİZ FENERİ & YAT MARİNASI
+  // =========================================================================
+  function buildPortScene(group, data) {
+    const emp = data.empire || {};
+    const pState = (emp.v24 && emp.v24.port) || {};
+    const hasYacht = !!(emp.v16 && emp.v16.vipAssets && emp.v16.vipAssets.yacht);
+
+    // Ana Beton Liman Rıhtımı (Sahil yolundan denize uzanır!)
+    const pier = box(78, 1.3, 28, "#475569", { rough: 0.78 });
+    pier.position.set(0, 0.45, -2);
+    const pierEdge = box(78.4, 0.35, 0.85, "#facc15", { shadow: false });
+    pierEdge.position.set(0, 1.12, 11.8);
+    group.add(pier, pierEdge);
+
+    // Kırmızı-Beyaz Deniz Feneri (Sağ Burun)
+    const lhBase = cyl(1.6, 2.1, 9.5, 12, "#f8fafc", { rough: 0.4 });
+    lhBase.position.set(35, 5.2, 8);
+    const lhBand = cyl(1.75, 1.9, 2.6, 12, "#dc2626");
+    lhBand.position.set(35, 5.5, 8);
+    const lhLamp = cyl(1.2, 1.2, 1.6, 10, "#fef08a", { emissive: "#fde047", emInt: 1.8 });
+    lhLamp.position.set(35, 10.6, 8);
+    group.add(lhBase, lhBand, lhLamp);
+
+    // Sol VIP Yat Marinası + Lüks Motor Yat (28m)
+    const marinaDock = box(18, 0.7, 16, "#92400e", { rough: 0.75 });
+    marinaDock.position.set(-50, 0.35, 2);
+    group.add(marinaDock);
+    if (hasYacht) {
+      const yachtHull = box(3.6, 1.3, 11.5, "#f8fafc", { rough: 0.18, metal: 0.25 });
+      yachtHull.position.set(-50, 0.7, 15.5);
+      yachtHull.rotation.y = Math.PI / 2;
+      const yachtDeck = box(3.0, 1.1, 6.8, "#e0f2fe", { emissive: "#38bdf8", emInt: 0.45, metal: 0.7 });
+      yachtDeck.position.set(-50, 1.75, 15.5);
+      yachtDeck.rotation.y = Math.PI / 2;
+      group.add(yachtHull, yachtDeck);
+    }
+
+    if (!pState.unlocked) {
+      const tex = createSignTexture("⚓ LİMAN KUR (42.000₺)", "#0f172a", "#bae6fd", "#38bdf8");
+      const sMat = new THREE.MeshStandardMaterial({ map: tex, emissive: new THREE.Color("#ffffff"), emissiveMap: tex, emissiveIntensity: 0.6 });
+      const brd = new THREE.Mesh(new THREE.BoxGeometry(15, 3.2, 0.45), sMat);
+      brd.position.set(0, 4.2, -2);
+      group.add(brd);
+      return;
+    }
+
+    // Gümrük & Liman Yönetim Binası
+    const bShort = window.MechanicsV23 ? window.MechanicsV23.getBrandShort(data) : "SON";
+    const hq = box(14, 4.6, 8.5, "#1e3a8a", { rough: 0.45 });
+    hq.position.set(-24, 3.3, -6);
+    addDetailedRoof(group, -24, 5.7, -6, 14.4, 8.8, "#0f172a", "#38bdf8", `${bShort} LİMAN`, "#0284c7");
+    group.add(hq);
+
+    // Rıhtım Konteyner İstifleri
+    const cols = ["#ef4444", "#2563eb", "#16a34a", "#f59e0b", "#06b6d4"];
+    for (let i = 0; i < 8; i++) {
+      const c = box(2.8, 1.5, 4.2, cols[i % cols.length], { metal: 0.3 });
+      c.position.set(-8 + (i % 4) * 4.2, 1.85 + Math.floor(i / 4) * 1.55, -6);
+      group.add(c);
+    }
+
+    // Dev Konteyner Kıyı Vinçleri (Gantry Cranes — Geminin Üzerine Uzanır!)
+    const craneCount = Math.min(3, 1 + Math.floor((pState.craneLvl || 1) / 2));
+    [-12, 4, 20].slice(0, craneCount).forEach((cx) => {
+      const leg1 = box(0.75, 11.5, 0.75, "#f59e0b", { metal: 0.5 });
+      leg1.position.set(cx - 2.4, 6.6, 7.5);
+      const leg2 = box(0.75, 11.5, 0.75, "#f59e0b", { metal: 0.5 });
+      leg2.position.set(cx + 2.4, 6.6, 7.5);
+      const boom = box(1.4, 0.95, 19.5, "#dc2626", { metal: 0.45 });
+      boom.position.set(cx, 12.2, 13.5);
+      group.add(leg1, leg2, boom);
+    });
+  }
+
   function computeSceneSig(activeLand, data) {
     const v23 = (data.empire && data.empire.v23) || {};
+    const v24 = (data.empire && data.empire.v24) || {};
     const bSig = `${v23.brandName || "SON"}_${v23.neonTheme || "amber"}_${v23.fuelPolicy || "normal"}`;
+    if (activeLand === "mansion") {
+      const e = data.empire || {};
+      const pSig = Object.keys(e.properties || {}).filter((k) => e.properties[k]).join("");
+      const cSig = Object.keys(e.cars || {}).filter((k) => e.cars[k]).join("");
+      const hSig = e.v16 && e.v16.vipAssets && e.v16.vipAssets.helicopter ? 1 : 0;
+      const m24 = v24.mansion || {};
+      return `mn_${bSig}_${pSig}_${cSig}_${hSig}_${m24.infinityPool}_${m24.vipGuesthouse}`;
+    }
+    if (activeLand === "port") {
+      const e = data.empire || {};
+      const ySig = e.v16 && e.v16.vipAssets && e.v16.vipAssets.yacht ? 1 : 0;
+      const p24 = v24.port || {};
+      return `pt_${bSig}_${ySig}_${p24.unlocked}_${p24.craneLvl}_${p24.roroUnlocked}`;
+    }
     if (activeLand === "station") {
       return `st_${bSig}_${data.pumpsUnlocked}_${data.lpgUnlocked}_${data.towUnlocked}_${data.busBakeryUnlocked}_${data.evUnlocked}_${data.carWashUnlocked}_${data.garageUnlocked}_${data.scaleUnlocked}_${data.restaurantUnlocked}_${data.motelUnlocked}_${data.solarInstalled}_${data.billboardInstalled}`;
     }
@@ -1956,7 +2224,9 @@ window.Engine3D = (function () {
       washRollers: []
     };
     landAnimRefs[lid] = animRefs;
-    if (lid === "station") buildStationScene(grp, data, stMeta);
+    if (lid === "mansion") buildMansionScene(grp, data);
+    else if (lid === "port") buildPortScene(grp, data);
+    else if (lid === "station") buildStationScene(grp, data, stMeta);
     else if (lid === "land2") buildLand2Scene(grp, data);
     else if (lid === "land3") buildLand3Scene(grp, data);
     else buildExtraLandScene(grp, data, lid);
@@ -2291,6 +2561,99 @@ window.Engine3D = (function () {
       }
       if (v23Render.floats) {
         v23Render.floats.forEach((ft) => floats.push(ft));
+      }
+    }
+
+    // v24.0 — 🏡 MALİKANE, 🚕 ŞEHİR TAKSİ FİLOSU, ⚽ STADYUM CANLI MAÇ & ⚓ 3D İHRACAT GEMİSİ!
+    if (seaWaterMat) {
+      seaWaterMat.emissiveIntensity = 0.24 + Math.sin(nowMs * 0.0022) * 0.08;
+    }
+    if (window.CityV24 && window.CityV24.get3DRenderState) {
+      const s24 = window.CityV24.get3DRenderState(data);
+      const v24 = s24.v24 || {};
+
+      // Kuzey Malikane & Güney Liman Başlık Rozetleri
+      overlayLabels.push({
+        wx: LAND_LAYOUT.mansion.ox,
+        wz: LAND_LAYOUT.mansion.oz,
+        h: 11.2,
+        text: "🏡 PATRON MALİKANESİ & GARAJ",
+        bg: "rgba(20, 83, 45, 0.92)",
+        brd: "#fde047",
+        major: true
+      });
+      overlayLabels.push({
+        wx: LAND_LAYOUT.port.ox,
+        wz: LAND_LAYOUT.port.oz,
+        h: 10.5,
+        text: v24.port && v24.port.unlocked ? `⚓ İHRACAT LİMANI ★${v24.port.craneLvl}` : "⚓ LİMAN KUR (42.000₺)",
+        bg: "rgba(12, 74, 110, 0.92)",
+        brd: "#38bdf8",
+        major: true
+      });
+      overlayLabels.push({
+        wx: -143,
+        wz: -26,
+        h: 4.8,
+        text: v24.taxi && v24.taxi.unlocked ? `🚕 TAKSİ (${v24.taxi.fleetCount}/8)` : "🚕 TAKSİ DURAĞI",
+        bg: "rgba(113, 63, 18, 0.92)",
+        brd: "#facc15",
+        major: false
+      });
+
+      // Canlı Taksi & Şehir Dolmuşları
+      s24.taxis.forEach((tx) => {
+        vehList.push({
+          wx: tx.wx,
+          wz: tx.wz,
+          angle: Math.PI - tx.angle,
+          color: tx.color,
+          shape: tx.shape
+        });
+      });
+
+      // Canlı 3D Kargo Gemisi (Güney Denizinde Yüzer!)
+      if (s24.cargoShip) {
+        if (!cargoShipMesh) {
+          cargoShipMesh = createCargoShip3D();
+          scene.add(cargoShipMesh);
+        }
+        cargoShipMesh.visible = true;
+        cargoShipMesh.position.set(s24.cargoShip.wx, Math.sin(nowMs * 0.003) * 0.16, s24.cargoShip.wz);
+        overlayLabels.push({
+          wx: s24.cargoShip.wx,
+          wz: s24.cargoShip.wz,
+          h: 10.2,
+          text: s24.cargoShip.phase === "loading" ? `🚢 YÜKLENİYOR (+${s24.cargoShip.payout.toLocaleString("tr-TR")}₺)` : `🚢 ${s24.cargoShip.cargoDef.emoji} İHRACAT GEMİSİ`,
+          bg: "rgba(153, 27, 27, 0.92)",
+          brd: "#fde047",
+          major: true
+        });
+      } else if (cargoShipMesh) {
+        cargoShipMesh.visible = false;
+      }
+
+      // Canlı Futbol Maçı Skorbordu
+      if (s24.liveMatch) {
+        const mLid = s24.liveMatch.stadiumLandId || "land7";
+        const sL = LAND_LAYOUT[mLid] || LAND_LAYOUT.land7;
+        overlayLabels.push({
+          wx: sL.ox,
+          wz: sL.oz,
+          h: 16.5,
+          text: `⚽ ${s24.liveMatch.minute}' | ${s24.liveMatch.myScore} - ${s24.liveMatch.oppScore}`,
+          bg: "#15803d",
+          brd: "#fef08a",
+          major: true
+        });
+      }
+
+      if (s24.floats) {
+        s24.floats.forEach((ft) => floats.push(ft));
+      }
+
+      if (window.CityV24.renderMiniRadar) {
+        window.CityV24.renderMiniRadar(data, activeLand, curLookAt);
       }
     }
 
