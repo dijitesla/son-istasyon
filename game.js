@@ -260,6 +260,10 @@
     if (data.garageUnlocked) base += 22;
     if (data.billboardInstalled) base += 10;
     if (data.solarInstalled) base = Math.round(base * 0.55);
+    if (data.empire && data.empire.extraLands) {
+      const hasPlant = Object.values(data.empire.extraLands).some((st) => st && st.owned && st.projectKey === "powerplant");
+      if (hasPlant) base = Math.round(base * 0.5);
+    }
     return base;
   }
 
@@ -3149,9 +3153,9 @@
       const st = data.empire.extraLands && data.empire.extraLands[land];
       const isAuto = !!(st && st.staff && (st.staff.manager || (st.staff.clerk && st.staff.cleaner)));
       el.liveHintText.textContent = !st || !st.owned
-        ? `🏞️ ${lDef.name}: Tapuyu alıp 6 dev projeden birini seç!`
+        ? `🏞️ ${lDef.name}: Tapuyu alıp 14 farklı 3D yapıdan birini seç!`
         : !st.projectKey
-        ? `🏗️ ${lDef.num}. Arazi: 6 projeden birini (Grand Otel vb.) seç!`
+        ? `🏗️ ${lDef.num}. Arazi: 14 yapıdan birini (Otel, Havalimanı, Aquapark, Üniversite vb.) seç!`
         : isAuto
         ? `🟢 ${lDef.num}. Arazi Tam Otopilot! Müşteri kaydı ve temizlik otomatik dönüyor!`
         : `👆 Önce müşteri/temizlikle sen ilgilen, büyüdükçe eleman al!`;
@@ -3760,8 +3764,8 @@
         land6: "autofactory",
         land7: "stadium",
         land8: "techpark",
-        land9: "convention",
-        land10: "hotel"
+        land9: "banktower",
+        land10: "airport"
       };
       Object.keys(projAssign).forEach((lid) => {
         emp.extraLands[lid] = {

@@ -19,11 +19,88 @@ window.ExtraLandsSystem = (function () {
     { id: "land10", num: 10, name: "10. Arazi — Altın Körfez VIP", deedCost: 1100000, mult: 3.2, desc: "İmparatorluğun zirvesi! En yüksek kazanç çarpanlı efsane parsel (x3.2 gelir)!" }
   ];
 
-  // HER ARAZİYE KURULABİLECEK 6 FARKLI DEV PROJE SEÇENEĞİ!
+  // HER ARAZİYE KURULABİLECEK 14 FARKLI DEV YAPI SEÇENEĞİ (3 KATEGORİDE ZENGİN ÇEŞİTLİLİK!)
   const PROJECT_TYPES = [
     {
+      key: "agrifarm",
+      cat: "industry",
+      name: "Organik Çiftlik & Sera Kompleksi",
+      short: "ÇİFTLİK",
+      emoji: "🌾",
+      buildCost: 52000,
+      basePay: 345,
+      color: "#7f1d1d",
+      roofCol: "#450a0a",
+      accent: "#84cc16",
+      checkinLabel: "🌱 ÜRETİM & HASAT BAŞLAT",
+      prepLabel: "🚜 SERA & PAKETLEME HAZIRLA",
+      unitName: "Sera",
+      floorLabel: "Yeni Cam Sera & Silo Ekle (+6 Sera)",
+      vipLabel: "🍯 Gurme Şarküteri & Süt Tesisi",
+      heliLabel: "🌬️ Modern Rüzgar Değirmeni & Sulama",
+      staffNames: {
+        clerk: "📋 Ziraat Sorumlusu (Oto Üretim)",
+        cleaner: "🚜 Çiftlik & Paketleme Ekibi (Oto Bakım)",
+        specialist: "👩‍🔬 Gıda Mühendisi (+%35 Gelir)",
+        manager: "👔 Çiftlik Genel Müdürü (Tam Otopilot)"
+      },
+      desc: "Modern cam seralar, tahıl silosu ve kırmızı ambar! Liman gıda ihracatına +%50 bonus verir."
+    },
+    {
+      key: "stadium",
+      cat: "tourism",
+      name: "Spor Kompleksi & Stadyum",
+      short: "STADYUM",
+      emoji: "🏟️",
+      buildCost: 58000,
+      basePay: 375,
+      color: "#064e3b",
+      roofCol: "#022c22",
+      accent: "#4ade80",
+      checkinLabel: "🎟️ BİLET & SAHA AÇ",
+      prepLabel: "🌱 ÇİM & TRİBÜN HAZIRLA",
+      unitName: "Saha/Loca",
+      floorLabel: "Yeni Tribün & Loca Katı (+6 Loca)",
+      vipLabel: "🌟 Şampiyonlar VIP Locası",
+      heliLabel: "📺 Dev Canlı Yayın Ekranları",
+      staffNames: {
+        clerk: "🎟️ Gişe Görevlisi (Oto Bilet)",
+        cleaner: "🌱 Saha Bakım Ekibi (Oto Bakım)",
+        specialist: "🏆 Spor Koordinatörü (+%35 Gelir)",
+        manager: "👔 Stadyum Müdürü (Tam Otopilot)"
+      },
+      desc: "Işıklı çim saha ve dev tribünler! Futbol Kulübünün maç gelirlerini +%45 artırır."
+    },
+    {
+      key: "aquapark",
+      cat: "tourism",
+      name: "Dev Aquapark & Su Dünyası",
+      short: "AQUAPARK",
+      emoji: "🎢",
+      buildCost: 64000,
+      basePay: 405,
+      color: "#0369a1",
+      roofCol: "#0c4a6e",
+      accent: "#22d3ee",
+      checkinLabel: "🎟️ ZİYARETÇİ BİLETİ KES",
+      prepLabel: "🌊 HAVUZ & KAYDIRAK TEMİZLE",
+      unitName: "Kaydırak/Havuz",
+      floorLabel: "Kaydırak Kulesini Yükselt (+6 Hat)",
+      vipLabel: "🏖️ Yapay Dalga Havuzu & Jakuzi Adası",
+      heliLabel: "🍹 Tropikal Plaj Kulübü",
+      staffNames: {
+        clerk: "🎟️ Gişe Memuru (Oto Giriş)",
+        cleaner: "🛟 Cankurtaran & Havuz Ekibi (Oto Bakım)",
+        specialist: "🎉 Animasyon Ekibi (+%35 Gelir)",
+        manager: "👔 Aquapark Müdürü (Tam Otopilot)"
+      },
+      desc: "Kıvrımlı dev su kaydırakları ve dalga havuzu! Ailelerin ve turistlerin akın ettiği eğlence merkezi."
+    },
+    {
       key: "hotel",
+      cat: "tourism",
       name: "5 Yıldızlı Grand Otel",
+      short: "OTEL",
       emoji: "🏨",
       buildCost: 65000,
       basePay: 420,
@@ -45,8 +122,35 @@ window.ExtraLandsSystem = (function () {
       desc: "Lüks odalar, kral dairesi ve çatı havuzu! Önce resepsiyon ve temizlikle sen ilgilenirsin, sonra tam kadro kurarsın."
     },
     {
+      key: "filmstudio",
+      cat: "tourism",
+      name: "Film & Dizi Stüdyosu Platosu",
+      short: "STÜDYO",
+      emoji: "🎬",
+      buildCost: 74000,
+      basePay: 465,
+      color: "#27272a",
+      roofCol: "#18181b",
+      accent: "#f43f5e",
+      checkinLabel: "🎥 ÇEKİM SETİNİ BAŞLAT",
+      prepLabel: "🎭 SAHNE & DEKOR HAZIRLA",
+      unitName: "Plato",
+      floorLabel: "Yeni Çekim Hangarı Ekle (+6 Plato)",
+      vipLabel: "🌟 Kırmızı Halı Gala & IMAX Salonu",
+      heliLabel: "🚁 Hava Çekim & Ünlü Helikopter Pisti",
+      staffNames: {
+        clerk: "🎬 Yapım Asistanı (Oto Set Kaydı)",
+        cleaner: "🎭 Dekor & Işık Ekibi (Oto Hazırlık)",
+        specialist: "🎥 Ünlü Yönetmen (+%35 Gelir)",
+        manager: "👔 Medya Yapım Patronu (Tam Otopilot)"
+      },
+      desc: "Dev ses geçirmez çekim hangarları ve yeşil perde sahnesi! Yüksek prodüksiyon ve kira geliri sağlar."
+    },
+    {
       key: "hospital",
+      cat: "prestige",
       name: "Özel Otoyol Hastanesi",
+      short: "HASTANE",
       emoji: "🏥",
       buildCost: 78000,
       basePay: 490,
@@ -65,80 +169,38 @@ window.ExtraLandsSystem = (function () {
         specialist: "👨‍⚕️ Uzman Doktor Kadrosu (+%35 Gelir)",
         manager: "👔 Başhekim & İdari Müdür (Tam Otopilot)"
       },
-      desc: "7/24 acil ve VIP check-up merkezi. Yüksek muayene ve sağlık geliri sağlar."
+      desc: "7/24 acil ve VIP check-up merkezi! Şehirdeki sağlık acillerine +%50 ekstra ödül kazandırır."
     },
     {
-      key: "autofactory",
-      name: "Otomobil Montaj & Showroom",
-      emoji: "🚗",
-      buildCost: 95000,
-      basePay: 590,
-      color: "#1e293b",
-      roofCol: "#090d1a",
-      accent: "#f97316",
-      checkinLabel: "🔩 SİPARİŞ BANDI BAŞLAT",
-      prepLabel: "🔧 KALİTE KONTROL YAP",
-      unitName: "Bant",
-      floorLabel: "Üretim Bandını Genişlet (+6 Hat)",
-      vipLabel: "🏎️ Süper Spor Showroom Galerisi",
-      heliLabel: "🚛 Otomatik Tır Sevkiyat Rampası",
+      key: "university",
+      cat: "prestige",
+      name: "Özel Üniversite & Kampüs",
+      short: "ÜNİVERSİTE",
+      emoji: "🎓",
+      buildCost: 82000,
+      basePay: 515,
+      color: "#7c2d12",
+      roofCol: "#1e293b",
+      accent: "#fbbf24",
+      checkinLabel: "📚 ÖĞRENCİ & DÖNEM KAYDI",
+      prepLabel: "🏛️ AMFİ & LAB HAZIRLA",
+      unitName: "Amfi/Fakülte",
+      floorLabel: "Yeni Fakülte Binası & Kat (+6 Amfi)",
+      vipLabel: "🔬 Ar-Ge Laboratuvarı & Kubbeli Kütüphane",
+      heliLabel: "🏅 Uluslararası Kampüs Akreditasyonu",
       staffNames: {
-        clerk: "📋 Sipariş Sorumlusu (Oto Başlatma)",
-        cleaner: "🔧 Kalite Kontrol Ustası (Oto Kontrol)",
-        specialist: "👷 Başmühendis (+%35 Üretim Değeri)",
-        manager: "👔 Fabrika Direktörü (Tam Otopilot)"
+        clerk: "📋 Öğrenci İşleri Memuru (Oto Kayıt)",
+        cleaner: "🧹 Kampüs İdare Ekibi (Oto Hazırlık)",
+        specialist: "👨‍🏫 Profesör Kadrosu (+%35 Gelir)",
+        manager: "👔 Üniversite Rektörü (Tam Otopilot)"
       },
-      desc: "Araç montaj hattı ve dev cam galeri! En yüksek tekil teslimat gelirlerinden birini üretir."
-    },
-    {
-      key: "stadium",
-      name: "Spor Kompleksi & Stadyum",
-      emoji: "🏟️",
-      buildCost: 58000,
-      basePay: 375,
-      color: "#064e3b",
-      roofCol: "#022c22",
-      accent: "#4ade80",
-      checkinLabel: "🎟️ BİLET & SAHA AÇ",
-      prepLabel: "🌱 ÇİM & TRİBÜN HAZIRLA",
-      unitName: "Saha/Loca",
-      floorLabel: "Yeni Tribün & Loca Katı (+6 Loca)",
-      vipLabel: "🌟 Şampiyonlar VIP Locası",
-      heliLabel: "📺 Dev Canlı Yayın Ekranları",
-      staffNames: {
-        clerk: "🎟️ Gişe Görevlisi (Oto Bilet)",
-        cleaner: "🌱 Saha Bakım Ekibi (Oto Bakım)",
-        specialist: "🏆 Spor Koordinatörü (+%35 Gelir)",
-        manager: "👔 Stadyum Müdürü (Tam Otopilot)"
-      },
-      desc: "Işıklı çim sahalar, turnuvalar ve VIP localar ile kesintisiz bilet geliri."
-    },
-    {
-      key: "techpark",
-      name: "Teknokent & Veri Merkezi",
-      emoji: "💻",
-      buildCost: 110000,
-      basePay: 680,
-      color: "#1e1b4b",
-      roofCol: "#0f172a",
-      accent: "#818cf8",
-      checkinLabel: "🖥️ SUNUCU KONTRATI AÇ",
-      prepLabel: "❄️ SOĞUTMA & BAKIM YAP",
-      unitName: "Sunucu",
-      floorLabel: "Yeni Sunucu Kulesi Katı (+6 Kabin)",
-      vipLabel: "🤖 Yapay Zeka Süper Bilgisayarı",
-      heliLabel: "☀️ Özel Trafo & Fiber Omurga",
-      staffNames: {
-        clerk: "💼 Kontrat Uzmanı (Oto Kabul)",
-        cleaner: "❄️ Soğutma Teknisyeni (Oto Bakım)",
-        specialist: "👨‍💻 Kıdemli Yazılım Mimarı (+%35 Gelir)",
-        manager: "👔 Teknokent CEO'su (Tam Otopilot)"
-      },
-      desc: "Dev şirketlere bulut sunucu ve yazılım kiralayan ultra kârlı teknoloji üssü!"
+      desc: "Saat kuleli görkemli kampüs ve kütüphane kubbesi! Şehre yüksek prestij ve eğitim geliri katar."
     },
     {
       key: "convention",
+      cat: "prestige",
       name: "Grand Düğün & Kongre Sarayı",
+      short: "KONGRE",
       emoji: "👑",
       buildCost: 88000,
       basePay: 540,
@@ -157,7 +219,157 @@ window.ExtraLandsSystem = (function () {
         specialist: "🎂 Ziyafet Başşefi (+%35 Gelir)",
         manager: "👔 Saray Genel Müdürü (Tam Otopilot)"
       },
-      desc: "Lüks düğünler, lansmanlar ve uluslararası kongrelerle yüksek organizasyon kazancı."
+      desc: "Altın kubbeli düğün ve kongre sarayı! Lüks lansman ve organizasyonlardan yüksek gelir üretir."
+    },
+    {
+      key: "powerplant",
+      cat: "industry",
+      name: "Rüzgar & Güneş Enerji Santrali",
+      short: "SANTRAL",
+      emoji: "⚡",
+      buildCost: 92000,
+      basePay: 565,
+      color: "#0f172a",
+      roofCol: "#0284c7",
+      accent: "#38bdf8",
+      checkinLabel: "⚡ ŞEBEKEYE ENERJİ AKTAR",
+      prepLabel: "🔧 TÜRBİN & PANEL BAKIMI",
+      unitName: "Türbin/Ünite",
+      floorLabel: "Yeni Rüzgar Türbini & Panel Ekle (+6 Ünite)",
+      vipLabel: "🔋 Dev Lityum Enerji Depolama Üssü",
+      heliLabel: "🌐 Yüksek Gerilim İletim Hattı",
+      staffNames: {
+        clerk: "⚡ Şebeke Operatörü (Oto Aktarım)",
+        cleaner: "🔧 Türbin Bakım Teknisyeni (Oto Bakım)",
+        specialist: "👷 Enerji Başmühendisi (+%35 Gelir)",
+        manager: "👔 Santral Direktörü (Tam Otopilot)"
+      },
+      desc: "Dönen dev rüzgar türbinleri ve güneş tarlası! Şehre elektrik satar ve tesis elektrik giderini %50 düşürür!"
+    },
+    {
+      key: "autofactory",
+      cat: "industry",
+      name: "Otomobil Montaj & Showroom",
+      short: "FABRİKA",
+      emoji: "🚗",
+      buildCost: 95000,
+      basePay: 590,
+      color: "#1e293b",
+      roofCol: "#090d1a",
+      accent: "#f97316",
+      checkinLabel: "🔩 SİPARİŞ BANDI BAŞLAT",
+      prepLabel: "🔧 KALİTE KONTROL YAP",
+      unitName: "Bant",
+      floorLabel: "Üretim Bandını Genişlet (+6 Hat)",
+      vipLabel: "🏎️ Süper Spor Showroom Galerisi",
+      heliLabel: "🚛 Otomatik Tır Sevkiyat Rampası",
+      staffNames: {
+        clerk: "📋 Sipariş Sorumlusu (Oto Başlatma)",
+        cleaner: "🔧 Kalite Kontrol Ustası (Oto Kontrol)",
+        specialist: "👷 Başmühendis (+%35 Üretim Değeri)",
+        manager: "👔 Fabrika Direktörü (Tam Otopilot)"
+      },
+      desc: "Araç montaj hattı ve cam galeri! Liman otomotiv ihracatına +%55 ekstra bonus kazandırır."
+    },
+    {
+      key: "techpark",
+      cat: "industry",
+      name: "Teknokent & Veri Merkezi",
+      short: "TEKNOKENT",
+      emoji: "💻",
+      buildCost: 110000,
+      basePay: 680,
+      color: "#1e1b4b",
+      roofCol: "#0f172a",
+      accent: "#818cf8",
+      checkinLabel: "🖥️ SUNUCU KONTRATI AÇ",
+      prepLabel: "❄️ SOĞUTMA & BAKIM YAP",
+      unitName: "Sunucu",
+      floorLabel: "Yeni Sunucu Kulesi Katı (+6 Kabin)",
+      vipLabel: "🤖 Yapay Zeka Süper Bilgisayarı",
+      heliLabel: "☀️ Özel Trafo & Fiber Omurga",
+      staffNames: {
+        clerk: "💼 Kontrat Uzmanı (Oto Kabul)",
+        cleaner: "❄️ Soğutma Teknisyeni (Oto Bakım)",
+        specialist: "👨‍💻 Kıdemli Yazılım Mimarı (+%35 Gelir)",
+        manager: "👔 Teknokent CEO'su (Tam Otopilot)"
+      },
+      desc: "Bulut sunucu ve yazılım üssü! Liman teknoloji ihracatına +%60 dev bonus verir!"
+    },
+    {
+      key: "twintowers",
+      cat: "prestige",
+      name: "İkiz Kuleler Lüks Rezidans",
+      short: "İKİZ KULE",
+      emoji: "🏙️",
+      buildCost: 120000,
+      basePay: 735,
+      color: "#0f172a",
+      roofCol: "#1e293b",
+      accent: "#38bdf8",
+      checkinLabel: "🔑 KONTRAT & ANAHTAR VER",
+      prepLabel: "✨ REZİDANS & LOBİ HAZIRLA",
+      unitName: "Penthouse",
+      floorLabel: "İkiz Kulelere Yeni Kat Çık (+6 Daire)",
+      vipLabel: "🌉 Cam Gökyüzü Köprüsü & Teras Lounge",
+      heliLabel: "🚁 Çift Kule VIP Helikopter Pisti",
+      staffNames: {
+        clerk: "🤵 Rezidans Danışmanı (Oto Kontrat)",
+        cleaner: "✨ Concierge & Bakım Ekibi (Oto Hazırlık)",
+        specialist: "💎 VIP Emlak Direktörü (+%35 Gelir)",
+        manager: "👔 Kuleler Genel Müdürü (Tam Otopilot)"
+      },
+      desc: "Gökyüzü köprüsüyle birbirine bağlanan çift cam gökdelen! Çok yüksek kira ve rezidans geliri üretir."
+    },
+    {
+      key: "airport",
+      cat: "tourism",
+      name: "Özel Havalimanı & Jet Terminali",
+      short: "HAVALİMANI",
+      emoji: "✈️",
+      buildCost: 135000,
+      basePay: 790,
+      color: "#0c4a6e",
+      roofCol: "#0f172a",
+      accent: "#bae6fd",
+      checkinLabel: "🛫 UÇUŞ & CHECK-IN AÇ",
+      prepLabel: "⛽ APRON & KABİN HAZIRLA",
+      unitName: "Uçuş/Jet",
+      floorLabel: "Yeni Terminal Kapısı & Hangar (+6 Kapı)",
+      vipLabel: "🥂 Duty-Free & Özel İş Jeti Salonu",
+      heliLabel: "📡 Gelişmiş Hava Trafik Radar Kulesi",
+      staffNames: {
+        clerk: "👩‍✈️ Check-In & Yer Hizmeti (Oto Uçuş)",
+        cleaner: "🛠️ Apron & Teknik Bakım (Oto Hazırlık)",
+        specialist: "👨‍✈️ Başpilot & Operasyon (+%35 Gelir)",
+        manager: "👔 Havalimanı Direktörü (Tam Otopilot)"
+      },
+      desc: "3D yolcu jeti, pist ışıkları ve radarlı kontrol kulesi! Şehre zengin turist ve iş insanı yağdırır."
+    },
+    {
+      key: "banktower",
+      cat: "prestige",
+      name: "Finans Kulesi & Özel Banka",
+      short: "FİNANS BANK",
+      emoji: "🏦",
+      buildCost: 145000,
+      basePay: 850,
+      color: "#1c1917",
+      roofCol: "#090d1a",
+      accent: "#facc15",
+      checkinLabel: "💼 YATIRIM & KREDİ ONAYLA",
+      prepLabel: "🔐 ZIRHLI KASA DENETİMİ",
+      unitName: "Portföy",
+      floorLabel: "Yeni Finans & Borsa Katı Çık (+6 Birim)",
+      vipLabel: "🪙 Altın Rezerv Kasası & Özel Bankacılık",
+      heliLabel: "🚁 Zırhlı VIP Transfer Helikopter Pisti",
+      staffNames: {
+        clerk: "💼 Gişe & Müşteri Temsilcisi (Oto Onay)",
+        cleaner: "🔐 Kasa & Denetim Uzmanı (Oto Hazırlık)",
+        specialist: "📈 Başekonomist & Fon Yöneticisi (+%35 Gelir)",
+        manager: "👔 Banka Genel Müdürü (Tam Otopilot)"
+      },
+      desc: "Altın taçlı siyah finans gökdeleni! 14 yapı arasındaki en yüksek tekil işlem kazancını üretir!"
     }
   ];
 
@@ -220,6 +432,8 @@ window.ExtraLandsSystem = (function () {
   let cachedHelpers = null;
   let activeManageLandId = "land4";
   let activeModalTab = "overview"; // "overview" | "staff"
+  let activeProjFilter = "all"; // "all" | "tourism" | "industry" | "prestige"
+  let confirmDemolishLandId = null;
 
   function getLandDef(landId) {
     return EXTRA_LANDS.find((l) => l.id === landId);
@@ -895,19 +1109,29 @@ window.ExtraLandsSystem = (function () {
     if (!body || !titleEl) return;
     if (cashEl) cashEl.textContent = Math.round(data.cash).toLocaleString("tr-TR");
 
-    // EĞER HENÜZ PROJE SEÇİLMEDİYSE 6 SEÇENEĞİ GÖSTER!
+    // EĞER HENÜZ PROJE SEÇİLMEDİYSE 14 YAPI SEÇENEĞİNİ KATEGORİ FİLTRESİYLE GÖSTER!
     if (!st.projectKey) {
-      titleEl.textContent = `🏗️ ${lDef.num}. Arazi — Ne İnşa Edelim?`;
+      titleEl.textContent = `🏗️ ${lDef.num}. Arazi — 14 Yapı Seçeneği`;
+      const filtered = activeProjFilter === "all"
+        ? PROJECT_TYPES
+        : PROJECT_TYPES.filter((p) => p.cat === activeProjFilter);
+
       let html = `
-        <p style="font-size:13px; color:#fde68a; font-weight:800; margin-bottom:10px;">
-          Bu araziye aşağıdaki <strong>6 dev projeden istediğin birini</strong> kurabilirsin! Kurulduğunda önce işlerle sen ilgilenirsin, büyüdükçe eleman ve müdür alırsın:
+        <p style="font-size:12.5px; color:#fde68a; font-weight:800; margin-bottom:8px;">
+          Bu araziye aşağıdaki <strong>14 farklı 3D yapıdan istediğini</strong> kurabilirsin! Kategoriye göre süzebilirsin:
         </p>
+        <div class="subtab-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom:10px;">
+          <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "all" ? "active" : ""}" data-pcat="all">🌟 Tümü (14)</button>
+          <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "tourism" ? "active" : ""}" data-pcat="tourism">🏨 Turizm</button>
+          <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "industry" ? "active" : ""}" data-pcat="industry">🏭 Üretim</button>
+          <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "prestige" ? "active" : ""}" data-pcat="prestige">🎓 Prestij</button>
+        </div>
       `;
-      PROJECT_TYPES.forEach((p) => {
+      filtered.forEach((p) => {
         const buildPrice = Math.round(p.buildCost * lDef.mult);
         const estPay = Math.round(p.basePay * lDef.mult);
         html += `
-          <div class="mall-shop-card">
+          <div class="mall-shop-card" style="border-color:${p.accent};">
             <div class="shop-top-row">
               <div class="shop-title">${p.emoji} ${p.name}</div>
               <span class="shop-status-tag tag-sale">+${estPay} ₺ / işlem</span>
@@ -915,13 +1139,21 @@ window.ExtraLandsSystem = (function () {
             <div style="font-size:12.5px; color:#cbd5e1;">${p.desc}</div>
             <div class="shop-btn-row">
               <button class="shop-action-btn buy-deed pick-proj-btn" data-proj="${p.key}">
-                🏗️ ${p.name} İnşa Et — ${buildPrice.toLocaleString("tr-TR")} ₺
+                🏗️ ${p.name} Kur — ${buildPrice.toLocaleString("tr-TR")} ₺
               </button>
             </div>
           </div>
         `;
       });
       body.innerHTML = html;
+
+      body.querySelectorAll(".proj-cat-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activeProjFilter = btn.dataset.pcat;
+          helpers.sfx.tap();
+          renderExtraLandModal(data, helpers);
+        });
+      });
 
       body.querySelectorAll(".pick-proj-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -931,8 +1163,9 @@ window.ExtraLandsSystem = (function () {
           helpers.payForBusiness(buildPrice, `${pDef.name} İnşaatı`, () => {
             st.projectKey = pKey;
             st.floorsLvl = 1;
+            confirmDemolishLandId = null;
             helpers.sfx.perfectHit();
-            helpers.showToast(`🎉 ${pDef.name} inşa edildi! Başlangıçta kayıt ve hazırlıkla sen ilgileniyorsun!`);
+            helpers.showToast(`🎉 ${pDef.name} 3D haritaya inşa edildi! Önce sen ilgilen, büyüdükçe ekip kur!`);
             helpers.saveGame();
             helpers.updateHUD();
             renderExtraLandModal(data, helpers);
@@ -1018,7 +1251,45 @@ window.ExtraLandsSystem = (function () {
             ${st.heliUpgrade ? "AKTİF ✓" : `${heliCost.toLocaleString("tr-TR")} ₺`}
           </button>
         </div>
+
+        <div class="upgrade-card" style="border-color:#64748b; background:rgba(15,23,42,0.75); margin-top:8px;">
+          <div class="up-info">
+            <h3 style="font-size:14.5px; color:#fca5a5;">🔄 Yapıyı Yık &amp; 14 Seçenekten Başka Yapı Kur</h3>
+            <p style="font-size:12px;">Mevcut yapıyı kaldırıp inşaat bedelinin %50'sini (+${Math.round(proj.buildCost * lDef.mult * 0.5).toLocaleString("tr-TR")} ₺) kasaya iade eder; arsa tapun sende kalır.</p>
+          </div>
+          <button id="btnExtChangeProj" class="up-buy-btn" style="background:${confirmDemolishLandId === activeManageLandId ? "#dc2626" : "#334155"}; color:#fff; font-size:12.5px;">
+            ${confirmDemolishLandId === activeManageLandId ? "⚠️ Onayla (Yık)" : "🔄 Değiştir"}
+          </button>
+        </div>
       `;
+
+      const chgBtn = document.getElementById("btnExtChangeProj");
+      if (chgBtn) {
+        chgBtn.addEventListener("click", () => {
+          if (confirmDemolishLandId !== activeManageLandId) {
+            confirmDemolishLandId = activeManageLandId;
+            helpers.sfx.tap();
+            renderExtraLandModal(data, helpers);
+            return;
+          }
+          const refund = Math.round(proj.buildCost * lDef.mult * 0.5);
+          data.cash += refund;
+          st.projectKey = null;
+          st.floorsLvl = 1;
+          st.vipUpgrade = false;
+          st.heliUpgrade = false;
+          st.staff = { clerk: false, cleaner: false, specialist: false, manager: false };
+          runtime[activeManageLandId].waitingCars = [];
+          runtime[activeManageLandId].occupiedTimers = [];
+          runtime[activeManageLandId].dirtyCount = 0;
+          confirmDemolishLandId = null;
+          helpers.sfx.cashRegister();
+          helpers.showToast(`🔄 Arsa temizlendi (+${refund.toLocaleString("tr-TR")} ₺ iade)! Şimdi 14 yapıdan yenisini seçebilirsin!`);
+          helpers.saveGame();
+          helpers.updateHUD();
+          renderExtraLandModal(data, helpers);
+        });
+      }
 
       const fBtn = document.getElementById("btnExtFloor");
       if (fBtn && st.floorsLvl < 5) {
@@ -1194,7 +1465,7 @@ window.ExtraLandsSystem = (function () {
           <div style="font-size:12px; color:#cbd5e1;">${l.desc}</div>
           <div class="shop-btn-row">
             <button class="shop-action-btn ${st.owned ? "rent-share" : "buy-deed"} go-land-btn" data-land="${l.id}">
-              ${!st.owned ? `🗺️ Arsayı Gör & Satın Al (${l.deedCost.toLocaleString("tr-TR")} ₺)` : pDef ? `🚀 ${pDef.name} Haritasına Git ➔` : "🏗️ 6 Projeden Birini Seç & Kur ➔"}
+              ${!st.owned ? `🗺️ Arsayı Gör & Satın Al (${l.deedCost.toLocaleString("tr-TR")} ₺)` : pDef ? `🚀 ${pDef.name} Haritasına Git ➔` : "🏗️ 14 Yapıdan Birini Seç & Kur ➔"}
             </button>
           </div>
         </div>

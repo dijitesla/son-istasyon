@@ -45,6 +45,15 @@ window.CityV24 = (function () {
 
   const EXPORT_CARGOS = [
     {
+      key: "agri_export",
+      emoji: "🌾",
+      name: "Organik Gıda & Tarım İhracatı",
+      basePay: 4200,
+      bonusDesc: "4.–10. Arazide Organik Çiftliğin varsa +%50 ekstra kazanç!",
+      checkBonus: (data) => hasExtraProject(data, "agrifarm"),
+      bonusMult: 1.50
+    },
+    {
       key: "fuel_export",
       emoji: "🛢️",
       name: "Rafineri Akaryakıt İhracatı",

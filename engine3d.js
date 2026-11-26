@@ -82,7 +82,9 @@ window.Engine3D = (function () {
     fountainRings: [],
     hotelRoomMeshes: [],
     fireMesh: null,
-    washRollers: []
+    washRollers: [],
+    windRotors: [],
+    radarRotors: []
   };
 
   let vehicleMeshes = [];
@@ -1667,6 +1669,224 @@ window.Engine3D = (function () {
         col.position.set(cx - 11.5 + i * 4.6, totalH * 0.35 + 0.1, cz - 11.6);
         group.add(col);
       }
+    } else if (st.projectKey === "agrifarm") {
+      // 🌾 ORGANİK ÇİFTLİK: Cam Seralar, Kırmızı Çiftlik Ambarı, Tahıl Silosu & Dönen Yel Değirmeni!
+      [-9.5, -1.5].forEach((gx) => {
+        const ghBase = box(6.6, 1.4, 15.5, "#f1f5f9");
+        ghBase.position.set(gx, 0.8, cz + 1.5);
+        const ghGlass = new THREE.Mesh(
+          new THREE.CylinderGeometry(3.3, 3.3, 15.2, 12, 1, false, 0, Math.PI),
+          getMat("#86efac", { emissive: "#22c55e", emInt: 0.35, op: 0.82, rough: 0.15 })
+        );
+        ghGlass.rotation.z = Math.PI / 2;
+        ghGlass.rotation.y = Math.PI / 2;
+        ghGlass.position.set(gx, 1.5, cz + 1.5);
+        group.add(ghBase, ghGlass);
+      });
+      // Kırmızı Çiftlik Ambarı + Tahıl Silosu
+      const barn = box(10.5, 4.6 + floors * 0.5, 11.5, "#991b1b", { rough: 0.72 });
+      barn.position.set(9.2, (4.6 + floors * 0.5) / 2 + 0.1, cz - 2.0);
+      addDetailedRoof(group, 9.2, 4.8 + floors * 0.5, cz - 2.0, 10.8, 11.8, "#450a0a", "#84cc16", "ORGANİK ÇİFTLİK", "#7f1d1d");
+      const silo = cyl(2.2, 2.2, 8.5 + floors * 0.8, 16, "#cbd5e1", { metal: 0.65, rough: 0.25 });
+      silo.position.set(14.5, (8.5 + floors * 0.8) / 2, cz + 6.5);
+      const siloCap = new THREE.Mesh(new THREE.SphereGeometry(2.2, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), getMat("#94a3b8", { metal: 0.65 }));
+      siloCap.position.set(14.5, 8.5 + floors * 0.8, cz + 6.5);
+      group.add(barn, silo, siloCap);
+      // Dönen Rüzgar Değirmeni
+      const wmTower = cyl(0.45, 1.1, 8.8, 8, "#f8fafc");
+      wmTower.position.set(6.8, 4.4, cz + 7.2);
+      const wmRotor = new THREE.Group();
+      wmRotor.position.set(6.8, 8.6, cz + 6.5);
+      for (let b = 0; b < 4; b++) {
+        const bl = box(0.55, 5.6, 0.12, "#fde047", { emissive: "#eab308", emInt: 0.35 });
+        bl.rotation.z = (b * Math.PI) / 2;
+        wmRotor.add(bl);
+      }
+      animRefs.windRotors.push(wmRotor);
+      group.add(wmTower, wmRotor);
+    } else if (st.projectKey === "aquapark") {
+      // 🎢 DEV AQUAPARK: Turkuaz Dalga Havuzu, Güneşlenme Terası & 3 Renkli Su Kaydırağı Kulesi!
+      const deck = box(32, 0.32, 21, "#fde68a", { rough: 0.8 });
+      deck.position.set(cx, 0.2, cz);
+      const wavePool = box(21, 0.42, 15.5, "#22d3ee", { emissive: "#0284c7", emInt: 0.72, rough: 0.08 });
+      wavePool.position.set(cx - 3.8, 0.28, cz);
+      group.add(deck, wavePool);
+
+      const towerH = 6.5 + floors * 2.1;
+      const slideTower = box(5.8, towerH, 5.8, "#0284c7", { rough: 0.4 });
+      slideTower.position.set(10.8, towerH / 2 + 0.1, cz - 3.5);
+      addDetailedRoof(group, 10.8, towerH + 0.2, cz - 3.5, 6.2, 6.2, "#0c4a6e", "#fde047", "AQUAPARK", "#0369a1");
+      group.add(slideTower);
+
+      // 3 Renkli Kıvrımlı Su Kaydırağı Tüpü (Havuza İner!)
+      [
+        { col: "#ef4444", dz: -4.2, hMul: 0.92 },
+        { col: "#facc15", dz: 0.0,  hMul: 0.75 },
+        { col: "#ec4899", dz: 4.2,  hMul: 0.58 }
+      ].forEach((sl) => {
+        const chute = cyl(0.75, 0.75, 15.5, 12, sl.col, { emissive: sl.col, emInt: 0.35, rough: 0.22 });
+        chute.position.set(3.5, towerH * sl.hMul * 0.52, cz + sl.dz);
+        chute.rotation.z = 1.05;
+        group.add(chute);
+      });
+    } else if (st.projectKey === "filmstudio") {
+      // 🎬 FİLM & DİZİ STÜDYOSU: İki Dev Çekim Hangarı, Yeşil Perde Sahnesi & Projektörler!
+      const hH = 5.4 + floors * 1.1;
+      [-8.2, 8.2].forEach((hx, idx) => {
+        const hangar = box(13.5, hH, 16.5, "#27272a", { rough: 0.55 });
+        hangar.position.set(hx, hH / 2 + 0.1, cz + 2.0);
+        addDetailedRoof(group, hx, hH + 0.2, cz + 2.0, 13.8, 16.8, "#18181b", "#f43f5e", idx === 0 ? "STÜDYO A" : "STÜDYO B", "#9f1239");
+        group.add(hangar);
+      });
+      // Açık Hava Yeşil Perde (Greenbox) Çekim Sahnesi
+      const greenStage = box(11.5, 3.8, 0.45, "#22c55e", { emissive: "#16a34a", emInt: 0.85 });
+      greenStage.position.set(0, 2.0, cz - 8.2);
+      const greenFloor = box(11.5, 0.22, 5.4, "#22c55e", { emissive: "#16a34a", emInt: 0.55 });
+      greenFloor.position.set(0, 0.22, cz - 5.6);
+      group.add(greenStage, greenFloor);
+    } else if (st.projectKey === "university") {
+      // 🎓 ÖZEL ÜNİVERSİTE: Kırmızı Tuğla Fakülte Kanatları, Kubbeli Kütüphane & Saat Kulesi!
+      const uH = 4.6 + floors * 1.4;
+      const mainWing = box(28, uH, 8.5, "#7c2d12", { rough: 0.62 });
+      mainWing.position.set(cx, uH / 2 + 0.1, cz + 5.5);
+      const leftWing = box(7.5, uH * 0.88, 12.5, "#9a3412", { rough: 0.62 });
+      leftWing.position.set(-10.2, (uH * 0.88) / 2 + 0.1, cz - 3.5);
+      const rightWing = box(7.5, uH * 0.88, 12.5, "#9a3412", { rough: 0.62 });
+      rightWing.position.set(10.2, (uH * 0.88) / 2 + 0.1, cz - 3.5);
+      addDetailedRoof(group, cx, uH + 0.2, cz + 5.5, 28.4, 8.8, "#1e293b", "#fbbf24", "ÜNİVERSİTE", "#7c2d12");
+      // Saat Kulesi + Işıklı Saat Kadranı
+      const clockH = uH + 6.5;
+      const clockTower = box(4.4, clockH, 4.4, "#b45309", { rough: 0.5 });
+      clockTower.position.set(cx, clockH / 2 + 0.1, cz + 4.5);
+      const clockFace = cyl(1.35, 1.35, 0.35, 16, "#fef9c3", { emissive: "#fde047", emInt: 1.3 });
+      clockFace.rotation.x = Math.PI / 2;
+      clockFace.position.set(cx, clockH - 1.8, cz + 2.2);
+      const spire = new THREE.Mesh(new THREE.ConeGeometry(3.2, 3.8, 4), getMat("#0f172a", { metal: 0.5 }));
+      spire.rotation.y = Math.PI / 4;
+      spire.position.set(cx, clockH + 1.9, cz + 4.5);
+      group.add(mainWing, leftWing, rightWing, clockTower, clockFace, spire);
+    } else if (st.projectKey === "powerplant") {
+      // ⚡ RÜZGAR & GÜNEŞ ENERJİ SANTRALİ: Dönen 3 Kanatlı Dev Rüzgar Türbinleri & Güneş Tarlası!
+      const ctrl = box(11.5, 3.8, 7.5, "#0f172a", { metal: 0.4 });
+      ctrl.position.set(-9.5, 2.0, cz + 5.5);
+      addDetailedRoof(group, -9.5, 4.0, cz + 5.5, 11.8, 7.8, "#1e293b", "#38bdf8", "ENERJİ SANTRALİ", "#0284c7");
+      group.add(ctrl);
+
+      // Mavi Güneş Paneli Sıraları
+      for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < 4; c++) {
+          const sp = box(5.8, 0.18, 3.6, "#0284c7", { emissive: "#0369a1", emInt: 0.55, metal: 0.8, rough: 0.15 });
+          sp.position.set(-10.5 + c * 7.0, 1.15, cz - 6.5 + r * 5.2);
+          sp.rotation.x = 0.36;
+          group.add(sp);
+        }
+      }
+
+      // Dönen Dev Beyaz Rüzgar Türbinleri (Seviyeye Göre 2..4 Adet!)
+      const turbCount = Math.min(4, 1 + floors);
+      [-11, -3.5, 4.5, 12.5].slice(0, turbCount).forEach((tx, idx) => {
+        const tH = 11.5 + (idx % 2) * 2.0;
+        const mast = cyl(0.28, 0.65, tH, 10, "#f8fafc", { rough: 0.3 });
+        mast.position.set(tx, tH / 2, cz + 6.5);
+        const nacelle = box(1.1, 1.1, 2.4, "#f1f5f9");
+        nacelle.position.set(tx, tH, cz + 6.5);
+        const rotor = new THREE.Group();
+        rotor.position.set(tx, tH, cz + 5.2);
+        for (let b = 0; b < 3; b++) {
+          const holder = new THREE.Group();
+          holder.rotation.z = (b * Math.PI * 2) / 3;
+          const blade = box(0.42, 5.4, 0.12, "#ffffff", { rough: 0.25 });
+          blade.position.y = 2.7;
+          holder.add(blade);
+          rotor.add(holder);
+        }
+        animRefs.windRotors.push(rotor);
+        group.add(mast, nacelle, rotor);
+      });
+    } else if (st.projectKey === "twintowers") {
+      // 🏙️ İKİZ KULELER LÜKS REZİDANS: Cam Gökyüzü Köprülü Çift Gökdelen!
+      const tH = 7.5 + floors * 3.4;
+      const M23 = window.MechanicsV23;
+      const bShortT = M23 ? M23.getBrandShort(data) : "PLATİN";
+      const twTex = createWindowFacadeTexture("#0f172a", "#0284c7", "#bae6fd", 3, floors + 1);
+      const twMat = new THREE.MeshStandardMaterial({ map: twTex, emissive: new THREE.Color("#38bdf8"), emissiveMap: twTex, emissiveIntensity: 0.35, metalness: 0.7, roughness: 0.18 });
+      [-8.6, 8.6].forEach((tx, idx) => {
+        const tower = new THREE.Mesh(new THREE.BoxGeometry(11.6, tH, 14.5), twMat);
+        tower.position.set(tx, tH / 2 + 0.1, cz);
+        tower.castShadow = true;
+        group.add(tower);
+        addDetailedRoof(group, tx, tH + 0.2, cz, 11.8, 14.8, "#0f172a", "#38bdf8", idx === 0 ? `${bShortT} KULE A` : "KULE B", "#0369a1");
+      });
+      // Gökyüzü Köprüsü (Skybridge)
+      const bridgeY = tH * 0.68;
+      const skyBridge = box(7.2, 2.4, 5.6, "#7dd3fc", { emissive: "#0284c7", emInt: 0.75, metal: 0.8, rough: 0.12 });
+      skyBridge.position.set(0, bridgeY, cz);
+      group.add(skyBridge);
+    } else if (st.projectKey === "airport") {
+      // ✈️ ÖZEL HAVALİMANI & VIP JET TERMİNALİ: Pist, Radar Kulesi ve 3D Beyaz Yolcu Jeti!
+      const termH = 4.5 + floors * 0.9;
+      const term = box(24, termH, 8.8, "#0c4a6e", { metal: 0.55, rough: 0.25 });
+      term.position.set(-2.5, termH / 2 + 0.1, cz - 5.5);
+      addDetailedRoof(group, -2.5, termH + 0.2, cz - 5.5, 24.4, 9.2, "#0f172a", "#38bdf8", "VIP HAVALİMANI", "#0284c7");
+      group.add(term);
+
+      // Hava Trafik Kontrol Kulesi + Dönen Radar
+      const atcH = 11.5 + floors * 1.4;
+      const atcShaft = cyl(1.2, 1.8, atcH, 10, "#e2e8f0");
+      atcShaft.position.set(12.8, atcH / 2, cz - 5.5);
+      const atcCab = cyl(2.6, 2.0, 2.4, 12, "#38bdf8", { emissive: "#0284c7", emInt: 0.65, metal: 0.8 });
+      atcCab.position.set(12.8, atcH + 1.0, cz - 5.5);
+      const radarPivot = new THREE.Group();
+      radarPivot.position.set(12.8, atcH + 2.6, cz - 5.5);
+      radarPivot.add(box(3.4, 0.55, 0.35, "#fde047", { emissive: "#facc15", emInt: 0.8 }));
+      animRefs.radarRotors.push(radarPivot);
+      group.add(atcShaft, atcCab, radarPivot);
+
+      // Pist / Apron Asfaltı + Yeşil Pist Işıkları + 3D Beyaz Yolcu Jeti!
+      const runway = box(36, 0.18, 10.5, "#1e293b", { shadow: false });
+      runway.position.set(0, 0.18, cz + 5.8);
+      group.add(runway);
+      for (let rx = -15; rx <= 15; rx += 6) {
+        const dash = box(2.6, 0.05, 0.35, "#f8fafc", { shadow: false });
+        dash.position.set(rx, 0.29, cz + 5.8);
+        const lgt = box(0.35, 0.25, 0.35, "#4ade80", { emissive: "#22c55e", emInt: 1.5, shadow: false });
+        lgt.position.set(rx, 0.32, cz + 10.6);
+        group.add(dash, lgt);
+      }
+      // 3D Beyaz VIP Jet Uçağı
+      const jet = new THREE.Group();
+      const fuselage = cyl(1.15, 1.15, 16.5, 14, "#f8fafc", { rough: 0.2, metal: 0.3 });
+      fuselage.rotation.z = Math.PI / 2;
+      fuselage.position.y = 1.65;
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(1.15, 3.2, 14), getMat("#f8fafc", { rough: 0.2 }));
+      nose.rotation.z = -Math.PI / 2;
+      nose.position.set(9.8, 1.65, 0);
+      const wings = box(3.2, 0.18, 14.8, "#cbd5e1", { metal: 0.55 });
+      wings.position.set(0.5, 1.5, 0);
+      const tailFin = box(2.4, 3.4, 0.22, "#0284c7", { emissive: "#0369a1", emInt: 0.4 });
+      tailFin.position.set(-7.2, 3.2, 0);
+      jet.add(fuselage, nose, wings, tailFin);
+      jet.position.set(-1.5, 0.2, cz + 5.8);
+      group.add(jet);
+    } else if (st.projectKey === "banktower") {
+      // 🏦 FİNANS KULESİ & ÖZEL BANKA: Altın Taçlı Siyah Gökdelen!
+      const bH = 8.0 + floors * 3.5;
+      const M23 = window.MechanicsV23;
+      const bShortB = M23 ? M23.getBrandShort(data) : "HOLDİNG";
+      const bkTex = createWindowFacadeTexture("#1c1917", "#422006", "#fde047", 4, floors + 1);
+      const bkMat = new THREE.MeshStandardMaterial({ map: bkTex, emissive: new THREE.Color("#facc15"), emissiveMap: bkTex, emissiveIntensity: 0.32, metalness: 0.72, roughness: 0.2 });
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(24, bH, 18), bkMat);
+      tower.position.set(cx, bH / 2 + 0.1, cz);
+      tower.castShadow = true;
+      group.add(tower);
+      addDetailedRoof(group, cx, bH + 0.2, cz, 24.4, 18.4, "#090d1a", "#facc15", `${bShortB} BANK`, "#78350f");
+      // Altın Piramit Taç & Yeşil Borsa Kayar Şeridi
+      const ticker = box(24.6, 0.75, 18.6, "#22c55e", { emissive: "#16a34a", emInt: 1.1 });
+      ticker.position.set(cx, 3.8, cz);
+      const crown = new THREE.Mesh(new THREE.ConeGeometry(8.5, 5.2, 4), getMat("#facc15", { emissive: "#ca8a04", emInt: 0.55, metal: 0.85, rough: 0.18 }));
+      crown.rotation.y = Math.PI / 4;
+      crown.position.set(cx, bH + 3.0, cz);
+      group.add(ticker, crown);
     } else {
       const M23 = window.MechanicsV23;
       const bShortX = M23 ? M23.getBrandShort(data) : "GRAND";
@@ -2221,7 +2441,9 @@ window.Engine3D = (function () {
       fountainRings: [],
       hotelRoomMeshes: [],
       fireMesh: null,
-      washRollers: []
+      washRollers: [],
+      windRotors: [],
+      radarRotors: []
     };
     landAnimRefs[lid] = animRefs;
     if (lid === "mansion") buildMansionScene(grp, data);
@@ -2457,6 +2679,12 @@ window.Engine3D = (function () {
           if (!isSkyOverview) rt.floats.forEach((ft) => pushFloat(lid, ft));
           const occU = rt.occupiedTimers.length;
           const dirtyU = rt.dirtyCount;
+          if (arX && arX.windRotors && arX.windRotors.length > 0) {
+            arX.windRotors.forEach((wr) => (wr.rotation.z -= 1.65 * dt));
+          }
+          if (arX && arX.radarRotors && arX.radarRotors.length > 0) {
+            arX.radarRotors.forEach((rr) => (rr.rotation.y += 2.2 * dt));
+          }
           if (arX && arX.hotelRoomMeshes) {
             arX.hotelRoomMeshes.forEach((mat, rIdx) => {
               if (rIdx < occU) {

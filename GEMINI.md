@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v24.0 — Tam Ekran 3D Şehir Planı, Mini Radar, Malikane, Futbol Kulübü, Taksi & Liman)
+## Proje Özeti: Son İstasyon (v25.0 — Tam Ekran 3D Şehir, 14 Farklı Arazi Yapısı, Malikane, Liman & Kulüp)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -91,8 +91,12 @@
     4. **🚕 Şehir İçi Taksi & Dolmuş Hattı:** Batı kavşağındaki merkez duraktan çıkan 8'e kadar **3D Sarı Taksi ve Şehir Dolmuşu**, tüm bulvarlarda dolaşarak düzenli taksimetre kazancı bırakır.
     5. **⚓ Güney Deniz Kıyısı, Marina & İhracat Limanı (`port`):** Şehrin güneyi kumsal, palmiyeli kordon, deniz feneri ve masmavi denize açıldı. Lüks Yat marinada yüzer; dev **3D İhracat Kargo Gemisi** rıhtım vinçlerinin altına yanaşıp Rafineri, Oto Fabrika ve Teknokent ürünlerini yurt dışına ihraç eder.
 
-## 📌 Diğer Bilgisayardaki Asistana Devir Notu (26 Kasım — v24.0 Son Durum)
-- **Mevcut Sürüm:** **v24.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
+  - **v25.0 Arazilerde 14 Farklı 3D Yapı Çeşidi & Yapı Değiştirme (`lands_4_10.js`, `engine3d.js`, `city_v24.js`, `game.js`):**
+    - Satın alınan arazilere (4.–10. Araziler) kurulabilen yapı seçenekleri 6'dan **14 farklı özel 3D mimarili yapıya** çıkarıldı (`🏨 Grand Otel`, `🏥 Özel Hastane`, `🚗 Oto Fabrika`, `🏟️ Stadyum`, `💻 Teknokent`, `👑 Kongre Sarayı`, **`🌾 Organik Çiftlik & Sera`**, **`🎢 Dev Aquapark`**, **`🎬 Film & Dizi Stüdyosu`**, **`🎓 Özel Üniversite & Saat Kulesi`**, **`⚡ Dönen Rüzgar & Güneş Enerji Santrali`**, **`🏙️ Gökyüzü Köprülü İkiz Kuleler`**, **`✈️ 3D Yolcu Jetli Özel Havalimanı`**, **`🏦 Altın Taçlı Finans Kulesi & Banka`**).
+    - Kategori süzgeci (`🌟 Tümü`, `🏨 Turizm`, `🏭 Üretim`, `🎓 Prestij`) ve kurulu bir yapıyı %50 iadeyle kaldırıp **başka bir yapı kurma (`🔄 Değiştir`)** özelliği eklendi.
+
+## 📌 Diğer Bilgisayardaki Asistana Devir Notu (26 Kasım — v25.0 Son Durum)
+- **Mevcut Sürüm:** **v25.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
 - **Bu Oturumda Tamamlanan Büyük Dönüşüm (v17.0 -> v22.0):**
   1. **Gerçek 3D WebGL Motoru (`v20.0`, `lib/three.min.js`, `engine3d.js`):** Düz 2D haritadan gerçek Three.js İzometrik 3D dünyaya geçildi (`empire.js`, `land3.js`, `lands_4_10.js`, `holding_v16.js` içine salt-okunur `get3DState()` eklendi).
   2. **SimCity Tarzı Kamera & Mimari (`v20.1`):** Dar açılı (`28° FOV`) dengeli izometrik kamera, sol alt kamera kontrolüne **🔄 90° döndürme** (4 köşe 360° bakış), prosedürel dokular, parapet çatılar, klimalar ve çift yüzlü ışıklı 3D bina tabelaları eklendi.
