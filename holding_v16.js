@@ -659,8 +659,9 @@ window.HoldingV16 = (function () {
     // 1) HOLDİNG LİGİ & RAKİP PATRONLARIN ŞİRKETLERİNİ SATIN ALMA
     if (currentHubTab === "league") {
       const myVal = calcPlayerHoldingValue(data);
+      const customBrand = (data.empire && data.empire.v23 && data.empire.v23.brandName) || "SON İSTASYON";
       const board = [
-        { key: "player", name: `🏆 SON İSTASYON HOLDİNG${v16.customPlate ? ` [${v16.customPlate}]` : ""}`, boss: "SEN (Patron)", emoji: "⭐", value: myVal, isPlayer: true }
+        { key: "player", name: `🏆 ${customBrand} HOLDİNG${v16.customPlate ? ` [${v16.customPlate}]` : ""}`, boss: "SEN (Patron)", emoji: "⭐", value: myVal, isPlayer: true }
       ];
       RIVAL_DEFS.forEach((r) => {
         const st = v16.rivals[r.key];

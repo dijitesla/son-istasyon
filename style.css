@@ -326,6 +326,7 @@ html, body {
 .fab-btn .fab-ico { font-size: 17px; line-height: 1; }
 .fab-btn .fab-lbl { font-size: 8.5px; font-weight: 900; letter-spacing: 0.1px; color: #e2e8f0; }
 
+.fab-btn.fab-red { border-color: rgba(255, 51, 88, 0.78); }
 .fab-btn.fab-gold { border-color: rgba(245, 158, 11, 0.65); }
 .fab-btn.fab-cyan { border-color: rgba(56, 189, 248, 0.65); }
 .fab-btn.fab-green { border-color: rgba(34, 197, 94, 0.65); }
@@ -1383,4 +1384,152 @@ html, body {
   font-size: 13.5px;
   font-weight: 900;
   margin-bottom: 6px;
+}
+
+/* =========================================================================
+   v23.0 — 🏎️ 3D PATRON SÜRÜŞ KOKPİTİ, 🚑 ACİL MÜDAHALE & ⚡ KOMUTA STİLLERİ
+   ========================================================================= */
+.cam-ctrl-btn.drive-cam-btn {
+  border-color: rgba(250, 204, 21, 0.8);
+  background: linear-gradient(180deg, rgba(153, 27, 27, 0.92), rgba(69, 10, 10, 0.95));
+  font-size: 15px;
+}
+
+.cam-ctrl-btn.drive-cam-btn.driving-on {
+  background: linear-gradient(180deg, #22c55e, #15803d);
+  border-color: #fef08a;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.75);
+}
+
+.city-emergency-bar {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 18px);
+  max-width: 410px;
+  background: linear-gradient(90deg, rgba(185, 28, 28, 0.96), rgba(127, 29, 29, 0.96));
+  border: 2px solid #fef08a;
+  border-radius: 12px;
+  padding: 8px 12px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+  z-index: 22;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
+  animation: pulseWarn 0.95s infinite;
+}
+
+.city-emergency-bar.dispatched {
+  background: linear-gradient(90deg, rgba(3, 105, 161, 0.94), rgba(15, 23, 42, 0.95));
+  border-color: #38bdf8;
+  animation: none;
+}
+
+.city-emergency-bar.hidden {
+  display: none;
+}
+
+.boss-drive-hud {
+  position: absolute;
+  left: 46px;
+  right: 56px;
+  bottom: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(9, 14, 28, 0.84);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(250, 204, 21, 0.55);
+  border-radius: 16px;
+  padding: 7px 9px;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.boss-drive-hud.hidden {
+  display: none;
+}
+
+.drive-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 32px);
+  grid-template-rows: repeat(2, 30px);
+  gap: 3px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.dpad-btn {
+  background: #1e293b;
+  border: 1.5px solid #475569;
+  border-radius: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: none;
+}
+.dpad-btn:active {
+  background: #f59e0b;
+  border-color: #fef08a;
+  transform: scale(0.93);
+}
+.dpad-up { grid-column: 2; grid-row: 1; }
+.dpad-left { grid-column: 1; grid-row: 2; }
+.dpad-down { grid-column: 2; grid-row: 2; }
+.dpad-right { grid-column: 3; grid-row: 2; }
+
+.drive-actions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.drive-car-title {
+  font-size: 10.5px;
+  font-weight: 900;
+  color: #fde68a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drive-inspect-btn {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+  border: 1.5px solid #fef08a;
+  border-radius: 9px;
+  padding: 5px 7px;
+  color: #090d1a;
+  font-size: 11.5px;
+  font-weight: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  line-height: 1.15;
+}
+.drive-inspect-btn small {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.drive-inspect-btn:active { transform: scale(0.95); }
+
+.drive-exit-btn {
+  background: #334155;
+  border: 1px solid #64748b;
+  border-radius: 7px;
+  padding: 3px 6px;
+  color: #f8fafc;
+  font-size: 10.5px;
+  font-weight: 900;
+  cursor: pointer;
 }

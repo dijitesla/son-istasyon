@@ -8,6 +8,7 @@
   const L3 = window.Land3System;
   const XL = window.ExtraLandsSystem;
   const H16 = window.HoldingV16;
+  const M23 = window.MechanicsV23;
   const E3D = window.Engine3D;
 
   const SAVE_KEY = "son_istasyon_v12_pro";
@@ -54,6 +55,8 @@
       land3ResortIncome: 0,
       extraLandIncomes: {},
       rivalIncome: 0,
+      tenderIncome: 0,
+      emergencyIncome: 0,
       eventIncome: 0,
       tankerCost: 0,
       eventLoss: 0,
@@ -151,6 +154,8 @@
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
     } catch (_) {}
   }
+
+  if (M23) M23.applyBrandThemeToDOM(data);
 
   function clamp(v, min, max) {
     return Math.max(min, Math.min(max, v));
@@ -263,6 +268,11 @@
     repText: document.getElementById("repText"),
     secText: document.getElementById("secText"),
     stationLvlSub: document.getElementById("stationLvlSub"),
+    commandV23Btn: document.getElementById("commandV23Btn"),
+    commandV23Modal: document.getElementById("commandV23Modal"),
+    closeCommandV23Btn: document.getElementById("closeCommandV23Btn"),
+    btnDriveBossCar: document.getElementById("btnDriveBossCar"),
+    cityEmergencyBar: document.getElementById("cityEmergencyBar"),
     holdingHubBtn: document.getElementById("holdingHubBtn"),
     holdingHubModal: document.getElementById("holdingHubModal"),
     closeHoldingHubBtn: document.getElementById("closeHoldingHubBtn"),
@@ -550,6 +560,14 @@
       activeMsgs.push(`📉 Yavaş ${Math.ceil(slowTrafficTimer)}sn`);
       isDanger = true;
     }
+    if (M23 && data.empire) {
+      const fPol = M23.getFuelPolicy(data);
+      if (fPol.key !== "normal") activeMsgs.push(fPol.badge);
+      const mVal = M23.ensureV23(data).morale || 100;
+      if (mVal >= 115) activeMsgs.push("🔥 Ekip 1.5x");
+      else if (mVal < 50) activeMsgs.push("😴 Ekip Yorgun");
+      if (M23.isLandInspected(activeLand)) activeMsgs.push("📣 Teftiş 2x");
+    }
 
     if (activeMsgs.length > 0) {
       el.activeEffectBar.textContent = activeMsgs.join(" • ");
@@ -794,6 +812,7 @@
     const shapes = isBig ? ["truck"] : isVip ? ["sport", "suv"] : ["sedan", "suv", "taxi"];
     const shape = shapes[Math.floor(Math.random() * shapes.length)];
 
+    const shopBoost = M23 ? M23.getFuelPolicy(data).shopBonus : 0;
     cars.push({
       x: -45,
       y: HIGHWAY_IN_Y,
@@ -812,10 +831,10 @@
       fuelFilled: 0,
       manualLatched: false,
       payAmount: basePay,
-      wantsMotel: data.motelUnlocked && Math.random() < 0.32,
-      wantsRestaurant: data.restaurantUnlocked && Math.random() < 0.44,
-      wantsMarket: Math.random() < 0.45,
-      wantsWash: data.carWashUnlocked && !washCar && Math.random() < 0.42,
+      wantsMotel: data.motelUnlocked && Math.random() < 0.32 + shopBoost * 0.5,
+      wantsRestaurant: data.restaurantUnlocked && Math.random() < 0.44 + shopBoost,
+      wantsMarket: Math.random() < 0.45 + shopBoost,
+      wantsWash: data.carWashUnlocked && !washCar && Math.random() < 0.42 + shopBoost * 0.5,
       wantsGarage: data.garageUnlocked && !garageCar && Math.random() < 0.38,
       isStory: false,
       storyEvent: null
@@ -959,7 +978,9 @@
     }
 
     const rivalRev = d.rivalIncome || 0;
-    const totalRev = stationSubTotal + land2SubTotal + land3SubTotal + extraSubTotal + rivalRev;
+    const tenderRev = d.tenderIncome || 0;
+    const emergRev = d.emergencyIncome || 0;
+    const totalRev = stationSubTotal + land2SubTotal + land3SubTotal + extraSubTotal + rivalRev + tenderRev + emergRev;
     let loanPayAmt = 0;
     if (!isDayEnd && data.empire.v16 && data.empire.v16.activeLoan) {
       loanPayAmt = data.empire.v16.activeLoan.dailyPay || 0;
@@ -982,6 +1003,7 @@
         loanPayAmt = v16Sum.loanPaid || 0;
         pendingNextSpecialDayTitle = v16Sum.newSpecialDay ? v16Sum.newSpecialDay.title : null;
       }
+      if (M23) M23.onDayRollover(data);
 
       el.repModalTitle.textContent = `📊 Gün ${data.dayNumber} Ayrıntılı Kazanç Raporu`;
       el.repModalBadge.textContent = "Vardiya Kapandı";
@@ -1051,6 +1073,8 @@
         <h4>🗺️ 4.–10. ARAZİLER — OTEL &amp; MEGA PROJELER (+${Math.round(extraSubTotal)} ₺)</h4>
         ${extraLinesHtml}
         ${rivalRev > 0 ? `<div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:4px;"><span>🏆 Devralınan Rakip Holdingler</span><span class="val-pos">+${Math.round(rivalRev)} ₺</span></div>` : ""}
+        ${tenderRev > 0 ? `<div class="rep-row"><span>🔨 Kazanılan İhale Sözleşmeleri</span><span class="val-pos">+${Math.round(tenderRev)} ₺</span></div>` : ""}
+        ${emergRev > 0 ? `<div class="rep-row"><span>🚑 Şehir Acil Müdahale Ödülleri</span><span class="val-pos">+${Math.round(emergRev)} ₺</span></div>` : ""}
       </div>
 
       <!-- GİDERLER -->
@@ -1155,8 +1179,9 @@
       callFuelTanker(true);
     }
 
-    // 2. Arazi & Borsa Canlı Güncellemesi + v16 Holding Ligi / Hava / Helikopter
+    // 2. Arazi & Borsa Canlı Güncellemesi + v16 Holding Ligi + v23 Yeni Mekanikler
     if (H16) H16.updateV16(dt, data);
+    if (M23) M23.updateV23(dt, data, v23Helpers);
     EMP.updateEmpire(dt, data, {
       onStockTick() {
         if (!el.phoneModal.classList.contains("hidden")) {
@@ -1284,6 +1309,9 @@
       if (H16 && data.empire && data.empire.v16) {
         const sd = H16.getSpecialDay(data.empire.v16);
         if (sd && sd.trafficMult) baseInterval /= sd.trafficMult;
+      }
+      if (M23) {
+        baseInterval /= M23.getFuelPolicy(data).trafficMult;
       }
       if (data.billboardInstalled) baseInterval *= 0.82;
       if (data.reputation >= 70 || vipRushTimer > 0) baseInterval *= 0.82;
@@ -1528,8 +1556,10 @@
       }
     }
 
-    // 3 Pompacı İşçi
-    const powerFactor = powerOutage ? 0.45 : 1.0;
+    // 3 Pompacı İşçi (Moral + Patron Teftiş Hızı Dahil!)
+    const stSpeedMult = M23 ? M23.getLandSpeedMult(data, "station") : 1.0;
+    const fuelPolMult = M23 ? M23.getFuelPolicy(data).fuelPayMult : 1.0;
+    const powerFactor = (powerOutage ? 0.45 : 1.0) * stSpeedMult;
     const pumperKeys = ["ali", "murat", "hasan"];
     pumperKeys.forEach((wKey, idx) => {
       const lvl = data.staff[wKey];
@@ -1606,7 +1636,7 @@
         if (car.fuelFilled >= car.fuelNeeded) {
           car.fuelFilled = car.fuelNeeded;
           car.manualLatched = false;
-          const fuelPay = Math.round(car.payAmount * getV16IncomeMult());
+          const fuelPay = Math.round(car.payAmount * fuelPolMult * getV16IncomeMult());
           data.cash += fuelPay;
           data.totalServed += 1;
           data.daily.fuelIncome += fuelPay;
@@ -1657,10 +1687,10 @@
         const autoSpd = data.staff.kerem > 0 ? 22 + data.staff.kerem * 9 : 0;
         const manSpd = car.serviceManual ? 38 : 0;
         if (autoSpd + manSpd > 0 && !powerOutage) {
-          car.serviceProg += (autoSpd + manSpd) * dt;
+          car.serviceProg += (autoSpd + manSpd) * stSpeedMult * dt;
           if (car.serviceProg >= 100) {
             const solarBonus = data.solarInstalled ? 1.25 : 1.0;
-            const evPay = Math.round((68 + (data.evLvl - 1) * 22) * solarBonus * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult());
+            const evPay = Math.round((68 + (data.evLvl - 1) * 22) * solarBonus * fuelPolMult * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult());
             data.cash += evPay;
             data.daily.evIncome += evPay;
             data.daily.evServed += 1;
@@ -1732,9 +1762,9 @@
         const autoSpd = hasPumper ? 28 + Math.max(data.staff.ali, data.staff.murat, data.staff.hasan) * 8 : 0;
         const manSpd = pointerHeldLpg || car.serviceManual ? 42 : 0;
         if (autoSpd + manSpd > 0 && !powerOutage) {
-          car.serviceProg += (autoSpd + manSpd) * dt;
+          car.serviceProg += (autoSpd + manSpd) * stSpeedMult * dt;
           if (car.serviceProg >= 100) {
-            const lpgPay = Math.round((44 + (data.lpgLvl - 1) * 14) * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult());
+            const lpgPay = Math.round((44 + (data.lpgLvl - 1) * 14) * fuelPolMult * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult());
             data.cash += lpgPay;
             data.daily.lpgIncome = (data.daily.lpgIncome || 0) + lpgPay;
             data.daily.lpgServed = (data.daily.lpgServed || 0) + 1;
@@ -1815,9 +1845,9 @@
     });
     motelOccupants = motelOccupants.filter((o) => !o.done);
 
-    // Otomatik Çalışanlar (Zeynep, Mehmet, Selin)
+    // Otomatik Çalışanlar (Zeynep, Mehmet, Selin — Moral & Teftiş Çarpanlı!)
     if (marketQueue > 0 && data.staff.zeynep > 0 && !powerOutage) {
-      marketProgress += (28 + data.staff.zeynep * 11) * dt;
+      marketProgress += (28 + data.staff.zeynep * 11) * stSpeedMult * dt;
       workers.zeynep.x = 105 + Math.sin(Date.now() * 0.006) * 14;
       workers.zeynep.moving = true;
       if (marketProgress >= 100) completeOneMarketSale();
@@ -1826,7 +1856,7 @@
     }
 
     if (restaurantQueue.length > 0 && data.staff.mehmet > 0 && !powerOutage) {
-      restaurantProgress += (24 + data.staff.mehmet * 10) * dt;
+      restaurantProgress += (24 + data.staff.mehmet * 10) * stSpeedMult * dt;
       workers.mehmet.x = 235 + Math.sin(Date.now() * 0.007) * 14;
       workers.mehmet.moving = true;
       if (restaurantProgress >= 100) completeOneRestaurantOrder();
@@ -1835,7 +1865,7 @@
     }
 
     if (motelQueue.length > 0 && motelOccupants.length < maxMotelRooms() && data.staff.selin > 0 && !powerOutage) {
-      motelProgress += (26 + data.staff.selin * 10) * dt;
+      motelProgress += (26 + data.staff.selin * 10) * stSpeedMult * dt;
       workers.selin.x = 365 + Math.sin(Date.now() * 0.006) * 14;
       workers.selin.moving = true;
       if (motelProgress >= 100) checkInOneMotelGuest();
@@ -3026,7 +3056,20 @@
     }
   };
 
+  const v23Helpers = {
+    sfx,
+    showToast,
+    saveGame,
+    updateHUD,
+    payForBusiness,
+    getActiveLand: () => activeLand,
+    onBossNearLand(nearLand) {
+      syncActiveLandFromCamera(nearLand);
+    }
+  };
+
   function switchLand(land) {
+    if (M23 && M23.isDriving()) M23.stopDriving();
     const prevLand = activeLand;
     activeLand = land;
     sfx.tap();
@@ -3200,6 +3243,67 @@
       H16.renderHubModal(data, empireHelpers);
     });
   });
+
+  // v23.0 — ⚡ Komuta Merkezi (Fiyat, Marka, İhaleler, Moral) + 🏎️ 3D Sürüş + 🚑 Acil Müdahale
+  if (el.commandV23Btn && M23) {
+    el.commandV23Btn.addEventListener("click", () => {
+      sfx.tap();
+      M23.renderCommandModal(data, v23Helpers);
+      el.commandV23Modal.classList.remove("hidden");
+      const box = el.commandV23Modal.querySelector(".modal-box");
+      if (box) box.scrollTop = 0;
+    });
+  }
+  if (el.closeCommandV23Btn) {
+    el.closeCommandV23Btn.addEventListener("click", () => el.commandV23Modal.classList.add("hidden"));
+  }
+  document.querySelectorAll(".cmd23-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!M23) return;
+      sfx.tap();
+      M23.setCommandTab(btn.dataset.cmdtab);
+      M23.renderCommandModal(data, v23Helpers);
+    });
+  });
+  if (el.btnDriveBossCar && M23) {
+    el.btnDriveBossCar.addEventListener("click", () => {
+      M23.toggleDriving(data, activeLand, v23Helpers);
+    });
+  }
+  if (el.cityEmergencyBar && M23) {
+    el.cityEmergencyBar.addEventListener("click", () => {
+      const st = M23.get3DRenderState(data);
+      const targetLid = st.pendingEmergencyLand ? st.pendingEmergencyLand.landId : null;
+      M23.dispatchEmergency(data, v23Helpers, false);
+      if (targetLid && !M23.isDriving()) switchLand(targetLid);
+    });
+  }
+  [
+    ["drvUpBtn", "up"],
+    ["drvDownBtn", "down"],
+    ["drvLeftBtn", "left"],
+    ["drvRightBtn", "right"]
+  ].forEach(([id, dir]) => {
+    const b = document.getElementById(id);
+    if (!b || !M23) return;
+    const onDown = (ev) => {
+      ev.preventDefault();
+      M23.setTouchDir(dir, true);
+    };
+    const onUp = () => M23.setTouchDir(dir, false);
+    b.addEventListener("pointerdown", onDown);
+    b.addEventListener("pointerup", onUp);
+    b.addEventListener("pointerleave", onUp);
+    b.addEventListener("pointercancel", onUp);
+  });
+  const drvInspectBtn = document.getElementById("drvInspectBtn");
+  if (drvInspectBtn && M23) {
+    drvInspectBtn.addEventListener("click", () => M23.honkAndInspect(data, v23Helpers));
+  }
+  const drvExitBtn = document.getElementById("drvExitBtn");
+  if (drvExitBtn && M23) {
+    drvExitBtn.addEventListener("click", () => M23.stopDriving(v23Helpers));
+  }
 
   el.managerAlertBar.addEventListener("click", () => {
     switchLand("station");
@@ -3600,6 +3704,15 @@
     if (emp.v16) {
       emp.v16.specialDayKey = "bayram";
       emp.v16.xp = 1200;
+    }
+    if (M23) {
+      emp.v23 = M23.createDefaultV23();
+      emp.v23.loungeUnlocked = true;
+      emp.v23.morale = 135;
+      emp.v23.activeContracts = [
+        { id: 1, emoji: "✈️", name: "Havalimanı VIP Transfer & Yakıt İhalesi", cycleIncome: 2650, daysLeft: 4 }
+      ];
+      M23.applyBrandThemeToDOM(data);
     }
     saveGame();
   }

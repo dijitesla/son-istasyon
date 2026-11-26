@@ -235,10 +235,11 @@ window.EmpireSystem = (function () {
       // Sağ Kanat Lojistik & Plaza
       sideLevels: { logistics: 0, office: 0 },
 
-      // 3. Arazi Mega Holding Kompleksi, 4..10 Araziler & v16 Holding Ligi / Banka / VIP
+      // 3. Arazi Mega Holding Kompleksi, 4..10 Araziler, v16 Holding & v23 Yeni Mekanikler
       land3: window.Land3System ? window.Land3System.createDefaultLand3() : null,
       extraLands: window.ExtraLandsSystem ? window.ExtraLandsSystem.createDefaultExtraLands() : null,
       v16: window.HoldingV16 ? window.HoldingV16.createDefaultV16() : null,
+      v23: window.MechanicsV23 ? window.MechanicsV23.createDefaultV23() : null,
 
       // Çok Kaynaklı Şahsi Maaş Sistemi!
       personalCash: 0,
@@ -305,6 +306,9 @@ window.EmpireSystem = (function () {
     }
     if (window.HoldingV16) {
       out.v16 = window.HoldingV16.mergeV16(saved.v16);
+    }
+    if (window.MechanicsV23) {
+      out.v23 = window.MechanicsV23.mergeV23(saved.v23);
     }
 
     out.electronics = Object.assign({}, saved.electronics || {});
@@ -598,9 +602,11 @@ window.EmpireSystem = (function () {
       if (callbacks.onStockTick) callbacks.onStockTick();
     }
 
-    // Otoyol üst şerit arka plan trafiği (Yan Arazi)
+    // Otoyol üst şerit arka plan trafiği (Yan Arazi) + 3..10 Araziler (Moral & Patron Teftiş Hızı Dahil!)
+    const M23 = window.MechanicsV23;
+    const dt3 = dt * (M23 ? M23.getLandSpeedMult(data, "land3") : 1.0);
     if (window.Land3System) {
-      window.Land3System.updateLand3(dt, data, callbacks.onLand2Earn);
+      window.Land3System.updateLand3(dt3, data, callbacks.onLand2Earn);
     }
     if (window.ExtraLandsSystem) {
       window.ExtraLandsSystem.updateExtraLands(dt, data, callbacks.onLand2Earn);
@@ -617,10 +623,11 @@ window.EmpireSystem = (function () {
     lotBgHighwayCars = lotBgHighwayCars.filter((hc) => hc.x > -60);
 
     if (!emp.land2Owned) return;
+    const dt2 = dt * (M23 ? M23.getLandSpeedMult(data, "land2") : 1.0);
 
     // 2. ÜCRETLİ OTOPARK SİMÜLASYONU (Hangi sekmede olursan ol çalışır!)
     if (emp.parkingUnlocked) {
-      parkSpawnTimer -= dt;
+      parkSpawnTimer -= dt2;
       if (parkSpawnTimer <= 0) {
         spawnParkingCar(emp);
         const mallBoost = emp.mallUnlocked ? 0.78 : 1.0;
@@ -741,7 +748,7 @@ window.EmpireSystem = (function () {
       const totalRent = Math.round(getMallTotalCycleRent(emp) * v16Mult);
       if (totalRent > 0) {
         const cleanMult = mallNeedsCleaning ? 0.45 : 1.0;
-        mallRentProgress += (dt / 7.5) * cleanMult;
+        mallRentProgress += (dt2 / 7.5) * cleanMult;
         if (mallRentProgress >= 1) {
           mallRentProgress -= 1;
           data.cash += totalRent;
@@ -777,7 +784,7 @@ window.EmpireSystem = (function () {
     SIDE_TOWERS.forEach((tw) => {
       const lvl = emp.sideLevels[tw.key] || 0;
       if (lvl > 0) {
-        sideProgress[tw.key] += dt / tw.cycleSec;
+        sideProgress[tw.key] += dt2 / tw.cycleSec;
         if (sideProgress[tw.key] >= 1) {
           sideProgress[tw.key] -= 1;
           const inc = Math.round(calcSideTowerIncome(tw, lvl) * v16Mult);

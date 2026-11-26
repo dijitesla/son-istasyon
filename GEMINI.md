@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v22.0 — Tek Dev Açık Dünya 2×5 Şehir Bulvarı 3D Motoru — Three.js)
+## Proje Özeti: Son İstasyon (v23.0 — 3D Patron Sürüşü, Canlı İhaleler, Acil Müdahale & 10 Arazi İmparatorluk)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -76,8 +76,16 @@
     - İki ana otoyol bulvarı, 6 dikey bağlantı caddesi, güney çevre yolu, kesintisiz akan şehir trafiği ve henüz alınmamış arsalar için 3D **"SATILIK ARSA"** çitli parselleri kuruldu.
     - Parmağınla/fareyle sürükleyerek araziler arasında kesintisiz gezilir, üstteki `1..10` butonları kamerayı o araziye akıcı biçimde uçurur, `🎥` kamera moduna eklenen **"İmparatorluk"** kuşbakışı ile tüm 10 arazi tek ekranda görünür ve hangi araziye dokunulursa doğrudan o arazi yönetilir.
 
-## 📌 Diğer Bilgisayardaki Asistana Devir Notu (25 Kasım — v22.0 Son Durum)
-- **Mevcut Sürüm:** **v22.0** — tüm dosyalar `main` dalına yüklendi ve canlı tarayıcıda **0 konsol hatası** ile doğrulandı.
+  - **v23.0 Altı Yeni Canlı Oyun Mekaniği (`mechanics_v23.js`, `engine3d.js`, `game.js`, `index.html`, `style.css`):**
+    1. **🏎️ Patron Direksiyonda (3D Açık Dünya Sürüş & 2x Hız Teftişi):** Sol alttaki `🏎️` butonuyla veya `⚡ Komuta -> Sürüş` menüsünden kendi kişisel arabanla (İtalyan Süper Spor, Elektrikli SUV, Lüks Sedan vb.) 2×5 3D şehir bulvarında Mac/Windows (`WASD` / Yön tuşları + `Space` korna) ve mobil dokunmatik yön tuşlarıyla serbestçe gezilir; sahip olunan arazilerin önünde **📣 Teftiş & Korna** basıldığında 60 sn boyunca **2x Hız & Verim** bonusu açılır!
+    2. **⛽ Canlı Akaryakıt Fiyat Rekabeti:** `🟢 İndirimli Sürüm (39.90₺ — +%65 araç akını + market/restoran yoğunluğu)`, `🟡 Piyasa Normali (44.90₺)` ve `🔴 Yüksek Kâr Marjı (52.90₺ — +%45 araç başı yakıt/LPG/EV kârı)` modları; seçilen fiyat **3D Yakıt Fiyat Totemi** üzerinde anında güncellenir!
+    3. **🚑 Araziler Arası 3D Acil Müdahale:** Sahip olunan arazilerde periyodik sağlık veya kıvılcım/teknik acilleri çıkar; tek dokunuşla (veya 🏥 Özel Hastane + Müdür varsa otomatik) **3D Ambulans** veya **3D İtfaiye/Acil Ekip Aracı** çakar lambalarıyla bulvardan hedef araziye gidip müdahale eder, yüksek nakit + itibar kazandırır.
+    4. **🔨 Canlı Dev İhaleler (Süreli Açık Artırma):** Rakiplerle (`Hakkı Bey`, `Selçuk Bey`, `Aysel Hanım` vb.) yarışılan süreli B2B/Belediye yakıt, lojistik, stadyum sponsorluğu ve havalimanı VIP transfer ihaleleri; kazanılan sözleşmeler çok günlü düzenli döngü geliri sağlar.
+    5. **🪧 Kendi Marka Adını & Neon Rengini Basma:** Oyuncunun yazdığı marka adı (ör. `DİJİTESLA`) ve seçtiği 5 kurumsal neon rengi **3D Yakıt Totemi, Otoyol Dev Tabelası, Market, Grand AVM, Grand Otel, Açılış Logosu ve Holding Ligi** tabelalarına anında işlenir!
+    6. **🏅 Çalışan Morali, Kahve İkramı, Bayram İkramiyesi & Sosyal Tesis:** Tüm 10 araziyi etkileyen moral çubuğu (`0–150%`), Sıcak Kahve & Tatlı ikramı, **%150 Süper Coşku (1.5x Turbo Hız)** veren Bayram İkramiyesi ve yorulmayı %65 azaltan kalıcı **Personel Dinlenme & Kafe Salonu**.
+
+## 📌 Diğer Bilgisayardaki Asistana Devir Notu (26 Kasım — v23.0 Son Durum)
+- **Mevcut Sürüm:** **v23.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
 - **Bu Oturumda Tamamlanan Büyük Dönüşüm (v17.0 -> v22.0):**
   1. **Gerçek 3D WebGL Motoru (`v20.0`, `lib/three.min.js`, `engine3d.js`):** Düz 2D haritadan gerçek Three.js İzometrik 3D dünyaya geçildi (`empire.js`, `land3.js`, `lands_4_10.js`, `holding_v16.js` içine salt-okunur `get3DState()` eklendi).
   2. **SimCity Tarzı Kamera & Mimari (`v20.1`):** Dar açılı (`28° FOV`) dengeli izometrik kamera, sol alt kamera kontrolüne **🔄 90° döndürme** (4 köşe 360° bakış), prosedürel dokular, parapet çatılar, klimalar ve çift yüzlü ışıklı 3D bina tabelaları eklendi.

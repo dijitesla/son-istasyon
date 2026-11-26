@@ -167,8 +167,12 @@ window.Engine3D = (function () {
     return tex;
   }
 
-  function createTotemTexture() {
-    const key = "fuel_totem_v21";
+  function createTotemTexture(data) {
+    const M23 = window.MechanicsV23;
+    const pol = M23 && data ? M23.getFuelPolicy(data) : { key: "normal", benzin: "44.90", dizel: "43.20", lpg: "25.40", ev: "9.50" };
+    const brandShort = M23 && data ? M23.getBrandShort(data) : "SON";
+    const neon = M23 && data ? M23.getNeonTheme(data) : { key: "amber", hex: "#dc2626", dark: "#dc2626" };
+    const key = `fuel_totem_v23_${brandShort}_${pol.key}_${neon.key}`;
     if (texCache[key]) return texCache[key];
     const c = document.createElement("canvas");
     c.width = 128;
@@ -176,17 +180,20 @@ window.Engine3D = (function () {
     const g = c.getContext("2d");
     g.fillStyle = "#0f172a";
     g.fillRect(0, 0, 128, 256);
-    g.fillStyle = "#dc2626";
+    g.fillStyle = neon.key === "amber" ? "#dc2626" : neon.dark;
     g.fillRect(6, 6, 116, 48);
+    g.strokeStyle = neon.hex;
+    g.lineWidth = 3;
+    g.strokeRect(6, 6, 116, 48);
     g.fillStyle = "#fef08a";
-    g.font = "900 22px sans-serif";
+    g.font = brandShort.length > 7 ? "900 13.5px sans-serif" : brandShort.length > 5 ? "900 16px sans-serif" : "900 20px sans-serif";
     g.textAlign = "center";
-    g.fillText("SON 7/24", 64, 38);
+    g.fillText(`${brandShort} 7/24`, 64, 37);
     const rows = [
-      ["BENZİN", "44.90", "#4ade80"],
-      ["DİZEL", "43.20", "#facc15"],
-      ["OTOGAZ", "25.40", "#38bdf8"],
-      ["EV kW", "9.50", "#c084fc"]
+      ["BENZİN", pol.benzin, "#4ade80"],
+      ["DİZEL", pol.dizel, "#facc15"],
+      ["OTOGAZ", pol.lpg, "#38bdf8"],
+      ["EV kW", pol.ev, "#c084fc"]
     ];
     rows.forEach(([lbl, pr, col], idx) => {
       const y = 66 + idx * 45;
@@ -582,6 +589,13 @@ window.Engine3D = (function () {
     }
   }
 
+  function followWorldPos(wx, wz) {
+    targetPanX = Math.max(-145, Math.min(145, wx));
+    targetPanZ = Math.max(-64, Math.min(68, wz));
+    if (elevIdx === 2) elevIdx = 0;
+    if (targetZoom > 1.15) targetZoom = 0.88;
+  }
+
   function getFocusedLand() {
     let bestId = "station";
     let bestDist = Infinity;
@@ -928,11 +942,15 @@ window.Engine3D = (function () {
       group.add(stripe);
     });
 
-    // Otoyol Girişi Işıklı 3D Yakıt Fiyat Totemi (SON 7/24)!
+    // Otoyol Girişi Işıklı 3D Yakıt Fiyat Totemi (Canlı Fiyat + Özel Marka Adı!)
+    const M23 = window.MechanicsV23;
+    const brandFull = M23 ? M23.ensureV23(data).brandName : "SON İSTASYON";
+    const neonObj = M23 ? M23.getNeonTheme(data) : { hex: "#facc15", glow: "#fde047", dark: "#991b1b" };
+
     const totemGroup = new THREE.Group();
     const tBase = box(1.8, 0.45, 1.2, "#334155");
     tBase.position.y = 0.22;
-    const tTex = createTotemTexture();
+    const tTex = createTotemTexture(data);
     const tMat = new THREE.MeshStandardMaterial({
       map: tTex,
       emissive: new THREE.Color("#ffffff"),
@@ -949,15 +967,15 @@ window.Engine3D = (function () {
     totemGroup.rotation.y = 0.35;
     group.add(totemGroup);
 
-    // 2. Otoyol Dev Işıklı Reklam Tabelası ("SON İSTASYON")
+    // 2. Otoyol Dev Işıklı Reklam Tabelası (Kendi Marka Adın & Neon Rengin!)
     if (data.billboardInstalled) {
       const bGroup = new THREE.Group();
       const leg1 = cyl(0.16, 0.2, 4.4, 6, "#64748b", { metal: 0.5 });
       leg1.position.set(-3.0, 2.2, 0);
       const leg2 = cyl(0.16, 0.2, 4.4, 6, "#64748b", { metal: 0.5 });
       leg2.position.set(3.0, 2.2, 0);
-      const bTex = createSignTexture("★ SON İSTASYON ★", "#991b1b", "#fef9c3", "#facc15");
-      const bMat = new THREE.MeshStandardMaterial({ map: bTex, emissive: new THREE.Color("#ffffff"), emissiveMap: bTex, emissiveIntensity: 0.55 });
+      const bTex = createSignTexture(`★ ${brandFull} ★`, neonObj.dark || "#991b1b", "#fef9c3", neonObj.hex);
+      const bMat = new THREE.MeshStandardMaterial({ map: bTex, emissive: new THREE.Color("#ffffff"), emissiveMap: bTex, emissiveIntensity: 0.58 });
       const board = new THREE.Mesh(new THREE.BoxGeometry(8.2, 2.0, 0.42), bMat);
       board.position.set(0, 4.9, 0);
       board.castShadow = true;
@@ -1023,8 +1041,8 @@ window.Engine3D = (function () {
 
       const canopy = box(4.8, 0.36, 3.2, isVip ? "#92400e" : "#1e293b", { metal: 0.35, rough: 0.3 });
       canopy.position.set(px, 3.7, pz + 0.3);
-      const neonStrip = box(4.92, 0.15, 3.32, isVip ? "#fde047" : "#38bdf8", {
-        emissive: isVip ? "#facc15" : "#0ea5e9",
+      const neonStrip = box(4.92, 0.15, 3.32, isVip ? "#fde047" : neonObj.hex, {
+        emissive: isVip ? "#facc15" : neonObj.hex,
         emInt: 1.25
       });
       neonStrip.position.set(px, 3.54, pz + 0.3);
@@ -1230,7 +1248,8 @@ window.Engine3D = (function () {
       }
     };
 
-    buildFrontBuilding(stMeta.MARKET_POS, true, "#57321d", "#293548", "#f59e0b", "MARKET 7/24", "market");
+    const brandShort = M23 ? M23.getBrandShort(data) : "SON";
+    buildFrontBuilding(stMeta.MARKET_POS, true, "#57321d", "#293548", neonObj.hex, `${brandShort} MARKET`, "market");
     buildFrontBuilding(stMeta.RESTAURANT_POS, data.restaurantUnlocked, "#6c2310", "#3b1c14", "#fb923c", "RESTORAN", "restaurant");
     buildFrontBuilding(stMeta.MOTEL_POS, data.motelUnlocked, "#4a1942", "#2d1444", "#f472b6", "MİNİ MOTEL", "motel");
   }
@@ -1321,7 +1340,10 @@ window.Engine3D = (function () {
       mallBase.receiveShadow = true;
       group.add(mallBase);
 
-      addDetailedRoof(group, mx, 5.95, mz, mw, md, "#1e293b", "#f59e0b", "OTOYOL GRAND AVM", "#7c2d12");
+      const M23 = window.MechanicsV23;
+      const bShort2 = M23 ? M23.getBrandShort(data) : "OTOYOL";
+      const neon2 = M23 ? M23.getNeonTheme(data).hex : "#f59e0b";
+      addDetailedRoof(group, mx, 5.95, mz, mw, md, "#1e293b", neon2, `${bShort2} GRAND AVM`, "#7c2d12");
 
       const portico = box(6.8, 3.2, 2.0, "#991b1b", { emissive: "#dc2626", emInt: 0.4 });
       portico.position.set(mx, 1.6, mz - md / 2 - 0.8);
@@ -1604,12 +1626,15 @@ window.Engine3D = (function () {
         group.add(col);
       }
     } else {
+      const M23 = window.MechanicsV23;
+      const bShortX = M23 ? M23.getBrandShort(data) : "GRAND";
+      const neonX = M23 ? M23.getNeonTheme(data).hex : "#facc15";
       const palette = {
-        hotel: { body: "#7c2d12", trim: "#facc15", glass: "#38bdf8", title: "GRAND OTEL" },
+        hotel: { body: "#7c2d12", trim: neonX, glass: "#38bdf8", title: `${bShortX} OTEL` },
         hospital: { body: "#e2e8f0", trim: "#38bdf8", glass: "#0ea5e9", title: "ÖZEL HASTANE" },
         autofactory: { body: "#334155", trim: "#f97316", glass: "#7dd3fc", title: "OTO FABRİKA" },
         techpark: { body: "#1e1b4b", trim: "#818cf8", glass: "#38bdf8", title: "TEKNOKENT" }
-      }[st.projectKey] || { body: "#334155", trim: "#facc15", glass: "#38bdf8", title: "TESİS" };
+      }[st.projectKey] || { body: "#334155", trim: neonX, glass: "#38bdf8", title: "TESİS" };
 
       const bw = 30;
       const bd = 21;
@@ -1693,7 +1718,8 @@ window.Engine3D = (function () {
   function createVehicle3D(color, shape) {
     const g = new THREE.Group();
     const isBus = shape === "bus";
-    const isTruck = shape === "truck" || shape === "tanker" || shape === "tow" || isBus;
+    const isEmerg = shape === "ambulance" || shape === "fire";
+    const isTruck = shape === "truck" || shape === "tanker" || shape === "tow" || isBus || isEmerg;
     const isSport = shape === "sport" || shape === "ev";
     const w = isTruck ? 2.38 : 1.94;
     const l = isBus ? 5.8 : isTruck ? 4.7 : isSport ? 3.8 : 3.5;
@@ -1706,7 +1732,35 @@ window.Engine3D = (function () {
     bumper.position.y = 0.44;
     g.add(body, bumper);
 
-    if (shape === "tanker") {
+    if (shape === "ambulance") {
+      const boxBody = box(w * 0.96, 1.38, l * 0.64, "#f8fafc", { rough: 0.25 });
+      boxBody.position.set(0, 1.42, 0.62);
+      const stripe = box(w * 0.99, 0.28, l * 0.65, "#ef4444", { emissive: "#dc2626", emInt: 0.45 });
+      stripe.position.set(0, 1.25, 0.62);
+      const cab = box(w * 0.92, 1.15, l * 0.3, "#f8fafc", { rough: 0.25 });
+      cab.position.set(0, 1.22, -1.4);
+      const ws = box(w * 0.84, 0.52, 0.14, "#0f172a", { metal: 0.85, rough: 0.12 });
+      ws.position.set(0, 1.42, -2.1);
+      const barL = box(0.65, 0.24, 0.34, "#ef4444", { emissive: "#ef4444", emInt: 2.2 });
+      barL.position.set(-0.48, 2.2, -0.5);
+      const barR = box(0.65, 0.24, 0.34, "#38bdf8", { emissive: "#0284c7", emInt: 2.2 });
+      barR.position.set(0.48, 2.2, -0.5);
+      g.add(boxBody, stripe, cab, ws, barL, barR);
+    } else if (shape === "fire") {
+      const tankBox = box(w * 0.96, 1.32, l * 0.62, "#dc2626", { metal: 0.35, rough: 0.25 });
+      tankBox.position.set(0, 1.38, 0.62);
+      const ladder = box(0.75, 0.18, l * 0.78, "#e2e8f0", { metal: 0.75 });
+      ladder.position.set(0, 2.15, 0.25);
+      const cab = box(w * 0.94, 1.26, l * 0.32, "#b91c1c", { metal: 0.35, rough: 0.25 });
+      cab.position.set(0, 1.28, -1.42);
+      const ws = box(w * 0.84, 0.52, 0.14, "#bae6fd", { emissive: "#0ea5e9", emInt: 0.3, metal: 0.85 });
+      ws.position.set(0, 1.48, -2.14);
+      const barL = box(0.68, 0.24, 0.34, "#ef4444", { emissive: "#ef4444", emInt: 2.2 });
+      barL.position.set(-0.48, 2.02, -1.4);
+      const barR = box(0.68, 0.24, 0.34, "#facc15", { emissive: "#eab308", emInt: 2.2 });
+      barR.position.set(0.48, 2.02, -1.4);
+      g.add(tankBox, ladder, cab, ws, barL, barR);
+    } else if (shape === "tanker") {
       const tank = cyl(0.94, 0.94, 3.2, 14, "#f8fafc", { metal: 0.65, rough: 0.18 });
       tank.rotation.x = Math.PI / 2;
       tank.position.set(0, 1.44, 0.52);
@@ -1864,12 +1918,14 @@ window.Engine3D = (function () {
   }
 
   function computeSceneSig(activeLand, data) {
+    const v23 = (data.empire && data.empire.v23) || {};
+    const bSig = `${v23.brandName || "SON"}_${v23.neonTheme || "amber"}_${v23.fuelPolicy || "normal"}`;
     if (activeLand === "station") {
-      return `st_${data.pumpsUnlocked}_${data.lpgUnlocked}_${data.towUnlocked}_${data.busBakeryUnlocked}_${data.evUnlocked}_${data.carWashUnlocked}_${data.garageUnlocked}_${data.scaleUnlocked}_${data.restaurantUnlocked}_${data.motelUnlocked}_${data.solarInstalled}_${data.billboardInstalled}`;
+      return `st_${bSig}_${data.pumpsUnlocked}_${data.lpgUnlocked}_${data.towUnlocked}_${data.busBakeryUnlocked}_${data.evUnlocked}_${data.carWashUnlocked}_${data.garageUnlocked}_${data.scaleUnlocked}_${data.restaurantUnlocked}_${data.motelUnlocked}_${data.solarInstalled}_${data.billboardInstalled}`;
     }
     if (activeLand === "land2") {
       const e = data.empire;
-      return `l2_${e.land2Owned}_${e.parkingUnlocked}_${e.parkingCapLvl}_${e.mallUnlocked}_${e.sideLevels.logistics}_${e.sideLevels.office}`;
+      return `l2_${bSig}_${e.land2Owned}_${e.parkingUnlocked}_${e.parkingCapLvl}_${e.mallUnlocked}_${e.sideLevels.logistics}_${e.sideLevels.office}`;
     }
     if (activeLand === "land3") {
       const l3 = data.empire.land3 || {};
@@ -1877,7 +1933,7 @@ window.Engine3D = (function () {
       return `l3_${l3.owned}_${l3.themeUnlocked}_${l3.refineryUnlocked}_${l3.resortUnlocked}_${l3.spaUnlocked}_${bOwned}`;
     }
     const st = (data.empire.extraLands && data.empire.extraLands[activeLand]) || {};
-    return `ex_${activeLand}_${st.owned}_${st.projectKey}_${st.floorsLvl}_${st.vipUpgrade}_${st.heliUpgrade}`;
+    return `ex_${bSig}_${activeLand}_${st.owned}_${st.projectKey}_${st.floorsLvl}_${st.vipUpgrade}_${st.heliUpgrade}`;
   }
 
   function clearGroup(grp) {
@@ -2161,6 +2217,83 @@ window.Engine3D = (function () {
       }
     }
 
+    // v23.0 — 3D PATRON MAKAM ARACI SÜRÜŞÜ, ARAZİLER ARASI AMBULANS/İTFAİYE VE 2X TEFTİŞ ETİKETLERİ!
+    let v23Render = null;
+    if (window.MechanicsV23 && window.MechanicsV23.get3DRenderState) {
+      v23Render = window.MechanicsV23.get3DRenderState(data);
+      if (v23Render.bossDrive) {
+        const bd = v23Render.bossDrive;
+        vehList.push({
+          wx: bd.wx,
+          wz: bd.wz,
+          angle: Math.PI - bd.angle,
+          color: bd.color,
+          shape: bd.shape
+        });
+        overlayLabels.push({
+          wx: bd.wx,
+          wz: bd.wz,
+          h: 3.1,
+          text: bd.tag,
+          bg: "rgba(153, 27, 27, 0.94)",
+          brd: "#fde047",
+          major: true
+        });
+      }
+      if (v23Render.emergencyVehicle) {
+        const ev = v23Render.emergencyVehicle;
+        vehList.push({
+          wx: ev.wx,
+          wz: ev.wz,
+          angle: Math.PI - ev.angle,
+          color: ev.kind === "ambulance" ? "#f8fafc" : "#dc2626",
+          shape: ev.kind === "ambulance" ? "ambulance" : "fire"
+        });
+        overlayLabels.push({
+          wx: ev.wx,
+          wz: ev.wz,
+          h: 3.6,
+          text: ev.kind === "ambulance" ? "🚑 ACİL AMBULANS" : "🚒 ACİL EKİP",
+          bg: "#dc2626",
+          brd: "#fef08a",
+          major: true
+        });
+      }
+      if (v23Render.pendingEmergencyLand) {
+        const pL = LAND_LAYOUT[v23Render.pendingEmergencyLand.landId];
+        if (pL) {
+          overlayLabels.push({
+            wx: pL.ox,
+            wz: pL.oz,
+            h: 11.5,
+            text: v23Render.pendingEmergencyLand.kind === "ambulance" ? "🚨 🚑 ACİL DURUM!" : "🚨 🚒 KIVILCIM ALARMI!",
+            bg: "#dc2626",
+            brd: "#fef08a",
+            major: true
+          });
+        }
+      }
+      if (v23Render.inspectedLands) {
+        Object.keys(v23Render.inspectedLands).forEach((lid) => {
+          const rem = v23Render.inspectedLands[lid];
+          if (rem > 0 && LAND_LAYOUT[lid]) {
+            overlayLabels.push({
+              wx: LAND_LAYOUT[lid].ox,
+              wz: LAND_LAYOUT[lid].oz - 14,
+              h: 6.2,
+              text: `📣 2X HIZ (${Math.ceil(rem)}sn)`,
+              bg: "rgba(21, 128, 61, 0.92)",
+              brd: "#fde047",
+              major: true
+            });
+          }
+        });
+      }
+      if (v23Render.floats) {
+        v23Render.floats.forEach((ft) => floats.push(ft));
+      }
+    }
+
     // Araç Havuzu (Tüm 10 Arazi + İki Şehir Bulvarı!)
     while (vehicleMeshes.length < vehList.length) {
       const m = createVehicle3D("#ef4444", "sedan");
@@ -2320,6 +2453,18 @@ window.Engine3D = (function () {
         overlayCtx.globalAlpha = 1;
       });
 
+      if (v23Render && v23Render.bossDrive && v23Render.bossDrive.hornFlash > 0) {
+        const hSc = worldPosToScreen(v23Render.bossDrive.wx, 1.0, v23Render.bossDrive.wz);
+        if (hSc.visible) {
+          const prog = 1 - v23Render.bossDrive.hornFlash / 0.85;
+          overlayCtx.strokeStyle = `rgba(253, 224, 71, ${Math.max(0, 1 - prog)})`;
+          overlayCtx.lineWidth = 3.2;
+          overlayCtx.beginPath();
+          overlayCtx.arc(hSc.x, hSc.y, 18 + prog * 56, 0, Math.PI * 2);
+          overlayCtx.stroke();
+        }
+      }
+
       overlayCtx.restore();
     }
   }
@@ -2334,6 +2479,7 @@ window.Engine3D = (function () {
     zoomBy,
     panBy,
     focusLand,
+    followWorldPos,
     getFocusedLand,
     rotate90,
     resetCamera,

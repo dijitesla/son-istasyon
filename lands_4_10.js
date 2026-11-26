@@ -368,9 +368,10 @@ window.ExtraLandsSystem = (function () {
 
       if (!st.owned || !st.projectKey) return;
       const proj = getProjectDef(st.projectKey);
+      const dtL = dt * (window.MechanicsV23 ? window.MechanicsV23.getLandSpeedMult(data, lDef.id) : 1.0);
 
       // 1. Otoyoldan Tesise Müşteri Aracı Gelişi (Kesintisiz Waypoint Motoru!)
-      rt.spawnTimer -= dt;
+      rt.spawnTimer -= dtL;
       if (rt.spawnTimer <= 0 && rt.waitingCars.length < 5) {
         rt.spawnTimer = Math.max(1.15, 3.4 - st.floorsLvl * 0.35 - (st.heliUpgrade ? 0.55 : 0));
         const slotIdx = rt.waitingCars.length;
@@ -432,7 +433,7 @@ window.ExtraLandsSystem = (function () {
 
       // 2. Eleman Varsa (Resepsiyonist veya Genel Müdür) Otomatik Kayıt Açar! Yoksa Patronu Bekler!
       if ((st.staff.clerk || st.staff.manager) && rt.waitingCars.some((c) => c.arrived)) {
-        rt.clerkTimer += dt;
+        rt.clerkTimer += dtL;
         const clerkRate = st.staff.manager && st.staff.clerk ? 0.65 : st.staff.manager ? 0.85 : 1.25;
         if (rt.clerkTimer >= clerkRate) {
           rt.clerkTimer = 0;
@@ -442,7 +443,7 @@ window.ExtraLandsSystem = (function () {
 
       // 3. Konaklayan / İşlem Gören Birimler Süresi Dolunca Ödeme Bırakır ve Oda Kirlenir!
       for (let i = rt.occupiedTimers.length - 1; i >= 0; i--) {
-        rt.occupiedTimers[i] -= dt;
+        rt.occupiedTimers[i] -= dtL;
         if (rt.occupiedTimers[i] <= 0) {
           rt.occupiedTimers.splice(i, 1);
           rt.dirtyCount += 1;

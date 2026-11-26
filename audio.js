@@ -197,6 +197,18 @@ class SoundEngine {
     this.softTone(490, 0.26, 0.032, 0, 620);
     this.softTone(620, 0.28, 0.028, 0.26, 490);
   }
+
+  carHorn() {
+    // Tok ve keyifli çift tonlu patron otomobil kornası ("Bip-Bip!")
+    if (this.muted) return;
+    this.init();
+    if (!this.ctx) return;
+    this.vibrate(18);
+    this.softTone(370, 0.13, 0.042, 0);
+    this.softTone(466.16, 0.13, 0.038, 0);
+    this.softTone(370, 0.22, 0.045, 0.16);
+    this.softTone(466.16, 0.22, 0.04, 0.16);
+  }
 }
 
 window.sfx = new SoundEngine();
