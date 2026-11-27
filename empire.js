@@ -564,23 +564,9 @@ window.EmpireSystem = (function () {
       emp.pendingRefund = 0;
     }
 
-    // 🚀 TEK SEFERLİK ANLIK +%1000 BORSA BOĞA RALLİSİ!
+    // v26.0 Yayın Sürümü: Yapay +%1000 test borsa sıçraması kaldırıldı — gerçekçi canlı borsa hareketi!
     if (emp.v16 && !emp.v16.surge1000Applied) {
       emp.v16.surge1000Applied = true;
-      INITIAL_STOCKS.forEach((s) => {
-        const st = emp.stocks[s.sym];
-        if (st) {
-          st.prev = st.price;
-          st.price = Math.round(st.price * 11); // +%1000 artış!
-        }
-      });
-      if (emp.v16.ipoLaunched && emp.v16.ipoStockPrice > 0) {
-        emp.v16.ipoPrevPrice = emp.v16.ipoStockPrice;
-        emp.v16.ipoStockPrice = Math.round(emp.v16.ipoStockPrice * 11);
-      }
-      emp.stockNews = "🚀 TARİHİ BOĞA RALLİSİ! Borsadaki tüm hisseler anlık +%1000 fırladı!";
-      if (callbacks.onStockSurge) callbacks.onStockSurge();
-      if (callbacks.onStockTick) callbacks.onStockTick();
     }
 
     const v16Mult = (() => {

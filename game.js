@@ -79,7 +79,7 @@
   }
 
   let data = {
-    cash: 120,
+    cash: 180,
     fuelStock: 1200,
     tankLevel: 1,
     autoTanker: false,
@@ -407,8 +407,8 @@
   // 9 Pompa Adası: Üst Sıra (P1..P5 VIP) + Orta Sıra (P6..P9 VIP)
   const PUMPS = [
     { idx: 0, x: 144, y: 142, carX: 144, carY: 175, laneY: APRON_MID_Y, unlockCost: 0, label: "POMPA 1", short: "P-1", shortLabel: "P-1", isVip: false },
-    { idx: 1, x: 200, y: 142, carX: 200, carY: 175, laneY: APRON_MID_Y, unlockCost: 420, label: "POMPA 2", short: "P-2", shortLabel: "P-2", isVip: false },
-    { idx: 2, x: 256, y: 142, carX: 256, carY: 175, laneY: APRON_MID_Y, unlockCost: 1150, label: "POMPA 3", short: "P-3", shortLabel: "P-3", isVip: false },
+    { idx: 1, x: 200, y: 142, carX: 200, carY: 175, laneY: APRON_MID_Y, unlockCost: 360, label: "POMPA 2", short: "P-2", shortLabel: "P-2", isVip: false },
+    { idx: 2, x: 256, y: 142, carX: 256, carY: 175, laneY: APRON_MID_Y, unlockCost: 980, label: "POMPA 3", short: "P-3", shortLabel: "P-3", isVip: false },
     { idx: 3, x: 312, y: 142, carX: 312, carY: 175, laneY: APRON_MID_Y, unlockCost: 2200, label: "POMPA 4", short: "P-4", shortLabel: "P-4", isVip: false },
     { idx: 4, x: 368, y: 142, carX: 368, carY: 175, laneY: APRON_MID_Y, unlockCost: 3600, label: "POMPA 5 VIP", short: "VIP-1", shortLabel: "P-5 VIP", isVip: true },
     { idx: 5, x: 158, y: 262, carX: 158, carY: 296, laneY: APRON_LOW_Y, unlockCost: 5200, label: "POMPA 6", short: "P-6", shortLabel: "P-6", isVip: false },
@@ -538,6 +538,48 @@
     return n.toLocaleString("tr-TR");
   }
 
+  let onboardingDismissed = false;
+  let onboardingDoneCelebrated = false;
+  const obCard = document.getElementById("onboardingGuide");
+  const obBadge = document.getElementById("obStepBadge");
+  const obText = document.getElementById("obStepText");
+  const obDismissBtn = document.getElementById("obDismissBtn");
+  if (obDismissBtn) {
+    obDismissBtn.addEventListener("click", () => {
+      onboardingDismissed = true;
+      if (obCard) obCard.classList.add("hidden");
+    });
+  }
+  function updateOnboardingGuide() {
+    if (!obCard || !obBadge || !obText) return;
+    if (onboardingDismissed || data.dayNumber > 3 || (data.totalServed >= 8 && data.staff.ali > 0)) {
+      obCard.classList.add("hidden");
+      return;
+    }
+    const step1Done = data.totalServed >= 1;
+    const step2Done = data.pumpsUnlocked >= 2 || data.marketLvl >= 2 || data.pumpSpeedLvl >= 2;
+    const step3Done = data.staff.ali > 0;
+    if (step1Done && step2Done && step3Done) {
+      obCard.classList.add("hidden");
+      if (!onboardingDoneCelebrated) {
+        onboardingDoneCelebrated = true;
+        showToast("🎉 Harikasın Patron! Şimdi haritayı sürükleyip 10 arazilik imparatorluğunu büyüt!");
+      }
+      return;
+    }
+    obCard.classList.remove("hidden");
+    if (!step1Done) {
+      obBadge.textContent = "ADIM 1/3";
+      obText.textContent = "⛽ Pompadaki araca dokun ve ilk yakıt satışını yap!";
+    } else if (!step2Done) {
+      obBadge.textContent = "ADIM 2/3";
+      obText.textContent = "🏗️ Alttan 'İstasyon'a dokunup 2. Pompa veya Market geliştir!";
+    } else {
+      obBadge.textContent = "ADIM 3/3";
+      obText.textContent = "👷 'Ekip & Müdür'den Pompacı Ali'yi işe al, otomatik kazanç başlasın!";
+    }
+  }
+
   function updateHUD() {
     el.cashText.textContent = formatCompactMoney(data.cash);
     el.fuelStockText.textContent = `${Math.round(data.fuelStock)}`;
@@ -597,6 +639,7 @@
         ? "0₺ Rafineri!"
         : `Doldur (${tCost}₺)`;
     el.btnCallTanker.classList.toggle("fuel-low", data.fuelStock < maxFuelCapacity() * 0.18);
+    updateOnboardingGuide();
 
     const staffKeys = ["ali", "murat", "hasan", "zeynep", "mehmet", "kerem", "selin", "osman", "kadir", "cemil"];
     const hiredCount =
@@ -827,7 +870,7 @@
     const isBig = chosenPump >= 2 ? Math.random() < 0.34 : Math.random() < 0.16;
     const isVip = p.isVip || (data.reputation >= 72 && Math.random() < 0.3) || (data.billboardInstalled && Math.random() < 0.25) || vipRushTimer > 0;
     const fuelReq = isBig ? 30 : 18;
-    let basePay = Math.round((p.isVip ? 56 : isVip ? 42 : isBig ? 34 : 22) + (data.pumpSpeedLvl - 1) * 7);
+    let basePay = Math.round((p.isVip ? 64 : isVip ? 48 : isBig ? 40 : 26) + (data.pumpSpeedLvl - 1) * 7);
     if (vipRushTimer > 0) basePay = Math.round(basePay * 1.4);
 
     const shapes = isBig ? ["truck"] : isVip ? ["sport", "suv"] : ["sedan", "suv", "taxi"];
@@ -2951,9 +2994,9 @@
     el.staffList.innerHTML = "";
 
     const staffDefs = [
-      { key: "ali", title: data.staff.ali > 0 ? `👷 Pompacı Ali (Sv.${data.staff.ali}/6)` : "👷 Pompacı Ali'yi İşe Al", desc: "Pompalara koşup otomatik yakıt doldurur. (Maaş: ~24₺+)", done: data.staff.ali >= 6, cost: data.staff.ali === 0 ? 360 : Math.round(320 * Math.pow(1.55, data.staff.ali)) },
-      { key: "duman", title: data.dumanHired ? "🐕 Bekçi Köpek Duman (Görevde ❤️)" : "🐕 Bekçi Köpek Duman'ı Sahiplen", desc: "Özel olaylarda koku/stres ipuçları verir, Güvenlik +10! (Mama: 15₺)", done: data.dumanHired, cost: 240 },
-      { key: "zeynep", title: data.staff.zeynep > 0 ? `👩‍🍳 Kasiyer Zeynep (Sv.${data.staff.zeynep}/6)` : "👩‍🍳 Kasiyer Zeynep'i İşe Al", desc: "7/24 Market satışlarını otomatik yapar. (Maaş: ~26₺+)", done: data.staff.zeynep >= 6, cost: data.staff.zeynep === 0 ? 480 : Math.round(360 * Math.pow(1.55, data.staff.zeynep)) },
+      { key: "ali", title: data.staff.ali > 0 ? `👷 Pompacı Ali (Sv.${data.staff.ali}/6)` : "👷 Pompacı Ali'yi İşe Al", desc: "Pompalara koşup otomatik yakıt doldurur. (Maaş: ~24₺+)", done: data.staff.ali >= 6, cost: data.staff.ali === 0 ? 320 : Math.round(300 * Math.pow(1.55, data.staff.ali)) },
+      { key: "duman", title: data.dumanHired ? "🐕 Bekçi Köpek Duman (Görevde ❤️)" : "🐕 Bekçi Köpek Duman'ı Sahiplen", desc: "Özel olaylarda koku/stres ipuçları verir, Güvenlik +10! (Mama: 15₺)", done: data.dumanHired, cost: 220 },
+      { key: "zeynep", title: data.staff.zeynep > 0 ? `👩‍🍳 Kasiyer Zeynep (Sv.${data.staff.zeynep}/6)` : "👩‍🍳 Kasiyer Zeynep'i İşe Al", desc: "7/24 Market satışlarını otomatik yapar. (Maaş: ~26₺+)", done: data.staff.zeynep >= 6, cost: data.staff.zeynep === 0 ? 420 : Math.round(350 * Math.pow(1.55, data.staff.zeynep)) },
       { key: "kerem", title: data.staff.kerem > 0 ? `⚡ EV Teknisyeni Kerem (Sv.${data.staff.kerem}/6)` : "⚡ EV Teknisyeni Kerem'i İşe Al", desc: "Elektrikli araçları otomatik hızlı şarj eder! (Maaş: ~30₺+)", done: data.staff.kerem >= 6, cost: data.staff.kerem === 0 ? 920 : Math.round(480 * Math.pow(1.55, data.staff.kerem)) },
       { key: "kadir", title: data.staff.kadir > 0 ? `🚿 Yıkamacı Kadir (Sv.${data.staff.kadir}/6)` : "🚿 Yıkamacı Kadir'i İşe Al", desc: "Oto yıkamaya giren araçları otomatik yıkar. (Maaş: ~28₺+)", done: data.staff.kadir >= 6, cost: data.staff.kadir === 0 ? 980 : Math.round(500 * Math.pow(1.55, data.staff.kadir)) },
       { key: "mehmet", title: data.staff.mehmet > 0 ? `👨‍🍳 Aşçı Mehmet (Sv.${data.staff.mehmet}/6)` : "👨‍🍳 Aşçı Mehmet'i İşe Al", desc: "Yol Restoranı'ndaki 10 çeşit yemeği otomatik servis eder! (Maaş: ~35₺+)", done: data.staff.mehmet >= 6, cost: data.staff.mehmet === 0 ? 1100 : Math.round(520 * Math.pow(1.55, data.staff.mehmet)) },

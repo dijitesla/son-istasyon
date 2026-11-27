@@ -93,6 +93,10 @@ window.Engine3D = (function () {
   let cargoShipMesh = null;
   let seaWaterMat = null;
   let weatherMeshes = [];
+  let rimLight = null;
+  let cloudMeshes = [];
+  let fuelHoseMeshes = [];
+  let smokeMeshes = [];
 
   // =========================================================================
   // PROSEDÜREL DOKU & TABELA ÜRETİCİ (0 KB İNDİRME — KRİSTAL NETLİK!)
@@ -443,9 +447,14 @@ window.Engine3D = (function () {
     scene.add(sunLight);
     scene.add(sunLight.target);
 
-    fillLight = new THREE.DirectionalLight(0x93c5fd, 0.48);
+    fillLight = new THREE.DirectionalLight(0x93c5fd, 0.52);
     fillLight.position.set(-32, 34, -26);
     scene.add(fillLight);
+
+    // v26.0 Sıcak Altın Rim (Kenar Parlama) Işığı — Araç tavanları, camlar & binalar daha gerçekçi parlar!
+    rimLight = new THREE.DirectionalLight(0xfde68a, 0.36);
+    rimLight.position.set(-48, 22, 46);
+    scene.add(rimLight);
 
     worldBaseGroup = new THREE.Group();
     staticLandGroup = new THREE.Group();
@@ -455,6 +464,41 @@ window.Engine3D = (function () {
     scene.add(staticLandGroup);
     scene.add(dynamicGroup);
     scene.add(weatherGroup);
+
+    // v26.0 Gökyüzünde Yumuşak Süzülen 3D Bulut Kümeleri
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: 0xdbeafe,
+      emissiveIntensity: 0.25,
+      roughness: 0.95,
+      transparent: true,
+      opacity: 0.62
+    });
+    for (let ci = 0; ci < 9; ci++) {
+      const cg = new THREE.Group();
+      const s1 = new THREE.Mesh(new THREE.SphereGeometry(5.5, 10, 8), cloudMat);
+      s1.scale.set(1.6, 0.55, 1.0);
+      const s2 = new THREE.Mesh(new THREE.SphereGeometry(4.2, 10, 8), cloudMat);
+      s2.position.set(-4.8, -0.4, 0.6);
+      s2.scale.set(1.4, 0.5, 0.95);
+      const s3 = new THREE.Mesh(new THREE.SphereGeometry(4.0, 10, 8), cloudMat);
+      s3.position.set(4.9, -0.5, -0.5);
+      s3.scale.set(1.35, 0.48, 0.9);
+      cg.add(s1, s2, s3);
+      cg.position.set(-190 + ci * 48, 52 + (ci % 3) * 6, -95 + (ci % 4) * 58);
+      cg.userData = { speed: 1.4 + (ci % 3) * 0.55, mat: cloudMat };
+      scene.add(cg);
+      cloudMeshes.push(cg);
+    }
+
+    // v26.0 Canlı Yükselen Baca Dumanı / Buhar Parçacıkları (Restoran & Taş Fırın!)
+    const smokeMat = new THREE.MeshBasicMaterial({ color: 0xf1f5f9, transparent: true, opacity: 0.36 });
+    for (let si = 0; si < 8; si++) {
+      const sm = new THREE.Mesh(new THREE.SphereGeometry(0.45, 7, 7), smokeMat.clone());
+      sm.userData = { phase: si * 0.125, isOven: si < 4 };
+      scene.add(sm);
+      smokeMeshes.push(sm);
+    }
 
     // 10 Arazi İçin Bağımsız Önbellekli Sahne Grupları (Yalnızca Değişen Arazi Yenilenir!)
     LAND_IDS.forEach((lid) => {
@@ -1039,6 +1083,22 @@ window.Engine3D = (function () {
     const tankBase = box(4.0, 0.3, 6.0, "#1e293b");
     tankBase.position.set(tankX, 0.16, tankZ);
     group.add(tankBase);
+    // Yakıt Silosu Koruma Dubaları (Sarı-Siyah Güvenlik Bariyerleri!)
+    [[-1.85, -2.8], [1.85, -2.8], [-1.85, 2.8], [1.85, 2.8]].forEach(([bx, bz]) => {
+      const bol = cyl(0.14, 0.15, 0.95, 8, "#facc15", { rough: 0.35 });
+      bol.position.set(tankX + bx, 0.52, tankZ + bz);
+      const tip = cyl(0.15, 0.15, 0.22, 8, "#0f172a");
+      tip.position.set(tankX + bx, 0.88, tankZ + bz);
+      group.add(bol, tip);
+    });
+    // Gerçekçi Hafif Lastik İzi Sürüş Koridoru (Otoyol Girişinden Pompalara!)
+    const trackMat = getMat("#1e293b", { op: 0.22, rough: 0.92, shadow: false });
+    [[-0.7, 0], [0.7, 0]].forEach(([ox]) => {
+      const trV = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 22), trackMat);
+      trV.rotation.x = -Math.PI / 2;
+      trV.position.set(to3DX(98) + ox, 0.085, to3DZ(165));
+      group.add(trV);
+    });
     const silo = cyl(1.25, 1.25, 5.0, 16, "#e2e8f0", { metal: 0.5, rough: 0.28 });
     silo.position.set(tankX, 2.7, tankZ);
     group.add(silo);
@@ -1069,7 +1129,12 @@ window.Engine3D = (function () {
 
       const island = box(4.2, 0.28, 1.2, "#cbd5e1");
       island.position.set(px, 0.16, pz);
-      group.add(island);
+      // Pompa Adası Koruyucu Sarı Çelik Dubalar
+      const bL = cyl(0.11, 0.12, 0.78, 8, "#facc15", { rough: 0.35 });
+      bL.position.set(px - 2.02, 0.45, pz);
+      const bR = cyl(0.11, 0.12, 0.78, 8, "#facc15", { rough: 0.35 });
+      bR.position.set(px + 2.02, 0.45, pz);
+      group.add(island, bL, bR);
 
       const pumpBody = box(1.2, 1.65, 0.8, isVip ? "#eab308" : "#ef4444", { metal: 0.25, rough: 0.32 });
       pumpBody.position.set(px, 1.08, pz);
@@ -2105,7 +2170,30 @@ window.Engine3D = (function () {
       g.add(hl, tl);
     });
 
-    g.userData = { color, shape };
+    // v26.0 Yumuşak Zemin Temas Gölgesi (Araçları Asfalta Gerçekçi Oturtur!)
+    const contactSh = new THREE.Mesh(
+      new THREE.PlaneGeometry(w + 0.55, l + 0.6),
+      new THREE.MeshBasicMaterial({ color: 0x050811, transparent: true, opacity: 0.34, depthWrite: false })
+    );
+    contactSh.rotation.x = -Math.PI / 2;
+    contactSh.position.y = 0.03;
+    g.add(contactSh);
+
+    // v26.0 Gece/Akşam Far Işık Hüzmesi (Asfalta Vuran Sıcak LED Far Yansıması!)
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0xfef08a,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false
+    });
+    const beam = new THREE.Mesh(new THREE.ConeGeometry(w * 0.78, 4.2, 10, 1, true), beamMat);
+    beam.rotation.x = -Math.PI / 2;
+    beam.scale.set(1.0, 1.0, 0.14);
+    beam.position.set(0, 0.14, -l / 2 - 2.05);
+    beam.visible = false;
+    g.add(beam);
+
+    g.userData = { color, shape, headlightBeam: beam };
     return g;
   }
 
@@ -2474,18 +2562,52 @@ window.Engine3D = (function () {
       }
     }
 
-    // Dinamik Gökyüzü & Işık
+    // Dinamik Gökyüzü, Gün Batımı & Işıklandırma (v26.0 Gerçekçi Atmosfer!)
     const n = phase.night;
+    const sunset = Math.max(0, 1 - Math.abs(n - 0.42) * 3.2);
     const skyCol = new THREE.Color().setRGB(
-      0.11 + (1 - n) * 0.32,
-      0.17 + (1 - n) * 0.45,
-      0.30 + (1 - n) * 0.56
+      0.09 + (1 - n) * 0.34 + sunset * 0.24,
+      0.14 + (1 - n) * 0.48 + sunset * 0.1,
+      0.27 + (1 - n) * 0.59 - sunset * 0.06
     );
     scene.background.copy(skyCol);
     fog.color.copy(skyCol);
-    sunLight.intensity = 0.68 + (1 - n) * 0.98;
-    hemiLight.intensity = 0.62 + (1 - n) * 0.6;
-    sunLight.color.setHex(n > 0.6 ? 0xbae6fd : n > 0.25 ? 0xfdba74 : 0xfff8e7);
+    sunLight.intensity = 0.66 + (1 - n) * 1.04;
+    hemiLight.intensity = 0.58 + (1 - n) * 0.64;
+    sunLight.color.setHex(n > 0.62 ? 0x93c5fd : sunset > 0.25 ? 0xfdba74 : 0xfff8e7);
+    if (rimLight) {
+      rimLight.intensity = 0.24 + sunset * 0.42 + (1 - n) * 0.18;
+      rimLight.color.setHex(n > 0.6 ? 0x38bdf8 : sunset > 0.25 ? 0xfb923c : 0xfde68a);
+    }
+
+    // Süzülen 3D Bulutlar
+    for (let ci = 0; ci < cloudMeshes.length; ci++) {
+      const cg = cloudMeshes[ci];
+      cg.position.x += cg.userData.speed * dt;
+      if (cg.position.x > 220) cg.position.x = -220;
+      if (ci === 0 && cg.userData.mat) {
+        cg.userData.mat.color.setHex(n > 0.6 ? 0x64748b : sunset > 0.25 ? 0xfed7aa : 0xffffff);
+        cg.userData.mat.opacity = 0.34 + (1 - n) * 0.32;
+      }
+    }
+
+    // Yükselen Sıcak Baca Dumanı (Restoran & Taş Fırın!)
+    const stL = LAND_LAYOUT.station;
+    const skyWideNow = elevIdx === 2 || camZoom > 1.75;
+    for (let si = 0; si < smokeMeshes.length; si++) {
+      const sm = smokeMeshes[si];
+      const activeSmoke = sm.userData.isOven ? !!data.busBakeryUnlocked : !!data.restaurantUnlocked;
+      sm.visible = activeSmoke && !skyWideNow;
+      if (sm.visible) {
+        const cyc = ((nowMs * 0.00032 + sm.userData.phase) % 1);
+        const baseX = sm.userData.isOven ? stL.ox + to3DX(342) : stL.ox + to3DX(276);
+        const baseZ = sm.userData.isOven ? stL.oz + to3DZ(90) : stL.oz + to3DZ(554);
+        const baseY = sm.userData.isOven ? 3.4 : 5.1;
+        sm.position.set(baseX + Math.sin(cyc * 5 + si) * 0.55 + cyc * 1.1, baseY + cyc * 4.2, baseZ - cyc * 0.5);
+        sm.scale.setScalar(0.55 + cyc * 1.35);
+        sm.material.opacity = Math.sin(cyc * Math.PI) * 0.32;
+      }
+    }
 
     // Yumuşak 360° Döndürülebilir Açık Dünya İzometrik Kamera!
     const pr = ELEV_PRESETS[elevIdx];
@@ -2792,9 +2914,13 @@ window.Engine3D = (function () {
       }
     }
 
-    // v24.0 — 🏡 MALİKANE, 🚕 ŞEHİR TAKSİ FİLOSU, ⚽ STADYUM CANLI MAÇ & ⚓ 3D İHRACAT GEMİSİ!
+    // v24.0 + v26.0 — 🏡 MALİKANE, 🚕 ŞEHİR TAKSİ FİLOSU, ⚽ STADYUM, ⚓ İHRACAT GEMİSİ & CANLI DALGALI DENİZ!
     if (seaWaterMat) {
       seaWaterMat.emissiveIntensity = 0.24 + Math.sin(nowMs * 0.0022) * 0.08;
+      if (seaWaterMat.map) {
+        seaWaterMat.map.offset.x = (nowMs * 0.000045) % 1;
+        seaWaterMat.map.offset.y = Math.sin(nowMs * 0.0004) * 0.04;
+      }
     }
     if (window.CityV24 && window.CityV24.get3DRenderState) {
       const s24 = window.CityV24.get3DRenderState(data);
@@ -2904,8 +3030,44 @@ window.Engine3D = (function () {
         mesh.visible = true;
         mesh.position.set(v.wx, 0.08, v.wz);
         mesh.rotation.y = -v.angle;
+        if (mesh.userData.headlightBeam) {
+          mesh.userData.headlightBeam.visible = n > 0.34;
+        }
       } else {
         vehicleMeshes[i].visible = false;
+      }
+    }
+
+    // v26.0 Canlı 3D Yakıt Dolum Hortumları (Pompadan Dolum Yapan Araca Bağlanır!)
+    const activeFueling = [];
+    stMeta.cars.forEach((c) => {
+      if (c.state === "fueling" && c.pumpIdx >= 0 && stMeta.PUMPS[c.pumpIdx]) {
+        activeFueling.push({ pump: stMeta.PUMPS[c.pumpIdx], car: c });
+      }
+    });
+    while (fuelHoseMeshes.length < activeFueling.length) {
+      const hm = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.08, 1, 6),
+        getMat("#22c55e", { emissive: "#16a34a", emInt: 0.75, shadow: false })
+      );
+      dynamicGroup.add(hm);
+      fuelHoseMeshes.push(hm);
+    }
+    for (let hi = 0; hi < fuelHoseMeshes.length; hi++) {
+      const hm = fuelHoseMeshes[hi];
+      if (hi < activeFueling.length && !isSkyOverview) {
+        const { pump, car } = activeFueling[hi];
+        const p1 = new THREE.Vector3(stL.ox + to3DX(pump.x), 1.35, stL.oz + to3DZ(pump.y));
+        const p2 = new THREE.Vector3(stL.ox + to3DX(car.x), 0.92, stL.oz + to3DZ(car.y));
+        const distH = p1.distanceTo(p2);
+        hm.visible = distH > 0.2 && distH < 10;
+        if (hm.visible) {
+          hm.position.copy(p1).add(p2).multiplyScalar(0.5);
+          hm.scale.set(1, distH, 1);
+          hm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), p2.clone().sub(p1).normalize());
+        }
+      } else {
+        hm.visible = false;
       }
     }
 

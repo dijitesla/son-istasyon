@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#090e1c" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Son İstasyon v25.1 — Dikey Mobil 3D Şehir İmparatorluğu</title>
+  <title>Son İstasyon v26.0 — Gerçekçi 3D Şehir İmparatorluğu</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./assets/app-icon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./assets/app-icon.png" />
-  <link rel="stylesheet" href="./style.css?v=25.1" />
+  <link rel="stylesheet" href="./style.css?v=26.0" />
 </head>
 <body>
   <main class="phone-stage">
@@ -37,11 +37,7 @@
           ▶ OYUNA BAŞLA
         </button>
 
-        <button id="loadPresetBtn" class="splash-cta-secondary">
-          ⏩ 10 Arazi Full Kayıttan Aç
-        </button>
-
-        <div class="splash-meta">v25.1 Mobil 3D Şehir &amp; 14 Yapı Çeşidi • Dijitesla Studio</div>
+        <div class="splash-meta">v26.0 Gerçekçi 3D Sürüm • Dijitesla Studio</div>
       </div>
     </section>
 
@@ -176,6 +172,15 @@
           </button>
           <button id="drvExitBtn" class="drive-exit-btn">🚪 İn</button>
         </div>
+      </div>
+
+      <!-- Sıfırdan Başlayanlar İçin 3 Adımlı Kısa Rehber Kartı (Tamamlanınca Otomatik Kaybolur!) -->
+      <div id="onboardingGuide" class="onboarding-card hidden">
+        <div class="ob-top">
+          <span id="obStepBadge" class="ob-badge">ADIM 1/3</span>
+          <button id="obDismissBtn" class="ob-close" title="Rehberi Gizle">✕</button>
+        </div>
+        <div id="obStepText" class="ob-text">⛽ Pompadaki araca dokun ve ilk yakıtı doldur!</div>
       </div>
 
       <!-- Harita Altı Tek Satır Yüzen Durum İpucu -->
@@ -437,18 +442,18 @@
     </div>
   </main>
 
-  <script src="./lib/three.min.js?v=25.1"></script>
-  <script src="./audio.js?v=25.1"></script>
-  <script src="./visuals.js?v=25.1"></script>
-  <script src="./map_renderer.js?v=25.1"></script>
-  <script src="./story_events.js?v=25.1"></script>
-  <script src="./land3.js?v=25.1"></script>
-  <script src="./lands_4_10.js?v=25.1"></script>
-  <script src="./holding_v16.js?v=25.1"></script>
-  <script src="./mechanics_v23.js?v=25.1"></script>
-  <script src="./city_v24.js?v=25.1"></script>
-  <script src="./empire.js?v=25.1"></script>
-  <script src="./engine3d.js?v=25.1"></script>
-  <script src="./game.js?v=25.1"></script>
+  <script src="./lib/three.min.js?v=26.0"></script>
+  <script src="./audio.js?v=26.0"></script>
+  <script src="./visuals.js?v=26.0"></script>
+  <script src="./map_renderer.js?v=26.0"></script>
+  <script src="./story_events.js?v=26.0"></script>
+  <script src="./land3.js?v=26.0"></script>
+  <script src="./lands_4_10.js?v=26.0"></script>
+  <script src="./holding_v16.js?v=26.0"></script>
+  <script src="./mechanics_v23.js?v=26.0"></script>
+  <script src="./city_v24.js?v=26.0"></script>
+  <script src="./empire.js?v=26.0"></script>
+  <script src="./engine3d.js?v=26.0"></script>
+  <script src="./game.js?v=26.0"></script>
 </body>
 </html>

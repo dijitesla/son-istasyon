@@ -100,6 +100,12 @@
     - Köşe Şehir Radarı mobil boyutuna (`112×80px`) daraltıldı, özel gün rozeti sağ üste taşındı ve 6'lı sağ menü butonları dikey mobil ekrana çakışmasız oturtuldu.
     - **KURAL:** Oyun her zaman **dikey 9:16 mobil oyun görünümünde** kalmalı; tam ekran yatay masaüstü görünümüne çevrilmemeli.
 
+  - **v26.0 Yayın Öncesi Cila, Gerçekçi 3D Atmosfer & Android APK (`engine3d.js`, `game.js`, `empire.js`, `index.html`, `style.css`, `.github/workflows/build-apk.yml`):**
+    - **Ekonomi Dengelemesi & Test Temizliği:** Yapay `+%1000` test borsa sıçraması ve açılıştaki full kayıt test butonu kaldırıldı (gizli `?kayit=son-durum` test linki korunur); sıfırdan başlayanlar için başlangıç kasası (`180 ₺`), ilk pompa/eleman fiyatları ve yakıt gelirleri dengelendi.
+    - **İlk 3 Adım Başlangıç Rehberi (`#onboardingGuide`):** Yeni oyunculara sırasıyla ilk dolum, ilk geliştirme ve ilk pompacı adımlarını gösteren, tamamlanınca otomatik kapanan rehber eklendi.
+    - **Ekstra Gerçekçi 3D Grafikler:** Gökyüzünde süzülen 3D bulut kümeleri, altın gün batımı kenar ışığı (`rimLight`), her aracın altında yumuşak temas gölgesi + gece asfalta vuran far hüzmeleri, hareketli deniz dalgaları, pompa koruma dubaları, lastik izli asfalt şeridi, pompadan araca bağlanan **canlı 3D yakıt dolum hortumu** ve Restoran/Fırın bacalarından yükselen sıcak duman eklendi.
+    - **Android APK Otomasyonu:** GitHub Actions üzerinden dikey kilitli, çevrimdışı çalışan **Android APK (`Son-Istasyon-v26.0.apk`)** üretim hattı kuruldu.
+
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (26 Kasım — v25.0 Son Durum)
 - **Mevcut Sürüm:** **v25.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
 - **Bu Oturumda Tamamlanan Büyük Dönüşüm (v22.0 -> v25.0):**

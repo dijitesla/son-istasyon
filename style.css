@@ -1613,3 +1613,54 @@ html, body {
   .fab-btn .fab-lbl { font-size: 7.5px; }
   #miniRadarCanvas { width: 96px; height: 68px; }
 }
+
+/* =========================================================================
+   v26.0 — İLK 3 ADIM BAŞLANGIÇ REHBERİ (SADE, TEMİZ, MOBİL UYUMLU)
+   ========================================================================= */
+.onboarding-card {
+  position: absolute;
+  left: 50%;
+  bottom: 36px;
+  transform: translateX(-50%);
+  width: calc(100% - 96px);
+  max-width: 310px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(9, 14, 28, 0.96));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.6px solid rgba(250, 204, 21, 0.78);
+  border-radius: 14px;
+  padding: 7px 10px;
+  z-index: 19;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6), 0 0 14px rgba(250, 204, 21, 0.25);
+}
+.onboarding-card.hidden { display: none; }
+.ob-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+.ob-badge {
+  background: linear-gradient(90deg, #f59e0b, #eab308);
+  color: #090d1a;
+  font-size: 9.5px;
+  font-weight: 900;
+  padding: 2px 7px;
+  border-radius: 999px;
+  letter-spacing: 0.4px;
+}
+.ob-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.ob-text {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #fef9c3;
+  line-height: 1.32;
+}
