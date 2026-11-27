@@ -32,15 +32,17 @@ html, body {
 
 .phone-stage {
   position: relative;
-  width: 100vw;
-  max-width: 100%;
+  width: 100%;
+  max-width: 450px;
   height: 100dvh;
-  max-height: 100dvh;
+  max-height: 940px;
   background: var(--bg-dark);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: none;
+  border-left: 2px solid #1e293b;
+  border-right: 2px solid #1e293b;
+  box-shadow: 0 0 60px rgba(255, 51, 88, 0.2);
 }
 
 @media (max-width: 480px) {
@@ -270,9 +272,10 @@ html, body {
 .floating-effect-pill {
   position: absolute;
   top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: calc(100% - 210px);
+  right: 8px;
+  left: auto;
+  transform: none;
+  max-width: calc(100% - 140px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -282,7 +285,7 @@ html, body {
   border: 1.5px solid rgba(250, 204, 21, 0.65);
   border-radius: 999px;
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 900;
   color: #fef08a;
   z-index: 15;
@@ -299,18 +302,18 @@ html, body {
 .map-fab-stack {
   position: absolute;
   right: 4px;
-  top: 50%;
+  top: 52%;
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 5px;
   z-index: 16;
 }
 
 .fab-btn {
-  width: 44px;
-  padding: 6px 2px 5px;
-  border-radius: 13px;
+  width: 42px;
+  padding: 5px 2px 4px;
+  border-radius: 12px;
   background: rgba(11, 18, 34, 0.84);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -1546,32 +1549,32 @@ html, body {
 }
 
 /* =========================================================================
-   v24.0 — TAM EKRAN GENİŞ GÖRÜNÜM, KÖŞE MİNİ ŞEHİR RADARI & YATAY UYUM
+   v25.1 — DİKEY 9:16 MOBİL OYUN DÜZENİ & KOMPAKT KÖŞE MİNİ ŞEHİR RADARI
    ========================================================================= */
 .mini-radar-box {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  top: 7px;
+  left: 7px;
   background: rgba(9, 14, 28, 0.88);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1.6px solid rgba(56, 189, 248, 0.55);
-  border-radius: 13px;
-  padding: 5px;
+  border: 1.5px solid rgba(56, 189, 248, 0.55);
+  border-radius: 11px;
+  padding: 4px;
   z-index: 17;
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .mini-radar-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  padding: 0 3px;
-  font-size: 10px;
+  gap: 5px;
+  padding: 0 2px;
+  font-size: 9px;
   font-weight: 900;
   color: #bae6fd;
 }
@@ -1581,17 +1584,17 @@ html, body {
   border: 1px solid #475569;
   color: #f8fafc;
   border-radius: 6px;
-  padding: 1px 6px;
-  font-size: 9.5px;
+  padding: 1px 5px;
+  font-size: 9px;
   font-weight: 900;
   cursor: pointer;
 }
 
 #miniRadarCanvas {
   display: block;
-  width: 156px;
-  height: 114px;
-  border-radius: 8px;
+  width: 112px;
+  height: 80px;
+  border-radius: 7px;
   border: 1px solid rgba(148, 163, 184, 0.3);
   cursor: pointer;
 }
@@ -1603,94 +1606,10 @@ html, body {
   display: none;
 }
 
-/* Bilgisayar (Mac & Windows) ve Tablet Geniş Ekran Düzeni */
-@media (min-width: 680px) {
-  .hud-bar {
-    padding: 8px 20px;
-  }
-  .land-ribbon {
-    padding: 6px 20px;
-    justify-content: center;
-  }
-  .land-ribbon-track {
-    max-width: 960px;
-    justify-content: center;
-  }
-  .map-fab-stack {
-    right: 14px;
-    gap: 8px;
-  }
-  .fab-btn {
-    width: 52px;
-    padding: 7px 4px 6px;
-  }
-  .fab-btn .fab-lbl {
-    font-size: 9.5px;
-  }
-  .cam-controls-pill {
-    left: 14px;
-    bottom: 24px;
-    gap: 6px;
-  }
-  .cam-ctrl-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 14px;
-  }
-  .bottom-dock {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(560px, 86vw);
-    border-radius: 20px;
-    border: 1.5px solid rgba(148, 163, 184, 0.3);
-    background: rgba(8, 13, 25, 0.9);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    padding: 8px 12px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65);
-  }
-  .floating-hint-pill {
-    bottom: 84px;
-    font-size: 12px;
-  }
-  .boss-drive-hud {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: 420px;
-    bottom: 86px;
-  }
-  #miniRadarCanvas {
-    width: 192px;
-    height: 140px;
-  }
-}
-
-/* Telefonu Yan Çevirince (Yatay Ekran / Landscape) Ferah Görünüm */
-@media (max-height: 520px) {
-  .hud-bar {
-    padding: 3px 12px;
-  }
-  .land-ribbon {
-    padding: 3px 10px;
-  }
-  .land-chip, .ribbon-arrow, .ribbon-map-btn {
-    height: 25px;
-    font-size: 11px;
-  }
-  .map-fab-stack {
-    gap: 4px;
-  }
-  .fab-btn {
-    width: 40px;
-    padding: 4px 2px;
-  }
-  .fab-btn .fab-ico { font-size: 14px; }
+/* Kısa dikey telefonlarda ek sıkıştırma */
+@media (max-height: 680px) {
+  .fab-btn { width: 40px; padding: 4px 2px 3px; }
+  .fab-btn .fab-ico { font-size: 15px; }
   .fab-btn .fab-lbl { font-size: 7.5px; }
-  #miniRadarCanvas {
-    width: 126px;
-    height: 90px;
-  }
+  #miniRadarCanvas { width: 96px; height: 68px; }
 }

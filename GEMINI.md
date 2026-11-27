@@ -95,6 +95,11 @@
     - Satın alınan arazilere (4.–10. Araziler) kurulabilen yapı seçenekleri 6'dan **14 farklı özel 3D mimarili yapıya** çıkarıldı (`🏨 Grand Otel`, `🏥 Özel Hastane`, `🚗 Oto Fabrika`, `🏟️ Stadyum`, `💻 Teknokent`, `👑 Kongre Sarayı`, **`🌾 Organik Çiftlik & Sera`**, **`🎢 Dev Aquapark`**, **`🎬 Film & Dizi Stüdyosu`**, **`🎓 Özel Üniversite & Saat Kulesi`**, **`⚡ Dönen Rüzgar & Güneş Enerji Santrali`**, **`🏙️ Gökyüzü Köprülü İkiz Kuleler`**, **`✈️ 3D Yolcu Jetli Özel Havalimanı`**, **`🏦 Altın Taçlı Finans Kulesi & Banka`**).
     - Kategori süzgeci (`🌟 Tümü`, `🏨 Turizm`, `🏭 Üretim`, `🎓 Prestij`) ve kurulu bir yapıyı %50 iadeyle kaldırıp **başka bir yapı kurma (`🔄 Değiştir`)** özelliği eklendi.
 
+  - **v25.1 Dikey 9:16 Mobil Oyun Çerçevesi Geri Getirildi (`style.css`, `index.html`):**
+    - v24.0'da eklenen tam ekran yatay/masaüstü genişleme (`width: 100vw` ve `@media (min-width: 680px)`) kaldırıldı; oyun yeniden orijinal **dikey 9:16 mobil telefon çerçevesine** (`max-width: 450px`, `max-height: 940px`) alındı.
+    - Köşe Şehir Radarı mobil boyutuna (`112×80px`) daraltıldı, özel gün rozeti sağ üste taşındı ve 6'lı sağ menü butonları dikey mobil ekrana çakışmasız oturtuldu.
+    - **KURAL:** Oyun her zaman **dikey 9:16 mobil oyun görünümünde** kalmalı; tam ekran yatay masaüstü görünümüne çevrilmemeli.
+
 ## 📌 Diğer Bilgisayardaki Asistana Devir Notu (26 Kasım — v25.0 Son Durum)
 - **Mevcut Sürüm:** **v25.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
 - **Bu Oturumda Tamamlanan Büyük Dönüşüm (v22.0 -> v25.0):**
