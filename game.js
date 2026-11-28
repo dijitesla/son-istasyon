@@ -269,6 +269,27 @@
       total += extW.total;
       extW.breakdown.forEach((b) => breakdown.push(b));
     }
+    if (data.empire && data.empire.v24) {
+      const v24 = data.empire.v24;
+      if (v24.port && v24.port.portManager) {
+        total += 75;
+        breakdown.push({ label: "👨‍✈️ Liman Müdürü Kaptan Demir", amount: 75 });
+      }
+      if (v24.club && v24.club.founded && v24.club.transfers) {
+        const trWages = [
+          { key: "keeper", label: "🧤 Milli Kaleci", amount: 40 },
+          { key: "midfielder", label: "🧠 Brezilyalı 10 Numara", amount: 55 },
+          { key: "striker", label: "⚡ Dünya Yıldızı Golcü", amount: 80 },
+          { key: "coach", label: "👔 Efsane Teknik Direktör", amount: 65 }
+        ];
+        trWages.forEach((tw) => {
+          if (v24.club.transfers[tw.key]) {
+            total += tw.amount;
+            breakdown.push({ label: tw.label, amount: tw.amount });
+          }
+        });
+      }
+    }
     return { total, breakdown };
   }
 
@@ -339,9 +360,6 @@
     canvas: document.getElementById("stationCanvas"),
     threeCanvas: document.getElementById("threeCanvas"),
     hudOverlayCanvas: document.getElementById("hudOverlayCanvas"),
-    btnCamZoomIn: document.getElementById("btnCamZoomIn"),
-    btnCamZoomOut: document.getElementById("btnCamZoomOut"),
-    btnCamRotate: document.getElementById("btnCamRotate"),
     btnCamAngle: document.getElementById("btnCamAngle"),
 
     btnCallTanker: document.getElementById("btnCallTanker"),
@@ -2657,27 +2675,6 @@
     );
   }
 
-  if (el.btnCamZoomIn) {
-    el.btnCamZoomIn.addEventListener("click", () => {
-      sfx.tap();
-      if (is3DActive) E3D.zoomBy(-0.18);
-    });
-  }
-  if (el.btnCamZoomOut) {
-    el.btnCamZoomOut.addEventListener("click", () => {
-      sfx.tap();
-      if (is3DActive) E3D.zoomBy(0.18);
-    });
-  }
-  if (el.btnCamRotate) {
-    el.btnCamRotate.addEventListener("click", () => {
-      sfx.tap();
-      if (is3DActive && E3D.rotate90) {
-        const dirName = E3D.rotate90();
-        showToast(`🔄 Kamera Yönü: ${dirName}`);
-      }
-    });
-  }
   if (el.btnCamAngle) {
     el.btnCamAngle.addEventListener("click", () => {
       sfx.tap();
@@ -2714,18 +2711,14 @@
     // 0. 🚌 Otobüs Peronu & 🥖 Taş Fırın
     if (inBox(pt, BUS_BAY_POS)) {
       if (!data.busBakeryUnlocked) {
-        if (data.cash >= BUS_BAY_POS.unlockCost) {
-          data.cash -= BUS_BAY_POS.unlockCost;
+        payForBusiness(BUS_BAY_POS.unlockCost, "Otobüs Peronu & Taş Fırın", () => {
           data.busBakeryUnlocked = true;
           sfx.perfectHit();
           addFloatingText(BUS_BAY_POS.busX, BUS_BAY_POS.y + 20, "🚌 OTOBÜS & FIRIN AÇILDI!", "#fb923c");
           showToast("🚌 Şehirlerarası Otobüs Peronu & Sıcak Taş Fırın açıldı!");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`Otobüs Peronu & Taş Fırın için ${BUS_BAY_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
       } else {
         openUpgradesModal();
       }
@@ -2735,24 +2728,22 @@
     // 0b. 🔵 LPG / Otogaz Adası
     if (Math.abs(pt.x - LPG_POS.x) < 32 && pt.y > LPG_POS.y - 38 && pt.y < LPG_POS.carY + 28) {
       if (!data.lpgUnlocked) {
-        if (data.cash >= LPG_POS.unlockCost) {
-          data.cash -= LPG_POS.unlockCost;
+        payForBusiness(LPG_POS.unlockCost, "LPG / Otogaz Adası", () => {
           data.lpgUnlocked = true;
           sfx.perfectHit();
           addFloatingText(LPG_POS.x, LPG_POS.y, "🔵 LPG OTOGAZ KURULDU!", "#38bdf8");
           showToast("🔵 LPG / Otogaz Pompası ve Basınçlı Tank kuruldu!");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`LPG Adası için ${LPG_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
         return;
       }
       if (lpgCar && lpgCar.state === "lpg_filling") {
         pointerHeldLpg = true;
         lpgCar.serviceManual = true;
         sfx.tap();
+      } else {
+        openUpgradesModal();
       }
       return;
     }
@@ -2760,8 +2751,7 @@
     // 0c. 🚜 7/24 Oto Çekici Kurtarıcı
     if (inBox(pt, TOW_POS)) {
       if (!data.towUnlocked) {
-        if (data.cash >= TOW_POS.unlockCost) {
-          data.cash -= TOW_POS.unlockCost;
+        payForBusiness(TOW_POS.unlockCost, "7/24 Oto Çekici Kurtarıcı", () => {
           data.towUnlocked = true;
           towMissionCooldown = 2.0;
           sfx.perfectHit();
@@ -2769,10 +2759,7 @@
           showToast("🚜 7/24 Sarı Oto Çekici göreve başladı!");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`7/24 Oto Çekici için ${TOW_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
       } else {
         openUpgradesModal();
       }
@@ -2791,17 +2778,13 @@
       if (Math.abs(pt.x - p.x) < 27 && pt.y > p.y - 38 && pt.y < p.carY + 30) {
         if (i >= data.pumpsUnlocked) {
           if (i > data.pumpsUnlocked) return showToast(`Önce ${PUMPS[data.pumpsUnlocked].label}'i açmalısın!`);
-          if (data.cash >= p.unlockCost) {
-            data.cash -= p.unlockCost;
+          payForBusiness(p.unlockCost, p.label, () => {
             data.pumpsUnlocked += 1;
             sfx.perfectHit();
             addFloatingText(p.x, p.y, `🎉 ${p.label} KURULDU!`, "#fde68a");
             saveGame();
             updateHUD();
-          } else {
-            sfx.burnFail();
-            showToast(`${p.label} için ${p.unlockCost} ₺ gerekli!`);
-          }
+          });
           return;
         }
         const carAtPump = cars.find((c) => c.pumpIdx === i && c.state !== "leaving" && c.state !== "entering");
@@ -2822,24 +2805,22 @@
     // 3. ⚡ EV Hızlı Şarj
     if (inBox(pt, EV_POS)) {
       if (!data.evUnlocked) {
-        if (data.cash >= EV_POS.unlockCost) {
-          data.cash -= EV_POS.unlockCost;
+        payForBusiness(EV_POS.unlockCost, "EV Hızlı Şarj İstasyonu", () => {
           data.evUnlocked = true;
           sfx.perfectHit();
           addFloatingText(EV_POS.carX, EV_POS.y + 30, "⚡ EV ŞARJ KURULDU!", "#22d3ee");
           showToast("⚡ Elektrikli Araç Hızlı Şarj istasyonu açıldı!");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`EV Hızlı Şarj için ${EV_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
         return;
       }
       if (evCar && evCar.state === "charging") {
         if (powerOutage) return showToast("⚡ Elektrik kesik! Önce Marketten sigortayı aç!");
         evCar.serviceManual = true;
         sfx.tap();
+      } else {
+        openUpgradesModal();
       }
       return;
     }
@@ -2847,22 +2828,20 @@
     // 4. 🚿 Oto Yıkama
     if (inBox(pt, WASH_POS)) {
       if (!data.carWashUnlocked) {
-        if (data.cash >= WASH_POS.unlockCost) {
-          data.cash -= WASH_POS.unlockCost;
+        payForBusiness(WASH_POS.unlockCost, "Köpüklü Oto Yıkama", () => {
           data.carWashUnlocked = true;
           sfx.perfectHit();
           addFloatingText(WASH_POS.carX, WASH_POS.y + 30, "🚿 OTO YIKAMA KURULDU!", "#38bdf8");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`Oto Yıkama için ${WASH_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
         return;
       }
       if (washCar && washCar.state === "washing") {
         washCar.serviceManual = true;
         sfx.tap();
+      } else {
+        openUpgradesModal();
       }
       return;
     }
@@ -2870,22 +2849,20 @@
     // 5. 🔧 Tamirhane
     if (inBox(pt, GARAGE_POS)) {
       if (!data.garageUnlocked) {
-        if (data.cash >= GARAGE_POS.unlockCost) {
-          data.cash -= GARAGE_POS.unlockCost;
+        payForBusiness(GARAGE_POS.unlockCost, "Oto Tamirhane Garajı", () => {
           data.garageUnlocked = true;
           sfx.perfectHit();
           addFloatingText(GARAGE_POS.carX, GARAGE_POS.y + 30, "🔧 TAMİRHANE KURULDU!", "#c084fc");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`Tamirhane için ${GARAGE_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
         return;
       }
       if (garageCar && garageCar.state === "repairing") {
         garageCar.serviceManual = true;
         sfx.tap();
+      } else {
+        openUpgradesModal();
       }
       return;
     }
@@ -2893,23 +2870,21 @@
     // 6. 🚛 Tır Kantarı
     if (inBox(pt, SCALE_POS)) {
       if (!data.scaleUnlocked) {
-        if (data.cash >= SCALE_POS.unlockCost) {
-          data.cash -= SCALE_POS.unlockCost;
+        payForBusiness(SCALE_POS.unlockCost, "Tır Kantarı & Dinlenme Parkı", () => {
           data.scaleUnlocked = true;
           sfx.perfectHit();
           addFloatingText(SCALE_POS.carX, SCALE_POS.y + 30, "🚛 TIR KANTARI AÇILDI!", "#facc15");
           showToast("🚛 Tır Kantar & Dinlenme Parkı açıldı!");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`Tır Kantarı için ${SCALE_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
         return;
       }
       if (scaleCar && scaleCar.state === "weighing") {
         scaleCar.serviceManual = true;
         sfx.tap();
+      } else {
+        openUpgradesModal();
       }
       return;
     }
@@ -2932,18 +2907,14 @@
     // 8. 🍽️ Yol Restoranı
     if (inBox(pt, RESTAURANT_POS)) {
       if (!data.restaurantUnlocked) {
-        if (data.cash >= RESTAURANT_POS.unlockCost) {
-          data.cash -= RESTAURANT_POS.unlockCost;
+        payForBusiness(RESTAURANT_POS.unlockCost, "Yol Restoranı", () => {
           data.restaurantUnlocked = true;
           sfx.perfectHit();
           addFloatingText(RESTAURANT_POS.doorX, RESTAURANT_POS.y + 25, "🍽️ RESTORAN AÇILDI!", "#fb923c");
           showToast("🍽️ 10 Çeşit Yemekli Yol Restoranı açıldı!");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`Yol Restoranı için ${RESTAURANT_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
         return;
       }
       if (restaurantQueue.length > 0) completeOneRestaurantOrder();
@@ -2954,18 +2925,14 @@
     // 9. 🏨 Mini Motel
     if (inBox(pt, MOTEL_POS)) {
       if (!data.motelUnlocked) {
-        if (data.cash >= MOTEL_POS.unlockCost) {
-          data.cash -= MOTEL_POS.unlockCost;
+        payForBusiness(MOTEL_POS.unlockCost, "Yol Üstü Mini Motel", () => {
           data.motelUnlocked = true;
           sfx.perfectHit();
           addFloatingText(MOTEL_POS.doorX, MOTEL_POS.y + 25, "🏨 MİNİ MOTEL AÇILDI!", "#f472b6");
           showToast("🏨 Yol Üstü Mini Motel açıldı!");
           saveGame();
           updateHUD();
-        } else {
-          sfx.burnFail();
-          showToast(`Mini Motel için ${MOTEL_POS.unlockCost} ₺ gerekli!`);
-        }
+        });
         return;
       }
       if (motelQueue.length > 0) checkInOneMotelGuest();
@@ -3253,6 +3220,13 @@
     if (compCash + persCash < cost) {
       sfx.burnFail();
       showToast(`Yetersiz bakiye! ${cost.toLocaleString("tr-TR")} ₺ gerekli (Kasa + Cüzdan: ${(compCash + persCash).toLocaleString("tr-TR")} ₺)`);
+      return;
+    }
+
+    // Şahsi cüzdan henüz boşsa (0 ₺) gereksiz ikinci pencere açmadan doğrudan şirket kasasından öde!
+    if (persCash <= 0 && compCash >= cost) {
+      data.cash -= cost;
+      onPaid("company");
       return;
     }
 
@@ -3649,8 +3623,9 @@
   });
   el.closeCityBtn.addEventListener("click", () => el.cityModal.classList.add("hidden"));
 
-  document.querySelectorAll(".city-tab-btn").forEach((btn) => {
+  el.cityModal.querySelectorAll(".city-tab-btn[data-tab]").forEach((btn) => {
     btn.addEventListener("click", () => {
+      if (!btn.dataset.tab) return;
       sfx.tap();
       EMP.setCityTab(btn.dataset.tab);
       EMP.renderCityModal(data, empireHelpers);

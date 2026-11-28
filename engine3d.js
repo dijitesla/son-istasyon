@@ -1585,6 +1585,10 @@ window.Engine3D = (function () {
       };
       animRefs.entryBarrier = makeGate(to3DX(74), to3DZ(98), "#22c55e");
       animRefs.exitBarrier = makeGate(to3DX(378), to3DZ(98), "#f59e0b");
+    } else {
+      const pPlot = box(38.4, 0.12, 16.8, "#1e293b", { op: 0.55 });
+      pPlot.position.set(0, 0.08, to3DZ(196));
+      group.add(pPlot);
     }
 
     // Mermer Süs Havuzu & Fıskiye
@@ -1644,6 +1648,10 @@ window.Engine3D = (function () {
       dome.rotation.y = Math.PI / 2;
       dome.position.set(mx, 6.15, mz + 0.6);
       group.add(dome);
+    } else {
+      const mPlot = box(22.4, 0.14, 23.4, "#1e293b", { op: 0.55 });
+      mPlot.position.set(to3DX(174), 0.08, to3DZ(456));
+      group.add(mPlot);
     }
 
     const logLvl = emp.sideLevels.logistics || 0;
@@ -1655,6 +1663,10 @@ window.Engine3D = (function () {
       wh.position.set(lx, lh / 2 + 0.1, lz);
       group.add(wh);
       addDetailedRoof(group, lx, lh + 0.2, lz, 10.8, 10.8, "#1e293b", "#34d399", "LOJİSTİK", "#064e3b");
+    } else {
+      const lPlot = box(10.6, 0.14, 10.6, "#1e293b", { op: 0.55 });
+      lPlot.position.set(to3DX(370), 0.08, to3DZ(388));
+      group.add(lPlot);
     }
 
     const offLvl = emp.sideLevels.office || 0;
@@ -1683,6 +1695,10 @@ window.Engine3D = (function () {
       hRing.rotation.x = Math.PI / 2;
       hRing.position.set(ox, oh + 0.5, oz + 0.6);
       group.add(hRing);
+    } else {
+      const oPlot = box(10.2, 0.14, 10.2, "#1e293b", { op: 0.55 });
+      oPlot.position.set(to3DX(370), 0.08, to3DZ(524));
+      group.add(oPlot);
     }
   }
 
@@ -1755,6 +1771,10 @@ window.Engine3D = (function () {
       }
       animRefs.ferrisWheel = wheelHub;
       group.add(wheelHub);
+    } else {
+      const thPlot = box(16.5, 0.14, 14.5, "#1e293b", { op: 0.55 });
+      thPlot.position.set(to3DX(150), 0.08, to3DZ(210));
+      group.add(thPlot);
     }
 
     const fx = to3DX(346);
@@ -1820,6 +1840,10 @@ window.Engine3D = (function () {
         glass.position.set(bx + (isLeft ? 3.05 : -3.05), 1.4, bz);
         group.add(base, roof, glass);
       });
+    } else {
+      const rsPlot = box(34.0, 0.14, 16.5, "#1e293b", { op: 0.55 });
+      rsPlot.position.set(0, 0.08, to3DZ(469));
+      group.add(rsPlot);
     }
   }
 
@@ -3150,6 +3174,32 @@ window.Engine3D = (function () {
         }
       }
 
+      // Sıradaki açılabilir pompa ve kilitli ön sıra binalar için 3D harita üstü ipucu!
+      if (!isSkyOverview) {
+        if (data.pumpsUnlocked < stMeta.PUMPS.length) {
+          const nextP = stMeta.PUMPS[data.pumpsUnlocked];
+          pushLbl("station", nextP.x, nextP.y + 10, 1.9, {
+            text: `🔒 ${nextP.short} (${nextP.unlockCost}₺)`,
+            bg: "rgba(15,23,42,0.82)",
+            brd: "#94a3b8"
+          });
+        }
+        if (data.pumpsUnlocked >= 2 && !data.restaurantUnlocked) {
+          pushLbl("station", 239, 512, 1.9, {
+            text: `🔒 Restoran (${stMeta.RESTAURANT_POS.unlockCost}₺)`,
+            bg: "rgba(15,23,42,0.82)",
+            brd: "#fb923c"
+          });
+        }
+        if (data.pumpsUnlocked >= 2 && !data.motelUnlocked) {
+          pushLbl("station", 368, 512, 1.9, {
+            text: `🔒 Motel (${stMeta.MOTEL_POS.unlockCost}₺)`,
+            bg: "rgba(15,23,42,0.82)",
+            brd: "#f472b6"
+          });
+        }
+      }
+
       if (!isSkyOverview) stMeta.floatingTexts.forEach((ft) => pushFloat("station", ft));
       if (isSkyOverview) {
         pushLbl("station", 240, 260, 7.5, { text: "⛽ 1. İSTASYON", bg: "rgba(153,27,27,0.92)", brd: "#facc15", major: true });
@@ -3165,6 +3215,9 @@ window.Engine3D = (function () {
         s2.parkingCars.forEach((c) => {
           if (!(c.isDeck && c.state === "parked")) pushVeh("land2", c.x, c.y, c.angle, c.color, c.shape);
         });
+        if (emp.mallUnlocked && s2.mallDeliveryWaiting) {
+          pushVeh("land2", 96, 296, Math.PI / 2, "#ea580c", "truck");
+        }
         s2.lotShoppers.forEach((sh) => pushChar("land2", sh.x, sh.y, sh.shirt, sh.hair, true));
         if (!isSkyOverview) s2.land2Floats.forEach((ft) => pushFloat("land2", ft));
         if (ar2) {
@@ -3175,11 +3228,34 @@ window.Engine3D = (function () {
         if (isSkyOverview) {
           pushLbl("land2", 240, 360, 12.0, { text: "🏬 2. GRAND AVM", bg: "rgba(124,45,18,0.92)", brd: "#fde047", major: true });
         } else {
-          pushLbl("land2", 230, 110, 4.0, { text: emp.parkingUnlocked ? `🅿️ OTOPARK (${s2.parkingCars.length} Araç)` : `🔒 Otopark`, bg: "rgba(9,13,26,0.88)", brd: "#38bdf8" });
+          const waitingGateCars = s2.parkingCars.filter((c) => c.waitingAtBooth).length;
+          const l2Stf = emp.land2Staff || {};
+          pushLbl("land2", 230, 110, 4.0, { text: emp.parkingUnlocked ? `🅿️ OTOPARK (${s2.parkingCars.length} Araç)` : `🔒 Otopark (${window.EmpireSystem.PARKING_UNLOCK_COST}₺)`, bg: "rgba(9,13,26,0.88)", brd: "#38bdf8" });
+          if (emp.parkingUnlocked && waitingGateCars > 0 && !l2Stf.gateOfficer && !l2Stf.land2Manager) {
+            pushLbl("land2", 392, 108, 3.8, { text: `🎫 ÜCRET AL (${waitingGateCars})!`, bg: "#16a34a", brd: "#fef08a", major: true });
+          }
+          if (emp.mallUnlocked && s2.mallDeliveryWaiting) {
+            pushLbl("land2", 98, 296, 3.6, { text: "📦 MAL KABUL YAP!", bg: "#ea580c", brd: "#fef08a", major: true });
+          }
+          if (emp.mallUnlocked && s2.mallNeedsCleaning) {
+            pushLbl("land2", 174, 368, 3.6, { text: "🧹 AVM BAKIM YAP!", bg: "#dc2626", brd: "#fef08a", major: true });
+          }
           pushLbl("land2", 174, 456, 11.6, {
-            text: emp.mallUnlocked ? `🏬 GRAND AVM (${s2.lotShoppers.length} Müşteri)` : `🔒 AVM Kur`,
+            text: emp.mallUnlocked ? `🏬 GRAND AVM (${s2.lotShoppers.length} Müşteri)` : `🔒 AVM Kur (${window.EmpireSystem.MALL_UNLOCK_COST}₺)`,
             bg: "rgba(124,45,18,0.92)",
             brd: "#fde047"
+          });
+          const logLvl = (emp.sideLevels && emp.sideLevels.logistics) || 0;
+          const offLvl = (emp.sideLevels && emp.sideLevels.office) || 0;
+          pushLbl("land2", 370, 388, logLvl > 0 ? 4.4 + logLvl * 0.5 : 2.0, {
+            text: logLvl > 0 ? `📦 LOJİSTİK ★${logLvl}` : "🔒 Lojistik (4200₺)",
+            bg: logLvl > 0 ? "rgba(6,78,59,0.9)" : "rgba(15,23,42,0.84)",
+            brd: "#34d399"
+          });
+          pushLbl("land2", 370, 524, offLvl > 0 ? 6.8 + offLvl * 2.0 : 2.0, {
+            text: offLvl > 0 ? `🏢 PLAZA ★${offLvl}` : "🔒 Plaza (9500₺)",
+            bg: offLvl > 0 ? "rgba(15,23,42,0.92)" : "rgba(15,23,42,0.84)",
+            brd: "#38bdf8"
           });
         }
       } else {
@@ -3266,6 +3342,26 @@ window.Engine3D = (function () {
               brd: proj.accent,
               major: true
             });
+            if (!isSkyOverview) {
+              const waitingReady = rt.waitingCars.filter((c) => c.arrived).length;
+              const stf = st.staff || {};
+              if (waitingReady > 0 && !stf.clerk && !stf.manager) {
+                pushLbl(lid, 148, 548, 2.2, {
+                  text: `${proj.checkinLabel} (${waitingReady})!`,
+                  bg: "#16a34a",
+                  brd: "#fef08a",
+                  major: true
+                });
+              }
+              if (dirtyU > 0 && !stf.cleaner && !stf.manager) {
+                pushLbl(lid, 332, 548, 2.2, {
+                  text: `${proj.prepLabel} (${dirtyU})!`,
+                  bg: "#ea580c",
+                  brd: "#fef08a",
+                  major: true
+                });
+              }
+            }
           }
         } else {
           pushLbl(lid, 240, 310, 6.2, { text: `🏞️ ${lDef.num}. ARSA (${lDef.deedCost.toLocaleString("tr-TR")}₺)`, bg: "#16a34a", brd: "#fef08a", major: true });
@@ -3645,10 +3741,10 @@ window.Engine3D = (function () {
       overlayLabels.forEach((lbl) => {
         if (isSkyOverview && !lbl.major) return;
         const sc = worldPosToScreen(lbl.wx, lbl.h || 3, lbl.wz);
-        if (!sc.visible || sc.x < -70 || sc.x > cw + 70 || sc.y < -30 || sc.y > ch + 30) return;
+        if (!sc.visible || sc.x < 2 || sc.x > cw - 2 || sc.y < 14 || sc.y > ch - 14) return;
 
         if (lbl.pct !== undefined) {
-          const bx = sc.x >= -10 && sc.x <= cw + 10 ? Math.max(26, Math.min(cw - 26, sc.x)) : sc.x;
+          const bx = Math.max(26, Math.min(cw - 26, sc.x));
           overlayCtx.fillStyle = "rgba(9, 13, 26, 0.9)";
           overlayCtx.strokeStyle = lbl.barCol || "#4ade80";
           overlayCtx.lineWidth = 1.3;
@@ -3661,7 +3757,7 @@ window.Engine3D = (function () {
         } else {
           overlayCtx.font = isSkyOverview ? "900 9px sans-serif" : "900 10px sans-serif";
           const tw = overlayCtx.measureText(lbl.text).width + 13;
-          const dx = sc.x >= -12 && sc.x <= cw + 12 ? Math.max(tw / 2 + 5, Math.min(cw - tw / 2 - 5, sc.x)) : sc.x;
+          const dx = Math.max(tw / 2 + 5, Math.min(cw - tw / 2 - 5, sc.x));
           overlayCtx.fillStyle = lbl.bg || "rgba(9, 13, 26, 0.88)";
           overlayCtx.strokeStyle = lbl.brd || "#facc15";
           overlayCtx.lineWidth = 1.5;

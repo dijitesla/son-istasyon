@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v27.0 — Akıcı 60 FPS, İki Parmak Zoom & 360° Döndürme, İç Müşteri Görünürlüğü & 10 Kredi Paketi)
+## Proje Özeti: Son İstasyon (v27.1 — Tam Oyun QA Testi, Hata Düzeltmeleri & 60 FPS Ultra 3D)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -114,8 +114,14 @@
     5. **🏦 10 Farklı Banka Kredisi Tutarı:** Mevcut `15.000 ₺`, `55.000 ₺` ve `220.000 ₺` kredileri korundu; `5.000 ₺`, `30.000 ₺`, `110.000 ₺`, `500.000 ₺`, `1.000.000 ₺`, `2.500.000 ₺` ve `5.000.000 ₺` tutarlarında 7 yeni kredi eklendi.
     6. **✨ Gelişmiş 3D Grafikler:** 256px keskin asfalt ve taş meydan dokuları, gece yıldızlı gökyüzü kubbesi, araç yan aynaları, kesintisiz LED arka stop şeridi ve taksilerde ışıklı sarı `TAKSİ` tepe tabelası eklendi.
 
-## 📌 Diğer Bilgisayardaki Asistana Devir Notu (28 Kasım — v27.0 Son Durum)
-- **Mevcut Sürüm:** **v27.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
+  - **v27.1 Kapsamlı Oyun Testi (QA) & Hata Düzeltmeleri (`game.js`, `empire.js`, `engine3d.js`, `holding_v16.js`, `land3.js`, `lands_4_10.js`, `index.html`, `manifest.json`):**
+    1. **Menü Sekmesi Çakışması Hatası Giderildi (`game.js`, `empire.js`):** `⚡ Komuta` veya `⚓ Liman/SK` pencerelerinde sekme değiştirildiğinde ortak `.city-tab-btn` sınıfı yüzünden `🏙️ Şehir` ekranının bozulmasına yol açan sekme çakışması kesin olarak düzeltildi.
+    2. **2. Arazi ve 4.–10. Arazilerde Eksik 3D İşlem Rozetleri Eklendi (`engine3d.js`):** 2. Arazide eleman alınmadan önce görünmeyen `🎫 ÜCRET AL!`, `📦 MAL KABUL YAP!` (turuncu 3D sevkiyat kamyonu dahil), `🧹 AVM BAKIM YAP!`, `📦 LOJİSTİK` ve `🏢 PLAZA` 3D etiketleri ile zemin parselleri eklendi; 4.–10. arazilerde eleman yokken müşteri kaydı ve temizlik uyarı rozetleri 3D binanın önüne eklendi.
+    3. **3D Etiket Kenar Kesilmesi & Harita Tıklama İyileştirmesi (`engine3d.js`, `game.js`, `land3.js`, `lands_4_10.js`):** Kamerayı kaydırırken veya yakınlaştırırken ekran dışına çıkan 3D etiketlerin yarım kesilerek kenarda kalması önlendi; satılık arsalarda dokunma alanı genişletildi; 1. İstasyonda haritadan doğrudan bina/pompa açma işlemleri Şahsi Cüzdan/Ortak Ödeme (`payForBusiness`) sistemine bağlandı ve şahsi cüzdan `0 ₺` iken gereksiz ödeme seçimi penceresi kaldırıldı.
+    4. **Muhasebe, Holding Değeri & Tanım Güncellemeleri (`game.js`, `holding_v16.js`, `manifest.json`):** Gün sonu giderlerine Liman Müdürü ve Futbol Kulübü transfer maaşları eklendi; günlük ciro görevine ve Holding Ligi değer hesabına yeni bölge/VIP yatırımları (`price` alanı düzeltmesiyle) dahil edildi; `manifest.json` eski dedektiflik metninden güncel Türkçe holding açıklamasına çevrildi.
+
+## 📌 Diğer Bilgisayardaki Asistana Devir Notu (28 Kasım — v27.1 Son Durum)
+- **Mevcut Sürüm:** **v27.1** — tüm dosyalar `main` dalına yüklendi ve uçtan uca 3 senaryolu tam simülasyon testlerinden **0 hata** ile geçti.
 - **Bu Oturumda Tamamlanan Büyük Dönüşüm (v22.0 -> v25.0):**
   1. **6 Yeni Canlı Mekanik (`v23.0`, `mechanics_v23.js`):** 3D Patron Aracı Sürüşü (`WASD`/Oklar + Mobil D-Pad + `📣 2x Hız Teftiş`), Canlı Akaryakıt Fiyat Rekabeti (3D Totem senkronlu), 3D Ambulans/İtfaiye Acil Müdahale, Süreli Dev İhaleler, Kendi Marka Adını & Neon Rengini 3D Tabelalara Basma ve Çalışan Morali / Bayram İkramiyesi (%150 hız).
   2. **Tam Ekran Görüntüleme, Şehir Radarı & 4 Yeni Bölge (`v24.0`, `city_v24.js`, `style.css`):** Dar `450px` kutu kaldırılıp Mac/Windows ve yatay/dikey telefonda **%100 Tam Ekran 3D Şehir** görünümüne geçildi; sol üste tek dokunuşla ışınlayan **Kuşbakışı Şehir Radarı** eklendi. Kuzeye **3D Patron Malikanesi Tepesi**, güneye **Mavi Deniz, Marina & 3D Kargo Gemili İhracat Limanı**, stadyuma **Kendi Futbol Kulübün (`<MARKA> SK`)** ve caddelere **8 Araçlık Sarı Taksi & Dolmuş Filosu** eklendi.

@@ -1046,11 +1046,11 @@ window.ExtraLandsSystem = (function () {
 
     // 1. Arsa satın alma
     if (!st.owned) {
-      if (pt.x > 50 && pt.x < 430 && pt.y > 148 && pt.y < 440) {
+      if (pt.x >= 16 && pt.x <= 464 && pt.y >= 60 && pt.y <= 590) {
         helpers.payForBusiness(lDef.deedCost, `${lDef.name} Tapusu`, () => {
           st.owned = true;
           helpers.sfx.perfectHit();
-          helpers.showToast(`🎉 ${lDef.name} tapusu alındı! Şimdi 6 dev projeden birini seç!`);
+          helpers.showToast(`🎉 ${lDef.name} tapusu alındı! Şimdi 14 farklı 3D yapıdan birini seç!`);
           helpers.saveGame();
           helpers.updateHUD();
           openExtraLandModal(landId, data, helpers);
@@ -1059,14 +1059,14 @@ window.ExtraLandsSystem = (function () {
       return;
     }
 
-    // 2. 6 Proje Seçim Ekranı
+    // 2. 14 Proje Seçim Ekranı
     if (!st.projectKey) {
       openExtraLandModal(landId, data, helpers);
       return;
     }
 
     // 3. Bina Alt Sol Buton: Manuel Müşteri Kaydı Açma!
-    if (pt.x >= 64 && pt.x <= 234 && pt.y >= 518 && pt.y <= 582) {
+    if (pt.x >= 54 && pt.x <= 238 && pt.y >= 496 && pt.y <= 596) {
       if (!doCheckInOne(landId, data, false)) {
         openExtraLandModal(landId, data, helpers);
       }
@@ -1074,7 +1074,7 @@ window.ExtraLandsSystem = (function () {
     }
 
     // 4. Bina Alt Sağ Buton: Manuel Oda/Birim Temizleme!
-    if (pt.x >= 246 && pt.x <= 416 && pt.y >= 518 && pt.y <= 582) {
+    if (pt.x >= 242 && pt.x <= 426 && pt.y >= 496 && pt.y <= 596) {
       if (!doCleanOne(landId, data, false)) {
         openExtraLandModal(landId, data, helpers);
       }

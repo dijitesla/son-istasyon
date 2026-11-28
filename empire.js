@@ -1697,7 +1697,7 @@ window.EmpireSystem = (function () {
     cachedHelpers = helpers;
 
     if (!emp.land2Owned) {
-      if (pt.x > 54 && pt.x < 426 && pt.y > 150 && pt.y < 430) {
+      if (pt.x >= 16 && pt.x <= 464 && pt.y >= 60 && pt.y <= 590) {
         helpers.payForBusiness(LAND2_COST, "2. Arazi Tapusu (Otopark & AVM)", () => {
           emp.land2Owned = true;
           helpers.sfx.perfectHit();
@@ -1823,9 +1823,12 @@ window.EmpireSystem = (function () {
     if (!body) return;
     if (cashEl) cashEl.textContent = Math.round(emp.personalCash);
 
-    document.querySelectorAll(".city-tab-btn").forEach((b) => {
-      b.classList.toggle("active", b.dataset.tab === currentCityTab);
-    });
+    const cityModalEl = document.getElementById("cityModal");
+    if (cityModalEl) {
+      cityModalEl.querySelectorAll(".city-tab-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.tab === currentCityTab);
+      });
+    }
 
     if (currentCityTab === "salary") {
       const sal = calcSalaryBreakdown(emp);
@@ -1953,7 +1956,7 @@ window.EmpireSystem = (function () {
       properties: { items: PROPERTIES, owned: emp.properties, type: "properties" },
       cars: { items: GALLERY_CARS, owned: emp.cars, type: "cars" }
     };
-    const cfg = listMap[currentCityTab];
+    const cfg = listMap[currentCityTab] || listMap.electronics;
     body.innerHTML = "";
 
     cfg.items.forEach((it) => {
@@ -2211,7 +2214,7 @@ window.EmpireSystem = (function () {
     updateEmpire,
     renderLand2,
     handleLand2Click,
-    setCityTab(tab) { currentCityTab = tab; },
+    setCityTab(tab) { if (tab) currentCityTab = tab; },
     setPhoneApp(app) { currentPhoneApp = app; },
     renderCityModal,
     renderPhoneModal,

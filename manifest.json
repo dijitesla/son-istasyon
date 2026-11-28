@@ -1,7 +1,7 @@
 {
-  "name": "Son İstasyon (Last Station)",
+  "name": "Son İstasyon",
   "short_name": "Son İstasyon",
-  "description": "Issız bir 7/24 gece benzinliğinde büfe işlet, bagaj ara, sahte parayı yakala ve sırrı çöz.",
+  "description": "Otoyol istasyonundan 10 arazili 3D şehir ve holding imparatorluğuna uzanan işletme simülasyonu.",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",

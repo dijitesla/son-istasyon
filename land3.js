@@ -1092,7 +1092,7 @@ window.Land3System = (function () {
     cachedHelpers = helpers;
 
     if (!l3.owned) {
-      if (pt.x > 50 && pt.x < 430 && pt.y > 142 && pt.y < 442) {
+      if (pt.x >= 16 && pt.x <= 464 && pt.y >= 60 && pt.y <= 590) {
         helpers.payForBusiness(LAND3_COST, "3. Arazi Tapusu", () => {
           l3.owned = true;
           helpers.sfx.perfectHit();

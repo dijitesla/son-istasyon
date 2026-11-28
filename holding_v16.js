@@ -310,7 +310,7 @@ window.HoldingV16 = (function () {
     if (data.carWashUnlocked) val += 2500 * (data.carWashLvl || 1);
     if (data.garageUnlocked) val += 4200 * (data.garageLvl || 1);
 
-    // 2. Arazi (Otopark + AVM)
+    // 2. Arazi (Otopark + AVM + Lojistik & Plaza)
     if (emp.land2Owned) val += 10000;
     if (emp.parkingUnlocked) val += 8000 * (emp.parkingCapLvl || 1);
     if (emp.mallUnlocked) {
@@ -318,6 +318,10 @@ window.HoldingV16 = (function () {
       Object.values(emp.mallShops || {}).forEach((sh) => {
         if (sh.owned) val += 6000 * (sh.lvl || 1);
       });
+    }
+    if (emp.sideLevels) {
+      val += (emp.sideLevels.logistics || 0) * 6500;
+      val += (emp.sideLevels.office || 0) * 14000;
     }
 
     // 3. Arazi
@@ -336,6 +340,31 @@ window.HoldingV16 = (function () {
         if (pl && pl.projectKey) val += 60000 * (pl.floorsLvl || 1);
       });
     }
+
+    // v24 Şehir Bölgeleri (Liman, Taksi Filosu, Futbol Kulübü & Malikane)
+    if (emp.v24) {
+      const v24 = emp.v24;
+      if (v24.port && v24.port.unlocked) {
+        val += 42000 + (v24.port.craneLvl || 1) * 16000 + (v24.port.roroUnlocked ? 35000 : 0);
+      }
+      if (v24.taxi && v24.taxi.unlocked) {
+        val += 9500 + (v24.taxi.fleetCount || 1) * 7500 + (v24.taxi.dispatchLvl || 1) * 5000;
+      }
+      if (v24.club && v24.club.founded) {
+        const trCount = Object.values(v24.club.transfers || {}).filter(Boolean).length;
+        val += 36000 + trCount * 28000;
+      }
+      if (v24.mansion) {
+        if (v24.mansion.infinityPool) val += 18000;
+        if (v24.mansion.securityTeam) val += 14000;
+        if (v24.mansion.vipGuesthouse) val += 32000;
+      }
+    }
+
+    // VIP Holding Varlıkları (Yat, Helikopter, Merkez Kule)
+    VIP_ASSETS.forEach((a) => {
+      if (v16.vipAssets && v16.vipAssets[a.key]) val += a.price || 0;
+    });
 
     // Devralınan rakip şirketleri
     RIVAL_DEFS.forEach((r) => {
@@ -413,6 +442,12 @@ window.HoldingV16 = (function () {
       (d.land3RefineryIncome || 0) +
       (d.land3FleetIncome || 0) +
       (d.land3ResortIncome || 0) +
+      (d.eventIncome || 0) +
+      (d.tenderIncome || 0) +
+      (d.emergencyIncome || 0) +
+      (d.taxiIncome || 0) +
+      (d.portIncome || 0) +
+      (d.clubIncome || 0) +
       extTotal +
       (d.rivalIncome || 0);
 
