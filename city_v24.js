@@ -7,18 +7,24 @@
 window.CityV24 = (function () {
   // Şehir Bölgeleri Dünya Koordinatları (Mini Radar + Kamera Uçuşu İçin)
   const CITY_ZONES = [
+    { id: "land15",  ox: -96,  oz: -104, w: 42, d: 34, label: "15",          row: "north" },
     { id: "mansion", ox: 0,    oz: -104, w: 68, d: 34, label: "🏡 Malikane", row: "north" },
-    { id: "taxi_hq", ox: -140, oz: -26,  w: 18, d: 20, label: "🚕 Taksi",    row: "mid" },
-    { id: "station", ox: -112, oz: -36,  w: 46, d: 52, label: "1",           row: "upper" },
-    { id: "land2",   ox: -56,  oz: -36,  w: 46, d: 52, label: "2",           row: "upper" },
-    { id: "land3",   ox: 0,    oz: -36,  w: 46, d: 52, label: "3",           row: "upper" },
-    { id: "land4",   ox: 56,   oz: -36,  w: 46, d: 52, label: "4",           row: "upper" },
-    { id: "land5",   ox: 112,  oz: -36,  w: 46, d: 52, label: "5",           row: "upper" },
-    { id: "land6",   ox: -112, oz: 36,   w: 46, d: 52, label: "6",           row: "lower" },
-    { id: "land7",   ox: -56,  oz: 36,   w: 46, d: 52, label: "7",           row: "lower" },
-    { id: "land8",   ox: 0,    oz: 36,   w: 46, d: 52, label: "8",           row: "lower" },
-    { id: "land9",   ox: 56,   oz: 36,   w: 46, d: 52, label: "9",           row: "lower" },
-    { id: "land10",  ox: 112,  oz: 36,   w: 46, d: 52, label: "10",          row: "lower" },
+    { id: "land16",  ox: 96,   oz: -104, w: 42, d: 34, label: "16",          row: "north" },
+    { id: "taxi_hq", ox: -140, oz: -69,  w: 16, d: 16, label: "🚕 Taksi",    row: "mid" },
+    { id: "land12",  ox: -168, oz: -36,  w: 44, d: 52, label: "12",          row: "upper" },
+    { id: "station", ox: -112, oz: -36,  w: 44, d: 52, label: "1",           row: "upper" },
+    { id: "land2",   ox: -56,  oz: -36,  w: 44, d: 52, label: "2",           row: "upper" },
+    { id: "land3",   ox: 0,    oz: -36,  w: 44, d: 52, label: "3",           row: "upper" },
+    { id: "land4",   ox: 56,   oz: -36,  w: 44, d: 52, label: "4",           row: "upper" },
+    { id: "land5",   ox: 112,  oz: -36,  w: 44, d: 52, label: "5",           row: "upper" },
+    { id: "land11",  ox: 168,  oz: -36,  w: 44, d: 52, label: "11",          row: "upper" },
+    { id: "land13",  ox: -168, oz: 36,   w: 44, d: 52, label: "13",          row: "lower" },
+    { id: "land6",   ox: -112, oz: 36,   w: 44, d: 52, label: "6",           row: "lower" },
+    { id: "land7",   ox: -56,  oz: 36,   w: 44, d: 52, label: "7",           row: "lower" },
+    { id: "land8",   ox: 0,    oz: 36,   w: 44, d: 52, label: "8",           row: "lower" },
+    { id: "land9",   ox: 56,   oz: 36,   w: 44, d: 52, label: "9",           row: "lower" },
+    { id: "land10",  ox: 112,  oz: 36,   w: 44, d: 52, label: "10",          row: "lower" },
+    { id: "land14",  ox: 168,  oz: 36,   w: 44, d: 52, label: "14",          row: "lower" },
     { id: "port",    ox: 0,    oz: 98,   w: 96, d: 34, label: "⚓ Liman",    row: "south" }
   ];
 
@@ -202,10 +208,11 @@ window.CityV24 = (function () {
     return Math.round(4200 * Math.pow(1.38, count));
   }
 
-  function getTaxiCycleIncome(v24) {
+  function getTaxiCycleIncome(v24, data) {
     if (!v24 || !v24.taxi || !v24.taxi.unlocked || v24.taxi.fleetCount <= 0) return 0;
     const perVeh = 85 + (v24.taxi.dispatchLvl - 1) * 32;
-    return v24.taxi.fleetCount * perVeh;
+    const synAuto = data && window.MetropolisV28 && window.MetropolisV28.calcSupplyChainSynergies(data).hasAuto ? 1.35 : 1.0;
+    return Math.round(v24.taxi.fleetCount * perVeh * synAuto);
   }
 
   function calcExportPayout(cargoDef, data) {
@@ -213,7 +220,10 @@ window.CityV24 = (function () {
     const craneMult = 1 + ((v24.port.craneLvl || 1) - 1) * 0.28;
     const roroMult = v24.port.roroUnlocked ? 1.35 : 1.0;
     const synMult = cargoDef.checkBonus(data) ? cargoDef.bonusMult : 1.0;
-    return Math.round(cargoDef.basePay * craneMult * roroMult * synMult);
+    const pChief = data && data.empire && data.empire.v28 && data.empire.v28.directors && data.empire.v28.directors.portChief
+      ? 1 + (data.empire.v28.directors.portChief.lvl || 0) * 0.1
+      : 1.0;
+    return Math.round(cargoDef.basePay * craneMult * roroMult * synMult * pChief);
   }
 
   // =========================================================================
@@ -355,7 +365,7 @@ window.CityV24 = (function () {
       taxiFareTimer += dt * moraleMult;
       if (taxiFareTimer >= 6.5) {
         taxiFareTimer -= 6.5;
-        const fare = getTaxiCycleIncome(v24);
+        const fare = getTaxiCycleIncome(v24, data);
         if (fare > 0) {
           data.cash += fare;
           if (data.daily) data.daily.taxiIncome = (data.daily.taxiIncome || 0) + fare;
@@ -510,15 +520,15 @@ window.CityV24 = (function () {
     return !!(st && st.owned);
   }
 
-  // Dünya koordinatı (-165..+165, -135..+145) <-> Mini Radar Canvas (156 x 116)
+  // Dünya koordinatı (-205..+205, -135..+145) <-> Mini Radar Canvas (156 x 116)
   function worldToRadar(wx, wz, cw, ch) {
-    const rx = ((wx + 165) / 330) * cw;
+    const rx = ((wx + 205) / 410) * cw;
     const ry = ((wz + 135) / 280) * ch;
     return { x: rx, y: ry };
   }
 
   function radarToWorld(rx, ry, cw, ch) {
-    const wx = (rx / cw) * 330 - 165;
+    const wx = (rx / cw) * 410 - 205;
     const wz = (ry / ch) * 280 - 135;
     return { wx, wz };
   }
@@ -595,14 +605,16 @@ window.CityV24 = (function () {
     ctx.fillRect(4, r1 - 2, cw - 8, 4);
     ctx.fillRect(4, r2 - 2, cw - 8, 4);
 
-    // 3. Bölgeler (Malikane, 1..10 Araziler, Liman)
+    // 3. Bölgeler (Malikane, 1..16 Araziler, Liman — Rakip Araziler Kırmızı Görünür!)
     CITY_ZONES.forEach((z) => {
       if (z.id === "taxi_hq") return;
       const c = worldToRadar(z.ox, z.oz, cw, ch);
-      const rw = Math.max(14, (z.w / 330) * cw - 2);
-      const rh = Math.max(12, (z.d / 280) * ch - 2);
+      const rw = Math.max(11, (z.w / 410) * cw - 1.5);
+      const rh = Math.max(11, (z.d / 280) * ch - 2);
       const owned = isZoneOwned(z.id, data);
       const isFocused = activeLand === z.id;
+      const lDef = !owned && window.ExtraLandsSystem ? window.ExtraLandsSystem.getLandDef(z.id) : null;
+      const isRival = !!(lDef && lDef.rivalBoss);
 
       ctx.fillStyle = isFocused
         ? "rgba(250, 204, 21, 0.92)"
@@ -612,19 +624,21 @@ window.CityV24 = (function () {
         ? owned ? "rgba(14, 165, 233, 0.92)" : "rgba(30, 58, 138, 0.78)"
         : owned
         ? "rgba(34, 197, 94, 0.82)"
+        : isRival
+        ? "rgba(185, 28, 28, 0.85)"
         : "rgba(30, 41, 59, 0.78)";
 
-      ctx.strokeStyle = isFocused ? "#ffffff" : owned ? "#86efac" : "#475569";
+      ctx.strokeStyle = isFocused ? "#ffffff" : owned ? "#86efac" : isRival ? "#fca5a5" : "#475569";
       ctx.lineWidth = isFocused ? 1.6 : 1;
       ctx.beginPath();
-      ctx.roundRect(c.x - rw / 2, c.y - rh / 2, rw, rh, 3);
+      ctx.roundRect(c.x - rw / 2, c.y - rh / 2, rw, rh, 2.5);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = isFocused ? "#090d1a" : "#f8fafc";
-      ctx.font = z.id === "mansion" || z.id === "port" ? "900 7.5px sans-serif" : "900 8px sans-serif";
+      ctx.font = z.id === "mansion" || z.id === "port" ? "900 7px sans-serif" : "900 7.2px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(z.label, c.x, c.y + 2.8);
+      ctx.fillText(z.label, c.x, c.y + 2.5);
     });
 
     // 4. Canlı Hareketli Noktalar (Kargo Gemisi, Taksiler, Patron Aracı!)
@@ -927,7 +941,7 @@ window.CityV24 = (function () {
 
       const nextVehCost = getTaxiVehicleCost(v24.taxi.fleetCount);
       const dispCost = Math.round(5200 * Math.pow(1.55, v24.taxi.dispatchLvl - 1));
-      const cycInc = getTaxiCycleIncome(v24);
+      const cycInc = getTaxiCycleIncome(v24, data);
 
       body.innerHTML = `
         <div class="rep-section" style="border-color:#facc15; margin-bottom:10px;">

@@ -10,6 +10,8 @@
   const H16 = window.HoldingV16;
   const M23 = window.MechanicsV23;
   const C24 = window.CityV24;
+  const M28 = window.MetropolisV28;
+  const R29 = window.RealCityV29;
   const E3D = window.Engine3D;
 
   const SAVE_KEY = "son_istasyon_v12_pro";
@@ -61,6 +63,15 @@
       taxiIncome: 0,
       portIncome: 0,
       clubIncome: 0,
+      tramIncome: 0,
+      courierIncome: 0,
+      franchiseIncome: 0,
+      carFlipIncome: 0,
+      multiCityIncome: 0,
+      realCityIncome: 0,
+      municipalIncome: 0,
+      bankLoanIncome: 0,
+      vaultInterest: 0,
       eventIncome: 0,
       tankerCost: 0,
       eventLoss: 0,
@@ -310,6 +321,7 @@
       const hasPlant = Object.values(data.empire.extraLands).some((st) => st && st.owned && st.projectKey === "powerplant");
       if (hasPlant) base = Math.round(base * 0.5);
     }
+    if (M28) base = Math.round(base * M28.getUtilityDiscountMult(data));
     return base;
   }
 
@@ -328,6 +340,18 @@
     cityDistrictBtn: document.getElementById("cityDistrictBtn"),
     cityDistrictModal: document.getElementById("cityDistrictModal"),
     closeCityDistrictBtn: document.getElementById("closeCityDistrictBtn"),
+    metropolisBtn: document.getElementById("metropolisBtn"),
+    metropolisModal: document.getElementById("metropolisModal"),
+    closeMetropolisBtn: document.getElementById("closeMetropolisBtn"),
+    btnStreetView: document.getElementById("btnStreetView"),
+    realCityBizBtn: document.getElementById("realCityBizBtn"),
+    realCityModal: document.getElementById("realCityModal"),
+    closeRealCityBtn: document.getElementById("closeRealCityBtn"),
+    openAllMenusBtn: document.getElementById("openAllMenusBtn"),
+    quickMenuModal: document.getElementById("quickMenuModal"),
+    closeQuickMenuBtn: document.getElementById("closeQuickMenuBtn"),
+    quickOpenWorldBtn: document.getElementById("quickOpenWorldBtn"),
+    quickMenuStepBadge: document.getElementById("quickMenuStepBadge"),
     btnDriveBossCar: document.getElementById("btnDriveBossCar"),
     cityEmergencyBar: document.getElementById("cityEmergencyBar"),
     holdingHubBtn: document.getElementById("holdingHubBtn"),
@@ -592,7 +616,26 @@
     return cost;
   }
 
-  const LAND_ORDER = ["mansion", "station", "land2", "land3", "land4", "land5", "land6", "land7", "land8", "land9", "land10", "port"];
+  const LAND_ORDER = [
+    "mansion",
+    "station",
+    "land2",
+    "land3",
+    "land4",
+    "land5",
+    "land6",
+    "land7",
+    "land8",
+    "land9",
+    "land10",
+    "land11",
+    "land12",
+    "land13",
+    "land14",
+    "land15",
+    "land16",
+    "port"
+  ];
 
   function formatCompactMoney(val) {
     const n = Math.round(val || 0);
@@ -627,7 +670,7 @@
       obCard.classList.add("hidden");
       if (!onboardingDoneCelebrated) {
         onboardingDoneCelebrated = true;
-        showToast("🎉 Harikasın Patron! Şimdi haritayı sürükleyip 10 arazilik imparatorluğunu büyüt!");
+        showToast("🎉 Harikasın Patron! Şimdi haritayı sürükleyip 16 arazilik şehri ve çevre kentleri büyüt!");
       }
       return;
     }
@@ -700,6 +743,9 @@
       else if (mVal < 50) activeMsgs.push("😴 Ekip Yorgun");
       if (M23.isLandInspected(activeLand)) activeMsgs.push("📣 Teftiş 2x");
     }
+    if (M28 && data.empire && data.empire.v28) {
+      if (data.empire.v28.weatherKey === "rain") activeMsgs.push("🌧️ Yağmur");
+    }
 
     const effKey = activeMsgs.map((m) => m.replace(/\d+sn/g, "")).join("|");
     if (activeMsgs.length > 0) {
@@ -769,10 +815,12 @@
         } else if (XL && data.empire.extraLands && data.empire.extraLands[lid]) {
           const st = data.empire.extraLands[lid];
           const num = lid.replace("land", "");
+          const lDef = XL.getLandDef(lid);
+          const isRival = !st.owned && lDef && lDef.rivalBoss;
           const pDef = st.projectKey ? XL.getProjectDef(st.projectKey) : null;
           chip.classList.toggle("owned", !!st.owned);
           chip.classList.toggle("locked", !st.owned);
-          chip.textContent = !st.owned ? `🔒 ${num}` : pDef ? `${pDef.emoji} ${num}` : `🏗️ ${num}`;
+          chip.textContent = !st.owned ? `${isRival ? "⚔️" : "🔒"} ${num}` : pDef ? `${pDef.emoji} ${num}` : `🏗️ ${num}`;
         }
       });
     }
@@ -785,6 +833,9 @@
 
     if (el.holdingHubBtn && H16) {
       el.holdingHubBtn.classList.toggle("reward-ready", H16.hasClaimableQuest(data));
+    }
+    if (el.quickMenuStepBadge && R29) {
+      el.quickMenuStepBadge.textContent = R29.getPlayerStage(data).badge;
     }
   }
 
@@ -1124,7 +1175,7 @@
       });
     }
     if (!extraLinesHtml) {
-      extraLinesHtml = `<div class="rep-row"><span style="color:#94a3b8;">Henüz 4.–10. arazi satın alınmadı</span><span>0 ₺</span></div>`;
+      extraLinesHtml = `<div class="rep-row"><span style="color:#94a3b8;">Henüz 4.–16. arazi satın alınmadı</span><span>0 ₺</span></div>`;
     }
 
     const rivalRev = d.rivalIncome || 0;
@@ -1133,7 +1184,27 @@
     const taxiRev = d.taxiIncome || 0;
     const portRev = d.portIncome || 0;
     const clubRev = d.clubIncome || 0;
-    const totalRev = stationSubTotal + land2SubTotal + land3SubTotal + extraSubTotal + rivalRev + tenderRev + emergRev + taxiRev + portRev + clubRev;
+    const tramRev = d.tramIncome || 0;
+    const courierRev = d.courierIncome || 0;
+    const franRev = d.franchiseIncome || 0;
+    const flipRev = d.carFlipIncome || 0;
+    const multiCityRev = d.multiCityIncome || 0;
+    const realCityRev = d.realCityIncome || 0;
+    const muniRev = d.municipalIncome || 0;
+    let bankLendRev = d.bankLoanIncome || 0;
+    let metroExtraRev = tramRev + courierRev + franRev + flipRev + multiCityRev + realCityRev + muniRev + bankLendRev;
+    let totalRev =
+      stationSubTotal +
+      land2SubTotal +
+      land3SubTotal +
+      extraSubTotal +
+      rivalRev +
+      tenderRev +
+      emergRev +
+      taxiRev +
+      portRev +
+      clubRev +
+      metroExtraRev;
     let loanPayAmt = 0;
     if (!isDayEnd && data.empire.v16 && data.empire.v16.activeLoan) {
       loanPayAmt = data.empire.v16.activeLoan.dailyPay || 0;
@@ -1157,6 +1228,17 @@
         pendingNextSpecialDayTitle = v16Sum.newSpecialDay ? v16Sum.newSpecialDay.title : null;
       }
       if (M23) M23.onDayRollover(data);
+      if (M28) {
+        const s28 = M28.onDayRollover(data);
+        d.vaultInterest = s28.vaultInterest || 0;
+      }
+      if (R29) {
+        const s29 = R29.onDayRollover(data);
+        bankLendRev = s29.bankInterestCollected || 0;
+        d.bankLoanIncome = bankLendRev;
+        metroExtraRev += bankLendRev;
+        totalRev += bankLendRev;
+      }
 
       el.repModalTitle.textContent = `📊 Gün ${data.dayNumber} Ayrıntılı Kazanç Raporu`;
       el.repModalBadge.textContent = "Vardiya Kapandı";
@@ -1221,15 +1303,24 @@
         <div class="rep-row"><span>🏖️ Bungalov &amp; Termal Köy Kiraları</span><span class="val-pos">+${Math.round(l3ResortRev)} ₺</span></div>
       </div>
 
-      <!-- 4..10 ARAZİLER DÖKÜMÜ -->
+      <!-- 4..16 ARAZİLER & BÜYÜKŞEHİR DÖKÜMÜ -->
       <div class="rep-section" style="border-color:#facc15;">
-        <h4>🗺️ 4.–10. ARAZİLER — OTEL &amp; MEGA PROJELER (+${Math.round(extraSubTotal)} ₺)</h4>
+        <h4>🗺️ 4.–16. ARAZİLER &amp; BÜYÜKŞEHİR (+${Math.round(extraSubTotal + metroExtraRev)} ₺)</h4>
         ${extraLinesHtml}
+        ${tramRev > 0 ? `<div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:4px;"><span>🚄 3D Hızlı Tramvay Bilet Geliri</span><span class="val-pos">+${Math.round(tramRev)} ₺</span></div>` : ""}
+        ${courierRev > 0 ? `<div class="rep-row"><span>🛵 3D Motokurye &amp; Paket Servis Ağı</span><span class="val-pos">+${Math.round(courierRev)} ₺</span></div>` : ""}
+        ${franRev > 0 ? `<div class="rep-row"><span>⛽ Ülke Çapında Bayilik (Franchise)</span><span class="val-pos">+${Math.round(franRev)} ₺</span></div>` : ""}
+        ${flipRev > 0 ? `<div class="rep-row"><span>🚗 2. El Oto Pazarı Al-Sat Kârı</span><span class="val-pos">+${Math.round(flipRev)} ₺</span></div>` : ""}
+        ${multiCityRev > 0 ? `<div class="rep-row"><span>🌍 Çevre Şehirler (1+10 Harita)</span><span class="val-pos">+${Math.round(multiCityRev)} ₺</span></div>` : ""}
+        ${realCityRev > 0 ? `<div class="rep-row"><span>🏪 Çarşı, Müteahhitlik, Sahil &amp; Uçuş</span><span class="val-pos">+${Math.round(realCityRev)} ₺</span></div>` : ""}
+        ${muniRev > 0 ? `<div class="rep-row"><span>🏛️ Belediye Otobüs, Teleferik &amp; Köprü</span><span class="val-pos">+${Math.round(muniRev)} ₺</span></div>` : ""}
+        ${bankLendRev > 0 ? `<div class="rep-row"><span>🏦 Kendi Kredi Bankan Tahsilatı</span><span class="val-pos">+${Math.round(bankLendRev)} ₺</span></div>` : ""}
+        ${d.vaultInterest > 0 ? `<div class="rep-row"><span>🔐 Merkez Bankası Vadeli Kasa Faizi (+%4)</span><span class="val-pos">+${Math.round(d.vaultInterest)} ₺</span></div>` : ""}
         ${rivalRev > 0 ? `<div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:4px;"><span>🏆 Devralınan Rakip Holdingler</span><span class="val-pos">+${Math.round(rivalRev)} ₺</span></div>` : ""}
         ${tenderRev > 0 ? `<div class="rep-row"><span>🔨 Kazanılan İhale Sözleşmeleri</span><span class="val-pos">+${Math.round(tenderRev)} ₺</span></div>` : ""}
         ${emergRev > 0 ? `<div class="rep-row"><span>🚑 Şehir Acil Müdahale Ödülleri</span><span class="val-pos">+${Math.round(emergRev)} ₺</span></div>` : ""}
         ${taxiRev > 0 ? `<div class="rep-row"><span>🚕 Şehir İçi Taksi &amp; Dolmuş Hattı</span><span class="val-pos">+${Math.round(taxiRev)} ₺</span></div>` : ""}
-        ${portRev > 0 ? `<div class="rep-row"><span>⚓ Uluslararası Liman İhracatı</span><span class="val-pos">+${Math.round(portRev)} ₺</span></div>` : ""}
+        ${portRev > 0 ? `<div class="rep-row"><span>⚓ Uluslararası Liman &amp; Kruvaziyer</span><span class="val-pos">+${Math.round(portRev)} ₺</span></div>` : ""}
         ${clubRev > 0 ? `<div class="rep-row"><span>⚽ Futbol Kulübü Maç &amp; Yayın Geliri</span><span class="val-pos">+${Math.round(clubRev)} ₺</span></div>` : ""}
       </div>
 
@@ -1254,7 +1345,7 @@
         <div class="rep-row"><span>🅿️ Ücretli Otopark Maaşın</span><span class="val-pos">+${sal.parkingSal} ₺</span></div>
         <div class="rep-row"><span>🏬 2. Arazi &amp; AVM Maaşın</span><span class="val-pos">+${sal.land2Sal} ₺</span></div>
         <div class="rep-row"><span>🎡 3. Arazi Maaşın</span><span class="val-pos">+${sal.land3Sal || 0} ₺</span></div>
-        <div class="rep-row"><span>🗺️ 4.–10. Araziler Maaşın</span><span class="val-pos">+${sal.extraSal || 0} ₺</span></div>
+        <div class="rep-row"><span>🗺️ 4.–16. Araziler Maaşın</span><span class="val-pos">+${sal.extraSal || 0} ₺</span></div>
         <div class="rep-row"><span>🏠 Emlak, VIP Yat &amp; SONH Temettü</span><span class="val-pos">+${dailyRent} ₺</span></div>
         <div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:3px;">
           <span><strong>💼 Toplam Yatırılan Maaş</strong></span>
@@ -1335,10 +1426,12 @@
       callFuelTanker(true);
     }
 
-    // 2. Arazi & Borsa Canlı Güncellemesi + v16 Holding + v23 + v24 Şehir Bölgeleri
+    // 2. Arazi & Borsa Canlı Güncellemesi + v16 Holding + v23 + v24 Şehir Bölgeleri + v28 Büyükşehir
     if (H16) H16.updateV16(dt, data);
     if (M23) M23.updateV23(dt, data, v23Helpers);
     if (C24) C24.updateV24(dt, data, v24Helpers);
+    if (M28) M28.updateV28(dt, data, m28Helpers);
+    if (R29) R29.updateV29(dt, data, m28Helpers);
     EMP.updateEmpire(dt, data, {
       onStockTick() {
         if (!el.phoneModal.classList.contains("hidden")) {
@@ -1470,6 +1563,9 @@
       if (M23) {
         baseInterval /= M23.getFuelPolicy(data).trafficMult;
       }
+      if (data.empire && data.empire.v28 && data.empire.v28.mayor && data.empire.v28.mayor.elected && data.empire.v28.mayor.activeDecree === "freetransit") {
+        baseInterval *= 0.78;
+      }
       if (data.billboardInstalled) baseInterval *= 0.82;
       if (data.reputation >= 70 || vipRushTimer > 0) baseInterval *= 0.82;
       if (data.reputation < 30 || slowTrafficTimer > 0) baseInterval *= 1.38;
@@ -1550,7 +1646,12 @@
           }
         } else if (activeTowTruck.phase === "returning") {
           if (followWaypoints(activeTowTruck, dt, 10)) {
-            const towPay = Math.round((125 + (data.towLvl - 1) * 34) * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult(true));
+            const towPay = Math.round(
+              (125 + (data.towLvl - 1) * 34) *
+                (vipRushTimer > 0 ? 1.25 : 1) *
+                getV16IncomeMult(true) *
+                (M28 ? M28.getStationFacilityMult(data, "tow") : 1)
+            );
             data.cash += towPay;
             data.daily.towIncome = (data.daily.towIncome || 0) + towPay;
             data.daily.towRescues = (data.daily.towRescues || 0) + 1;
@@ -1604,7 +1705,12 @@
         if (activeBus.phase === "entering") {
           if (followWaypoints(activeBus, dt, 8.5)) {
             activeBus.phase = "boarding";
-            const bakeryPay = Math.round((95 + (data.busBakeryLvl - 1) * 30) * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult());
+            const bakeryPay = Math.round(
+              (95 + (data.busBakeryLvl - 1) * 30) *
+                (vipRushTimer > 0 ? 1.25 : 1) *
+                getV16IncomeMult() *
+                (M28 ? M28.getStationFacilityMult(data, "bus") : 1)
+            );
             data.cash += bakeryPay;
             data.daily.busBakeryIncome = (data.daily.busBakeryIncome || 0) + bakeryPay;
             data.daily.busesServed = (data.daily.busesServed || 0) + 1;
@@ -1793,7 +1899,7 @@
         if (car.fuelFilled >= car.fuelNeeded) {
           car.fuelFilled = car.fuelNeeded;
           car.manualLatched = false;
-          const fuelPay = Math.round(car.payAmount * fuelPolMult * getV16IncomeMult());
+          const fuelPay = Math.round(car.payAmount * fuelPolMult * getV16IncomeMult() * (M28 ? M28.getStationFacilityMult(data, "fuel") : 1));
           data.cash += fuelPay;
           data.totalServed += 1;
           data.daily.fuelIncome += fuelPay;
@@ -1847,7 +1953,14 @@
           car.serviceProg += (autoSpd + manSpd) * stSpeedMult * dt;
           if (car.serviceProg >= 100) {
             const solarBonus = data.solarInstalled ? 1.25 : 1.0;
-            const evPay = Math.round((68 + (data.evLvl - 1) * 22) * solarBonus * fuelPolMult * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult());
+            const evPay = Math.round(
+              (68 + (data.evLvl - 1) * 22) *
+                solarBonus *
+                fuelPolMult *
+                (vipRushTimer > 0 ? 1.25 : 1) *
+                getV16IncomeMult() *
+                (M28 ? M28.getStationFacilityMult(data, "ev") : 1)
+            );
             data.cash += evPay;
             data.daily.evIncome += evPay;
             data.daily.evServed += 1;
@@ -1873,7 +1986,12 @@
         if (autoSpd + manSpd > 0) {
           car.serviceProg += (autoSpd + manSpd) * powerFactor * dt;
           if (car.serviceProg >= 100) {
-            const scalePay = Math.round((135 + (data.scaleLvl - 1) * 35) * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult());
+            const scalePay = Math.round(
+              (135 + (data.scaleLvl - 1) * 35) *
+                (vipRushTimer > 0 ? 1.25 : 1) *
+                getV16IncomeMult() *
+                (M28 ? M28.getStationFacilityMult(data, "scale") : 1)
+            );
             data.cash += scalePay;
             data.daily.scaleIncome += scalePay;
             data.daily.trucksWeighed += 1;
@@ -1896,7 +2014,12 @@
         if (autoSpd + manSpd > 0) {
           car.serviceProg += (autoSpd + manSpd) * powerFactor * dt;
           if (car.serviceProg >= 100) {
-            const washPay = Math.round((36 + (data.carWashLvl - 1) * 14) * (vipRushTimer > 0 ? 1.3 : 1) * getV16IncomeMult());
+            const washPay = Math.round(
+              (36 + (data.carWashLvl - 1) * 14) *
+                (vipRushTimer > 0 ? 1.3 : 1) *
+                getV16IncomeMult() *
+                (M28 ? M28.getStationFacilityMult(data, "wash") : 1)
+            );
             data.cash += washPay;
             data.daily.washIncome = (data.daily.washIncome || 0) + washPay;
             data.daily.washServed = (data.daily.washServed || 0) + 1;
@@ -1921,7 +2044,13 @@
         if (autoSpd + manSpd > 0 && !powerOutage) {
           car.serviceProg += (autoSpd + manSpd) * stSpeedMult * dt;
           if (car.serviceProg >= 100) {
-            const lpgPay = Math.round((44 + (data.lpgLvl - 1) * 14) * fuelPolMult * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult());
+            const lpgPay = Math.round(
+              (44 + (data.lpgLvl - 1) * 14) *
+                fuelPolMult *
+                (vipRushTimer > 0 ? 1.25 : 1) *
+                getV16IncomeMult() *
+                (M28 ? M28.getStationFacilityMult(data, "lpg") : 1)
+            );
             data.cash += lpgPay;
             data.daily.lpgIncome = (data.daily.lpgIncome || 0) + lpgPay;
             data.daily.lpgServed = (data.daily.lpgServed || 0) + 1;
@@ -1944,7 +2073,12 @@
         if (autoSpd + manSpd > 0) {
           car.serviceProg += (autoSpd + manSpd) * powerFactor * dt;
           if (car.serviceProg >= 100) {
-            const repPay = Math.round((58 + (data.garageLvl - 1) * 20) * (vipRushTimer > 0 ? 1.3 : 1) * getV16IncomeMult());
+            const repPay = Math.round(
+              (58 + (data.garageLvl - 1) * 20) *
+                (vipRushTimer > 0 ? 1.3 : 1) *
+                getV16IncomeMult() *
+                (M28 ? M28.getStationFacilityMult(data, "garage") : 1)
+            );
             data.cash += repPay;
             data.daily.garageIncome = (data.daily.garageIncome || 0) + repPay;
             data.daily.garageServed = (data.daily.garageServed || 0) + 1;
@@ -2049,7 +2183,13 @@
     if (marketQueue <= 0) return;
     marketQueue -= 1;
     marketProgress = 0;
-    const sale = Math.round((18 + (data.marketLvl - 1) * 9) * (vipRushTimer > 0 ? 1.3 : 1) * getV16IncomeMult());
+    const sale = Math.round(
+      (18 + (data.marketLvl - 1) * 9) *
+        (vipRushTimer > 0 ? 1.3 : 1) *
+        getV16IncomeMult() *
+        (M28 ? M28.getStationFacilityMult(data, "market") : 1) *
+        (R29 ? R29.getMarketAisleMult(data) * R29.getSeasonFacilityMult(data, "market") : 1)
+    );
     data.cash += sale;
     data.daily.marketIncome += sale;
     data.daily.marketServed += 1;
@@ -2064,7 +2204,7 @@
     if (restaurantQueue.length === 0) return;
     const order = restaurantQueue.shift();
     restaurantProgress = 0;
-    const dishPay = Math.round(order.price * getV16IncomeMult());
+    const dishPay = Math.round(order.price * getV16IncomeMult() * (M28 ? M28.getStationFacilityMult(data, "restaurant") : 1));
     data.cash += dishPay;
     data.daily.restaurantIncome += dishPay;
     data.daily.dishesServed += 1;
@@ -2082,7 +2222,12 @@
     }
     const guest = motelQueue.shift();
     motelProgress = 0;
-    const rent = Math.round((115 + (data.motelLvl - 1) * 32) * (vipRushTimer > 0 ? 1.25 : 1) * getV16IncomeMult(true));
+    const rent = Math.round(
+      (115 + (data.motelLvl - 1) * 32) *
+        (vipRushTimer > 0 ? 1.25 : 1) *
+        getV16IncomeMult(true) *
+        (M28 ? M28.getStationFacilityMult(data, "motel") : 1)
+    );
     data.cash += rent;
     data.daily.motelIncome += rent;
     data.daily.motelGuests += 1;
@@ -3329,6 +3474,58 @@
     }
   };
 
+  const m28Helpers = {
+    sfx,
+    showToast,
+    saveGame,
+    updateHUD,
+    payForBusiness,
+    triggerVipRush(sec) {
+      vipRushTimer = Math.max(vipRushTimer, sec || 30);
+    },
+    fillMainTankFull() {
+      data.fuelStock = maxFuelCapacity();
+    },
+    onTramDropPassengers() {
+      marketQueue = Math.min(6, marketQueue + 1);
+      if (data.restaurantUnlocked && restaurantQueue.length < 5 && Math.random() < 0.5) {
+        restaurantQueue.push(pickRestaurantDish());
+      }
+    },
+    openWorldCitiesMap() {
+      if (XL) {
+        XL.setDirectoryTab("world_cities");
+        XL.renderLandsDirectory(data, activeLand, (selected) => switchLand(selected), empireHelpers);
+        el.landsDirectoryModal.classList.remove("hidden");
+      }
+    },
+    openCivicServices() {
+      if (R29 && el.realCityModal) {
+        R29.setRcTab("civic");
+        R29.renderRealCityModal(data, m28Helpers);
+        el.realCityModal.classList.remove("hidden");
+      }
+    },
+    applyImportedSave(parsed) {
+      const mergedStaff = Object.assign(
+        { ali: 0, murat: 0, hasan: 0, zeynep: 0, mehmet: 0, kerem: 0, selin: 0, osman: 0, kadir: 0, cemil: 0 },
+        parsed.staff || {}
+      );
+      const mergedDaily = Object.assign(createEmptyDailyStats(), parsed.daily || {});
+      const mergedEmpire = EMP.mergeEmpire(parsed.empire);
+      Object.assign(data, parsed);
+      data.staff = mergedStaff;
+      data.daily = mergedDaily;
+      data.empire = mergedEmpire;
+      data.reputation = clamp(Number.isFinite(data.reputation) ? data.reputation : 50, 0, 100);
+      data.security = clamp(Number.isFinite(data.security) ? data.security : 65, 0, 100);
+      data.dayNumber = Math.max(1, Number.isFinite(data.dayNumber) ? data.dayNumber : 1);
+      if (M23) M23.applyBrandThemeToDOM(data);
+      saveGame(true);
+      updateHUD(true);
+    }
+  };
+
   function switchLand(land) {
     if (M23 && M23.isDriving()) M23.stopDriving();
     const prevLand = activeLand;
@@ -3364,9 +3561,11 @@
       const st = data.empire.extraLands && data.empire.extraLands[land];
       const isAuto = !!(st && st.staff && (st.staff.manager || (st.staff.clerk && st.staff.cleaner)));
       el.liveHintText.textContent = !st || !st.owned
-        ? `🏞️ ${lDef.name}: Tapuyu alıp 14 farklı 3D yapıdan birini seç!`
+        ? lDef && lDef.rivalBoss
+          ? `⚔️ ${lDef.name}: Rakip ${lDef.rivalBoss}'den satın al ve kendi yapını kur!`
+          : `🏞️ ${lDef.name}: Tapuyu alıp 15 farklı 3D yapıdan birini seç!`
         : !st.projectKey
-        ? `🏗️ ${lDef.num}. Arazi: 14 yapıdan birini (Otel, Havalimanı, Aquapark, Üniversite vb.) seç!`
+        ? `🏗️ ${lDef.num}. Arazi: 15 yapıdan birini (Karma Gökdelen, Otel, Havalimanı vb.) seç!`
         : isAuto
         ? `🟢 ${lDef.num}. Arazi Tam Otopilot! Müşteri kaydı ve temizlik otomatik dönüyor!`
         : `👆 Önce müşteri/temizlikle sen ilgilen, büyüdükçe eleman al!`;
@@ -3405,10 +3604,12 @@
       const lDef = XL.getLandDef(land);
       const st = data.empire.extraLands && data.empire.extraLands[land];
       el.liveHintText.textContent = !st || !st.owned
-        ? `🏞️ ${lDef.name}: Satılık Arsa — dokunup al!`
+        ? lDef && lDef.rivalBoss
+          ? `⚔️ ${lDef.name}: Rakip ${lDef.rivalBoss}'den satın al!`
+          : `🏞️ ${lDef.name}: Satılık Arsa — dokunup al!`
         : `🏙️ ${lDef.num}. Arazi — dokunup yönet veya kaydırarak gez!`;
     } else {
-      el.liveHintText.textContent = "👆 Pompadaki araca dokun veya sürükleyip tüm 10 araziyi gez!";
+      el.liveHintText.textContent = "👆 Pompadaki araca dokun veya sürükleyip tüm 16 araziyi gez!";
     }
     updateHUD();
     if (el.landRibbonTrack) {
@@ -3484,12 +3685,94 @@
   if (el.openLandsDirBtn) {
     el.openLandsDirBtn.addEventListener("click", () => {
       sfx.tap();
-      if (XL) XL.renderLandsDirectory(data, activeLand, (selected) => switchLand(selected));
+      if (XL) XL.renderLandsDirectory(data, activeLand, (selected) => switchLand(selected), empireHelpers);
       el.landsDirectoryModal.classList.remove("hidden");
     });
   }
   if (el.closeLandsDirBtn) {
     el.closeLandsDirBtn.addEventListener("click", () => el.landsDirectoryModal.classList.add("hidden"));
+  }
+
+  // v28.0 — 🌐 Büyükşehir & İmparatorluk Merkezi (Tramvay, Motokurye, Belediye, 1+10 Şehir, Oto Pazarı, Kupa Vitrini)
+  if (el.metropolisBtn && M28) {
+    el.metropolisBtn.addEventListener("click", () => {
+      sfx.tap();
+      M28.renderMetropolisModal(data, m28Helpers);
+      el.metropolisModal.classList.remove("hidden");
+      const box = el.metropolisModal.querySelector(".modal-box");
+      if (box) box.scrollTop = 0;
+    });
+  }
+  if (el.closeMetropolisBtn) {
+    el.closeMetropolisBtn.addEventListener("click", () => el.metropolisModal.classList.add("hidden"));
+  }
+  if (el.metropolisModal) {
+    el.metropolisModal.querySelectorAll(".metro28-tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (!M28) return;
+        sfx.tap();
+        M28.setMetroTab(btn.dataset.mtab);
+        M28.renderMetropolisModal(data, m28Helpers);
+      });
+    });
+  }
+
+  // v29.0 — 🏪 Yaşayan Şehir & Ticaret + 🧭 Tüm Menüler Rehber Çekmecesi + 🚶 Sokak Kamerası
+  if (el.btnStreetView && R29) {
+    el.btnStreetView.addEventListener("click", () => {
+      R29.toggleStreetView(m28Helpers);
+    });
+  }
+  if (el.realCityBizBtn && R29) {
+    el.realCityBizBtn.addEventListener("click", () => {
+      sfx.tap();
+      R29.renderRealCityModal(data, m28Helpers);
+      el.realCityModal.classList.remove("hidden");
+      const box = el.realCityModal.querySelector(".modal-box");
+      if (box) box.scrollTop = 0;
+    });
+  }
+  if (el.closeRealCityBtn) {
+    el.closeRealCityBtn.addEventListener("click", () => el.realCityModal.classList.add("hidden"));
+  }
+  if (el.realCityModal) {
+    el.realCityModal.querySelectorAll(".rc29-tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (!R29) return;
+        sfx.tap();
+        R29.setRcTab(btn.dataset.rctab);
+        R29.renderRealCityModal(data, m28Helpers);
+      });
+    });
+  }
+
+  if (el.openAllMenusBtn && el.quickMenuModal) {
+    el.openAllMenusBtn.addEventListener("click", () => {
+      sfx.tap();
+      updateHUD(true);
+      el.quickMenuModal.classList.remove("hidden");
+    });
+  }
+  if (el.closeQuickMenuBtn && el.quickMenuModal) {
+    el.closeQuickMenuBtn.addEventListener("click", () => el.quickMenuModal.classList.add("hidden"));
+  }
+  if (el.quickOpenWorldBtn) {
+    el.quickOpenWorldBtn.addEventListener("click", () => {
+      sfx.tap();
+      if (el.quickMenuModal) el.quickMenuModal.classList.add("hidden");
+      if (XL) XL.renderLandsDirectory(data, activeLand, (selected) => switchLand(selected), empireHelpers);
+      el.landsDirectoryModal.classList.remove("hidden");
+    });
+  }
+  if (el.quickMenuModal) {
+    ["openPhoneBtn", "openCityBtn", "commandV23Btn", "cityDistrictBtn", "reportBtn"].forEach((bid) => {
+      const b = document.getElementById(bid);
+      if (b) {
+        b.addEventListener("click", () => {
+          el.quickMenuModal.classList.add("hidden");
+        });
+      }
+    });
   }
 
   if (el.holdingHubBtn && H16) {
@@ -3920,7 +4203,7 @@
       sfx.startRainAmbience();
       sfx.tap();
       applyV15Checkpoint();
-      launchIntoMap("🏆 10 Arazi Full Tamamlanmış Kaydın Yüklendi! Şahsi cüzdanınla da iş büyütebilirsin!");
+      launchIntoMap("🏆 16 Arazi Merkez Şehir Tamamlandı & 1. Çevre Şehir Açıldı! Büyükşehir İmparatorluğun hazır!");
     });
   }
 
@@ -3935,7 +4218,7 @@
     data.busBakeryLvl = 6;
     data.reputation = 100;
     data.security = 100;
-    data.cash = 450000;
+    data.cash = 850000;
     data.dayNumber = 45;
     data.totalServed = 680;
     data.eventsResolved = 42;
@@ -3972,7 +4255,7 @@
       emp.land3.land3Salary = 8000;
     }
 
-    // 4.–10. ARAZİLER — 7 MEGA PROJE HEPSİ 5 KAT + VIP + HELİKOPTER + FULL KADRO %100 MAKSİMUM!
+    // 4.–16. ARAZİLER — 13 MEGA PROJE (RAKİPLERDEN DEVRALINAN BÖLGELER DAHİL!) %100 MAKSİMUM!
     if (emp.extraLands) {
       const projAssign = {
         land4: "hotel",
@@ -3981,7 +4264,13 @@
         land7: "stadium",
         land8: "techpark",
         land9: "banktower",
-        land10: "airport"
+        land10: "airport",
+        land11: "agrifarm",
+        land12: "powerplant",
+        land13: "filmstudio",
+        land14: "aquapark",
+        land15: "university",
+        land16: "mixedtower"
       };
       Object.keys(projAssign).forEach((lid) => {
         emp.extraLands[lid] = {
@@ -3991,24 +4280,30 @@
           vipUpgrade: true,
           heliUpgrade: true,
           staff: { clerk: true, cleaner: true, specialist: true, manager: true },
-          salary: 15000
+          salary: 15000,
+          mixedConfig: {
+            ground: "gallery",
+            mid: "clinic",
+            top: "finance",
+            roof: "skypool"
+          }
         };
       });
     }
 
     // ŞEHİR & ŞAHSİ SERVET — TÜM ELEKTRONİK, EMLAK VE GALERİ TAM + BÜYÜK ŞAHSİ CÜZDAN!
     emp.dailySalary = 2000;
-    emp.personalCash = 320000;
+    emp.personalCash = 420000;
     emp.electronics = { phone: true, headphones: true, watch: true, laptop: true, tv: true };
     emp.properties = { studio: true, city2p1: true, residence: true, villa: true };
     emp.cars = { hatchback: true, sedan_lux: true, ev_suv: true, supercar: true };
     emp.managerLogs = [
-      "👔 Kemal Bey: Tüm 10 arazi tam kapasite ve tam kadroyla tıkır tıkır çalışıyor patron! Artık Holding Ligi, Rakipler ve Halka Arz zamanı!"
+      "👔 Kemal Bey: Merkez Şehirdeki tüm 16 arazi tam kapasite çalışıyor patron! 1. Çevre Şehir (Yeşil Sahil Kenti) kilidi açıldı!"
     ];
 
     if (emp.v16) {
       emp.v16.specialDayKey = "bayram";
-      emp.v16.xp = 1200;
+      emp.v16.xp = 1800;
     }
     if (M23) {
       emp.v23 = M23.createDefaultV23();
@@ -4027,6 +4322,54 @@
         port: { unlocked: true, craneLvl: 5, roroUnlocked: true, portManager: true, shipmentsDone: 18 }
       };
     }
+    if (M28) {
+      emp.v28 = M28.createDefaultV28();
+      emp.v28.rivalPlotsConquered = 8;
+      emp.v28.tram = { unlocked: true, lvl: 5 };
+      emp.v28.couriers = { count: 8, lvl: 3 };
+      emp.v28.franchiseCount = 10;
+      emp.v28.mayor = { elected: true, activeDecree: "festival" };
+      emp.v28.monuments = { school: true, park: true, bridge: true, foundation: true };
+      emp.v28.vaultBalance = 250000;
+      emp.v28.sea = { cruiseUnlocked: true, fishingBoats: 4 };
+      emp.v28.directors = {
+        stationChief: { lvl: 4, xp: 40 },
+        mallChief: { lvl: 4, xp: 30 },
+        portChief: { lvl: 4, xp: 20 },
+        cityChief: { lvl: 4, xp: 50 }
+      };
+      M28.syncCityUnlocks(data);
+    }
+    if (R29) {
+      emp.v29 = R29.createDefaultV29();
+      emp.v29.publicSupport = 84;
+      emp.v29.marketAisles = { coffee: 4, cold: 4, bakery: 4, autogear: 4 };
+      emp.v29.bazaarShops = { barber: true, pharmacy: true, bakery_trad: true, butcher: true, tailor: true };
+      emp.v29.jewelry = { unlocked: true, goldGrams: 40, goldPrice: 2920, fxUnits: 1500, fxPrice: 36.5 };
+      emp.v29.wholesaleHal = { unlocked: true, lvl: 4 };
+      emp.v29.deliveryAgency = { vans: 5, lvl: 3 };
+      emp.v29.autoIndustry = { unlocked: true, lvl: 4, ekspertiz: true };
+      emp.v29.drivingSchool = { unlocked: true, lvl: 3 };
+      emp.v29.weddingHall = { unlocked: true, lvl: 4, eventsHosted: 8 };
+      emp.v29.beachClub = { unlocked: true, lvl: 4 };
+      emp.v29.seaTour = { boats: 3 };
+      emp.v29.flights = { routeLvl: 4, vipJet: true, flightsDone: 12 };
+      emp.v29.municipal = {
+        busCount: 6,
+        garbageTrucks: 4,
+        recyclingPlant: true,
+        fireStation: true,
+        policeHQ: true,
+        zabitaHQ: true,
+        roadAsphaltLvl: 4,
+        powerWaterLvl: 4,
+        cableCarUnlocked: true,
+        bayBridgeUnlocked: true
+      };
+      emp.v29.board = { cfo: true, architect: true, cmo: true, counsel: true };
+      emp.v29.playerBank = { unlocked: true, activeLoansOut: [] };
+      emp.v29.media = { billboards: 5, localTv: true };
+    }
     if (emp.v16) {
       emp.v16.vipAssets = { yacht: true, helicopter: true, hq: true };
     }
@@ -4041,7 +4384,7 @@
       try {
         window.history.replaceState({}, "", window.location.pathname);
       } catch (_) {}
-      launchIntoMap("🏆 Tüm 10 Arazi Full Tamamlanmış Kaydın Yüklendi! Şahsi cüzdanınla da ödeme yapabilirsin!");
+      launchIntoMap("🏆 16 Arazi Merkez Şehir Tamamlandı & 1. Çevre Şehir Açıldı! Büyükşehir İmparatorluğun hazır!");
     } else if (params.get("kayit") === "yan-arazi") {
       applyFullStationPreset();
       try {

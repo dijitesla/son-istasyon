@@ -8,15 +8,85 @@ window.ExtraLandsSystem = (function () {
   baseImg.onload = () => (baseReady = true);
   baseImg.src = "./assets/extra-ground.jpg";
 
-  // 4. ARAZİDEN 10. ARAZİYE KADAR 7 YENİ YATIRIM ARSASI (Pahalı ve Prestijli Para Eritme Hedefleri!)
+  // 4 RESMİ ŞEHİR BÖLGESİ (Bölge Tamamlandığında +%18 Kalıcı Bölge Hakimiyet Bonusu!)
+  const CITY_DISTRICTS = [
+    {
+      key: "dist_core",
+      title: "⛽ 1. Bölge — Otoyol & Ticaret Merkezi",
+      subtitle: "Başlangıç aksı: Ana İstasyon, Otopark & Grand AVM ve Tatil Köyü",
+      color: "#f59e0b",
+      landIds: ["station", "land2", "land3"]
+    },
+    {
+      key: "dist_north",
+      title: "🏙️ 2. Bölge — Kuzey Finans & Lojistik Bulvarı",
+      subtitle: "Kuzey bulvar kavşakları ve rakip holdinglerin doğu-batı kapıları",
+      color: "#38bdf8",
+      landIds: ["land12", "land4", "land5", "land11"]
+    },
+    {
+      key: "dist_south",
+      title: "🏭 3. Bölge — Güney Sanayi, Spor & Teknoloji Kuşağı",
+      subtitle: "Üretim fabrikaları, stadyum, teknokent ve orta bulvar rakipleri",
+      color: "#a855f7",
+      landIds: ["land6", "land7", "land8", "land9", "land10"]
+    },
+    {
+      key: "dist_horizon",
+      title: "🌊 4. Bölge — Boğaz Zirvesi & Prestij Kordonu",
+      subtitle: "Büyük rakiplerin elindeki en değerli sahil kanatları ve kuzey zirve parselleri",
+      color: "#22c55e",
+      landIds: ["land13", "land14", "land15", "land16"]
+    }
+  ];
+
+  // 4. ARAZİDEN 16. ARAZİYE KADAR 13 YATIRIM & RAKİP DEVRALMA ARSASI (Toplam 16 Arazi!)
   const EXTRA_LANDS = [
-    { id: "land4", num: 4, name: "4. Arazi — Kuzey Kavşağı", deedCost: 45000, mult: 1.0, desc: "Otoyol ana kavşağında otel ve dev tesisler için altın değerinde arsa." },
-    { id: "land5", num: 5, name: "5. Arazi — Vadi Yamacı", deedCost: 85000, mult: 1.22, desc: "Panoramik manzaralı yüksek gelir çarpanlı (+%22) yatırım arsası." },
-    { id: "land6", num: 6, name: "6. Arazi — Sahil Bulvarı", deedCost: 150000, mult: 1.48, desc: "Deniz manzaralı turizm ve ticaret kuşağı (+%48 gelir bonusu)." },
-    { id: "land7", num: 7, name: "7. Arazi — Sanayi Çıkışı", deedCost: 260000, mult: 1.78, desc: "Yoğun iş ve filo trafiğinin kalbinde dev parsel (+%78 gelir bonusu)." },
-    { id: "land8", num: 8, name: "8. Arazi — Boğaz Tepesi", deedCost: 420000, mult: 2.15, desc: "VIP müşterilerin uğrak noktası prestij arazisi (x2.15 gelir)." },
-    { id: "land9", num: 9, name: "9. Arazi — Havalimanı Yolu", deedCost: 680000, mult: 2.6, desc: "Uluslararası yolcu akışının tam üstünde mega arsa (x2.6 gelir)." },
-    { id: "land10", num: 10, name: "10. Arazi — Altın Körfez VIP", deedCost: 1100000, mult: 3.2, desc: "İmparatorluğun zirvesi! En yüksek kazanç çarpanlı efsane parsel (x3.2 gelir)!" }
+    { id: "land4", num: 4, district: "dist_north", name: "4. Arazi — Kuzey Kavşağı", deedCost: 45000, mult: 1.0, desc: "Otoyol ana kavşağında otel ve dev tesisler için altın değerinde arsa." },
+    { id: "land5", num: 5, district: "dist_north", name: "5. Arazi — Vadi Yamacı", deedCost: 85000, mult: 1.22, desc: "Panoramik manzaralı yüksek gelir çarpanlı (+%22) yatırım arsası." },
+    { id: "land6", num: 6, district: "dist_south", name: "6. Arazi — Sahil Bulvarı", deedCost: 150000, mult: 1.48, desc: "Deniz manzaralı turizm ve ticaret kuşağı (+%48 gelir bonusu)." },
+    { id: "land7", num: 7, district: "dist_south", name: "7. Arazi — Sanayi Çıkışı", deedCost: 260000, mult: 1.78, desc: "Yoğun iş ve filo trafiğinin kalbinde dev parsel (+%78 gelir bonusu)." },
+    {
+      id: "land8", num: 8, district: "dist_south", name: "8. Arazi — Orta Bulvar Meydanı", deedCost: 420000, mult: 2.15,
+      rivalBoss: "Hakkı Bey", rivalHold: "Anadolu Petrol", rivalShort: "HAKKI BEY", rivalColor: "#dc2626", rivalBuildTitle: "ANADOLU TESİS",
+      desc: "Rakip Hakkı Bey'in elindeki işlek meydan arsası! Satın alıp kendi dev yapını kur (x2.15 gelir)."
+    },
+    {
+      id: "land9", num: 9, district: "dist_south", name: "9. Arazi — Havalimanı Yolu", deedCost: 680000, mult: 2.6,
+      rivalBoss: "Selçuk Bey", rivalHold: "Kuzey Grup", rivalShort: "SELÇUK BEY", rivalColor: "#0284c7", rivalBuildTitle: "KUZEY LOJİSTİK",
+      desc: "Rakip Selçuk Bey'in elindeki havalimanı kavşağı! Devralıp kendi kuleni dik (x2.6 gelir)."
+    },
+    { id: "land10", num: 10, district: "dist_south", name: "10. Arazi — Altın Körfez VIP", deedCost: 1100000, mult: 3.2, desc: "Güney bulvarının en yüksek çarpanlı VIP köşe parseli (x3.2 gelir)!" },
+    {
+      id: "land11", num: 11, district: "dist_north", name: "11. Arazi — Doğu Finans Kapısı", deedCost: 190000, mult: 1.65,
+      rivalBoss: "Hakkı Bey", rivalHold: "Anadolu Petrol", rivalShort: "HAKKI BEY", rivalColor: "#dc2626", rivalBuildTitle: "ANADOLU PLAZA",
+      desc: "Kuzey bulvarının doğu girişinde Hakkı Bey'in işlettiği ticari tesis — satın alıp devral (+%65 bonus)!"
+    },
+    {
+      id: "land12", num: 12, district: "dist_north", name: "12. Arazi — Batı Lojistik Kavşağı", deedCost: 320000, mult: 1.95,
+      rivalBoss: "Selçuk Bey", rivalHold: "Kuzey Grup", rivalShort: "SELÇUK BEY", rivalColor: "#0284c7", rivalBuildTitle: "KUZEY MERKEZ",
+      desc: "Batı otoyol girişinde Selçuk Bey'in üssü — rakibinden satın alıp bölgeyi ele geçir (+%95 bonus)!"
+    },
+    {
+      id: "land13", num: 13, district: "dist_horizon", name: "13. Arazi — Batı Sahil Kordonu", deedCost: 520000, mult: 2.35,
+      rivalBoss: "Aysel Hanım", rivalHold: "Yıldız Holding", rivalShort: "AYSEL HANIM", rivalColor: "#db2777", rivalBuildTitle: "YILDIZ AVM",
+      desc: "Aysel Hanım'ın batı yakasındaki gözde AVM parseli — satın alıp kendi projeni kur (x2.35 gelir)!"
+    },
+    {
+      id: "land14", num: 14, district: "dist_horizon", name: "14. Arazi — Doğu Marina Yolu", deedCost: 790000, mult: 2.8,
+      rivalBoss: "Turgut Bey", rivalHold: "Altın Vadi", rivalShort: "TURGUT BEY", rivalColor: "#d97706", rivalBuildTitle: "ALTIN VADİ OTEL",
+      desc: "Turgut Bey'in doğu sahil turizm arsası — devralıp deniz hattına hükmet (x2.8 gelir)!"
+    },
+    {
+      id: "land15", num: 15, district: "dist_horizon", name: "15. Arazi — Kuzeybatı Zirve Tepesi", deedCost: 1250000, mult: 3.4,
+      rivalBoss: "Turgut Bey", rivalHold: "Altın Vadi", rivalShort: "TURGUT BEY", rivalColor: "#d97706", rivalBuildTitle: "ALTIN REZİDANS",
+      desc: "Malikane tepesinin batı yamacında Turgut Bey'in lüks zirve parseli (x3.4 gelir)!"
+    },
+    {
+      id: "land16", num: 16, district: "dist_horizon", name: "16. Arazi — Kuzeydoğu İmparatorluk Zirvesi", deedCost: 1850000, mult: 4.0,
+      rivalBoss: "Cemil Soylu", rivalHold: "Marmara Dev", rivalShort: "CEMİL SOYLU", rivalColor: "#7c3aed", rivalBuildTitle: "MARMARA KULE",
+      desc: "Şehrin en büyük rakibi Cemil Soylu'nun kalesi! Burayı da alırsan şehir tamamen senin olur (x4.0 gelir)!"
+    }
   ];
 
   // HER ARAZİYE KURULABİLECEK 14 FARKLI DEV YAPI SEÇENEĞİ (3 KATEGORİDE ZENGİN ÇEŞİTLİLİK!)
@@ -369,24 +439,73 @@ window.ExtraLandsSystem = (function () {
         specialist: "📈 Başekonomist & Fon Yöneticisi (+%35 Gelir)",
         manager: "👔 Banka Genel Müdürü (Tam Otopilot)"
       },
-      desc: "Altın taçlı siyah finans gökdeleni! 14 yapı arasındaki en yüksek tekil işlem kazancını üretir!"
+      desc: "Altın taçlı siyah finans gökdeleni! Çok yüksek tekil işlem kazancı üretir!"
+    },
+    {
+      key: "mixedtower",
+      cat: "prestige",
+      name: "Özel Karma Gökdelen (Kat Kat Tasarla!)",
+      short: "KARMA KULE",
+      emoji: "🏗️",
+      buildCost: 132000,
+      basePay: 890,
+      color: "#0f172a",
+      roofCol: "#1e1b4b",
+      accent: "#38bdf8",
+      checkinLabel: "🛎️ LOBİ & KULE GİRİŞİ AÇ",
+      prepLabel: "✨ KAT & TERASLARI HAZIRLA",
+      unitName: "Kat Birimi",
+      floorLabel: "Karma Gökdelene Yeni Kat Ekle (+6 Birim)",
+      vipLabel: "🌉 Panoramik Cam Seyir Terası",
+      heliLabel: "🚁 Çatı VIP Helikopter & Lounge",
+      staffNames: {
+        clerk: "🤵 Kule Resepsiyon & Danışma (Oto Giriş)",
+        cleaner: "✨ Gökdelen Kat Bakım Ekibi (Oto Hazırlık)",
+        specialist: "💎 Karma Kule İşletme Direktörü (+%35 Gelir)",
+        manager: "👔 Gökdelen CEO'su (Tam Otopilot)"
+      },
+      desc: "Zemin katı AVM/Galeri, orta katı Otel/Ofis, üst katı Rezidans/Banka ve çatısı Helikopter/Restoran olan kendi özel kuleni tasarla!"
     }
   ];
+
+  const MIXED_TOWER_OPTIONS = {
+    ground: [
+      { key: "avm", label: "🛍️ Zemin: Lüks AVM", col: "#9a3412", bonus: 0.06 },
+      { key: "market", label: "🏪 Zemin: Hipermarket", col: "#166534", bonus: 0.05 },
+      { key: "gallery", label: "🏎️ Zemin: Süper Oto Galeri", col: "#991b1b", bonus: 0.08 }
+    ],
+    mid: [
+      { key: "hotel", label: "🏨 Orta: 5★ Otel Katları", col: "#b45309", bonus: 0.07 },
+      { key: "office", label: "🏢 Orta: Kurumsal Plaza", col: "#0369a1", bonus: 0.06 },
+      { key: "clinic", label: "🏥 Orta: VIP Estetik & Klinik", col: "#0f766e", bonus: 0.08 }
+    ],
+    top: [
+      { key: "penthouse", label: "💎 Üst: Kral Rezidans", col: "#4338ca", bonus: 0.08 },
+      { key: "finance", label: "🏦 Üst: Yatırım Bankası", col: "#ca8a04", bonus: 0.09 },
+      { key: "tech", label: "💻 Üst: Teknoloji Üssü", col: "#6d28d9", bonus: 0.07 }
+    ],
+    roof: [
+      { key: "helipad", label: "🚁 Çatı: Helikopter Pisti", col: "#facc15", bonus: 0.07 },
+      { key: "skyrest", label: "🍽️ Çatı: Dönen Restoran", col: "#f43f5e", bonus: 0.08 },
+      { key: "skypool", label: "🏊 Çatı: Sonsuzluk Havuzu", col: "#22d3ee", bonus: 0.08 }
+    ]
+  };
 
   function createSingleLandState() {
     return {
       owned: false,
-      projectKey: null, // null iken 6 seçenek sunulur!
-      floorsLvl: 1, // 1..5 -> kapasite 6..30 oda/birim
+      projectKey: null,
+      floorsLvl: 1,
       vipUpgrade: false,
       heliUpgrade: false,
+      mixedConfig: { ground: "avm", mid: "hotel", top: "penthouse", roof: "helipad" },
       staff: {
-        clerk: false, // Otomatik müşteri kaydı
-        cleaner: false, // Otomatik oda/birim temizliği
-        specialist: false, // +%35 gelir artışı
-        manager: false // Tam otopilot + bakım garantisi
+        clerk: false,
+        cleaner: false,
+        specialist: false,
+        manager: false
       },
-      salary: 0 // Bu araziden şahsi cüzdana bağlanan günlük maaş
+      salary: 0
     };
   }
 
@@ -407,6 +526,10 @@ window.ExtraLandsSystem = (function () {
         def[l.id].staff = Object.assign(
           { clerk: false, cleaner: false, specialist: false, manager: false },
           saved[l.id].staff || {}
+        );
+        def[l.id].mixedConfig = Object.assign(
+          { ground: "avm", mid: "hotel", top: "penthouse", roof: "helipad" },
+          saved[l.id].mixedConfig || {}
         );
       }
     });
@@ -433,6 +556,7 @@ window.ExtraLandsSystem = (function () {
   let activeManageLandId = "land4";
   let activeModalTab = "overview"; // "overview" | "staff"
   let activeProjFilter = "all"; // "all" | "tourism" | "industry" | "prestige"
+  let activeDirectoryTab = "districts"; // "districts" | "world_cities"
   let confirmDemolishLandId = null;
 
   function getLandDef(landId) {
@@ -443,20 +567,62 @@ window.ExtraLandsSystem = (function () {
     return PROJECT_TYPES.find((p) => p.key === key);
   }
 
+  function isCoreLandBuilt(data, id) {
+    const emp = data.empire || {};
+    if (id === "station") return true;
+    if (id === "land2") return !!(emp.land2Owned && (emp.parkingUnlocked || emp.mallUnlocked));
+    if (id === "land3") return !!(emp.land3 && emp.land3.owned && (emp.land3.themeUnlocked || emp.land3.refineryUnlocked || emp.land3.resortUnlocked));
+    const st = emp.extraLands && emp.extraLands[id];
+    return !!(st && st.owned && st.projectKey);
+  }
+
+  function isDistrictMastered(data, distKey) {
+    const d = CITY_DISTRICTS.find((x) => x.key === distKey);
+    if (!d) return false;
+    return d.landIds.every((id) => isCoreLandBuilt(data, id));
+  }
+
+  function getMainCityCompletion(data) {
+    const allIds = ["station", "land2", "land3", ...EXTRA_LANDS.map((l) => l.id)];
+    const built = allIds.filter((id) => isCoreLandBuilt(data, id)).length;
+    return {
+      built,
+      total: allIds.length,
+      pct: Math.round((built / allIds.length) * 100),
+      completed: built >= allIds.length
+    };
+  }
+
   function getMaxUnits(st) {
     return 6 * (st.floorsLvl || 1); // 6, 12, 18, 24, 30 oda/birim!
   }
 
-  function getUnitPayout(landDef, projDef, st) {
+  function getMixedTowerBonus(st) {
+    if (!st || st.projectKey !== "mixedtower" || !st.mixedConfig) return 1.0;
+    const mc = st.mixedConfig;
+    let b = 1.0;
+    ["ground", "mid", "top", "roof"].forEach((tier) => {
+      const opt = (MIXED_TOWER_OPTIONS[tier] || []).find((o) => o.key === mc[tier]);
+      if (opt) b += opt.bonus;
+    });
+    return b;
+  }
+
+  function getUnitPayout(landDef, projDef, st, data) {
     let val = projDef.basePay * landDef.mult * (1 + (st.floorsLvl - 1) * 0.22);
     if (st.vipUpgrade) val *= 1.35;
     if (st.heliUpgrade) val *= 1.25;
     if (st.staff.specialist) val *= 1.35;
+    if (projDef.key === "mixedtower") val *= getMixedTowerBonus(st);
+    if (data && landDef.district && isDistrictMastered(data, landDef.district)) {
+      val *= 1.18; // +%18 Bölge Hakimiyet Bonusu!
+    }
     return Math.round(val);
   }
 
-  function getFloorUpgradeCost(landDef, projDef, floorsLvl) {
-    return Math.round(projDef.buildCost * 0.55 * landDef.mult * Math.pow(1.55, floorsLvl - 1));
+  function getFloorUpgradeCost(landDef, projDef, floorsLvl, data) {
+    const disc = data && window.MetropolisV28 ? window.MetropolisV28.getBuildDiscountMult(data) : 1.0;
+    return Math.round(projDef.buildCost * 0.55 * landDef.mult * Math.pow(1.55, floorsLvl - 1) * disc);
   }
 
   function getStaffCosts(landDef, projDef) {
@@ -661,7 +827,8 @@ window.ExtraLandsSystem = (function () {
         if (rt.occupiedTimers[i] <= 0) {
           rt.occupiedTimers.splice(i, 1);
           rt.dirtyCount += 1;
-          const pay = Math.round(getUnitPayout(lDef, proj, st) * v16Mult);
+          const m28Mult = window.MetropolisV28 ? window.MetropolisV28.getExtraLandMult(data, proj.key) : 1.0;
+          const pay = Math.round(getUnitPayout(lDef, proj, st, data) * v16Mult * m28Mult);
           data.cash += pay;
           if (data.daily) {
             if (!data.daily.extraLandIncomes) data.daily.extraLandIncomes = {};
@@ -1044,13 +1211,23 @@ window.ExtraLandsSystem = (function () {
     const lDef = getLandDef(landId);
     const st = data.empire.extraLands[landId];
 
-    // 1. Arsa satın alma
+    // 1. Arsa satın alma (Rakip patronun elindeyse Rakip Devralma!)
     if (!st.owned) {
       if (pt.x >= 16 && pt.x <= 464 && pt.y >= 60 && pt.y <= 590) {
-        helpers.payForBusiness(lDef.deedCost, `${lDef.name} Tapusu`, () => {
+        const buyTitle = lDef.rivalBoss ? `⚔️ ${lDef.rivalBoss}'den ${lDef.num}. Araziyi Devral` : `${lDef.name} Tapusu`;
+        helpers.payForBusiness(lDef.deedCost, buyTitle, () => {
           st.owned = true;
+          if (lDef.rivalBoss) {
+            data.reputation = Math.min(100, (data.reputation || 50) + 4);
+            if (data.empire && data.empire.v16) data.empire.v16.xp = (data.empire.v16.xp || 0) + 85;
+            if (window.MetropolisV28) window.MetropolisV28.onRivalPlotConquered(data, lDef);
+          }
           helpers.sfx.perfectHit();
-          helpers.showToast(`🎉 ${lDef.name} tapusu alındı! Şimdi 14 farklı 3D yapıdan birini seç!`);
+          helpers.showToast(
+            lDef.rivalBoss
+              ? `⚔️ ${lDef.rivalBoss} (${lDef.rivalHold}) elinden ${lDef.num}. Araziyi satın aldın! Şimdi kendi yapını kur!`
+              : `🎉 ${lDef.name} tapusu alındı! Şimdi 15 farklı 3D yapıdan birini seç!`
+          );
           helpers.saveGame();
           helpers.updateHUD();
           openExtraLandModal(landId, data, helpers);
@@ -1109,26 +1286,27 @@ window.ExtraLandsSystem = (function () {
     if (!body || !titleEl) return;
     if (cashEl) cashEl.textContent = Math.round(data.cash).toLocaleString("tr-TR");
 
-    // EĞER HENÜZ PROJE SEÇİLMEDİYSE 14 YAPI SEÇENEĞİNİ KATEGORİ FİLTRESİYLE GÖSTER!
+    // EĞER HENÜZ PROJE SEÇİLMEDİYSE 15 YAPI SEÇENEĞİNİ KATEGORİ FİLTRESİYLE GÖSTER!
     if (!st.projectKey) {
-      titleEl.textContent = `🏗️ ${lDef.num}. Arazi — 14 Yapı Seçeneği`;
+      titleEl.textContent = `🏗️ ${lDef.num}. Arazi — 15 Yapı Seçeneği`;
+      const discMult = window.MetropolisV28 ? window.MetropolisV28.getBuildDiscountMult(data) : 1.0;
       const filtered = activeProjFilter === "all"
         ? PROJECT_TYPES
         : PROJECT_TYPES.filter((p) => p.cat === activeProjFilter);
 
       let html = `
         <p style="font-size:12.5px; color:#fde68a; font-weight:800; margin-bottom:8px;">
-          Bu araziye aşağıdaki <strong>14 farklı 3D yapıdan istediğini</strong> kurabilirsin! Kategoriye göre süzebilirsin:
+          Bu araziye <strong>Özel Karma Gökdelen</strong> dahil <strong>15 farklı 3D yapıdan</strong> istediğini kurabilirsin:
         </p>
         <div class="subtab-row" style="grid-template-columns: repeat(4, 1fr); margin-bottom:10px;">
-          <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "all" ? "active" : ""}" data-pcat="all">🌟 Tümü (14)</button>
+          <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "all" ? "active" : ""}" data-pcat="all">🌟 Tümü (15)</button>
           <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "tourism" ? "active" : ""}" data-pcat="tourism">🏨 Turizm</button>
           <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "industry" ? "active" : ""}" data-pcat="industry">🏭 Üretim</button>
           <button class="city-tab-btn proj-cat-btn ${activeProjFilter === "prestige" ? "active" : ""}" data-pcat="prestige">🎓 Prestij</button>
         </div>
       `;
       filtered.forEach((p) => {
-        const buildPrice = Math.round(p.buildCost * lDef.mult);
+        const buildPrice = Math.round(p.buildCost * lDef.mult * discMult);
         const estPay = Math.round(p.basePay * lDef.mult);
         html += `
           <div class="mall-shop-card" style="border-color:${p.accent};">
@@ -1159,13 +1337,14 @@ window.ExtraLandsSystem = (function () {
         btn.addEventListener("click", () => {
           const pKey = btn.dataset.proj;
           const pDef = getProjectDef(pKey);
-          const buildPrice = Math.round(pDef.buildCost * lDef.mult);
+          const buildPrice = Math.round(pDef.buildCost * lDef.mult * discMult);
           helpers.payForBusiness(buildPrice, `${pDef.name} İnşaatı`, () => {
             st.projectKey = pKey;
             st.floorsLvl = 1;
             confirmDemolishLandId = null;
+            if (window.RealCityV29) window.RealCityV29.startConstructionSite(activeManageLandId, pDef.name, data);
             helpers.sfx.perfectHit();
-            helpers.showToast(`🎉 ${pDef.name} 3D haritaya inşa edildi! Önce sen ilgilen, büyüdükçe ekip kur!`);
+            helpers.showToast(`🏗️ 3D Sarı Kule Vinç sahaya kuruldu; ${pDef.name} yükseliyor!`);
             helpers.saveGame();
             helpers.updateHUD();
             renderExtraLandModal(data, helpers);
@@ -1175,15 +1354,15 @@ window.ExtraLandsSystem = (function () {
       return;
     }
 
-    // PROJE KURULMUŞ -> BÜYÜTME, ELEMAN ALMA VE ŞAHSİ MAAŞ BAĞLAMA!
+    // PROJE KURULMUŞ -> BÜYÜTME, KARMA KULE KAT TASARIMI, ELEMAN ALMA VE ŞAHSİ MAAŞ BAĞLAMA!
     const proj = getProjectDef(st.projectKey);
     titleEl.textContent = `${proj.emoji} ${lDef.num}. Arazi: ${proj.name}`;
 
-    const floorCost = getFloorUpgradeCost(lDef, proj, st.floorsLvl);
+    const floorCost = getFloorUpgradeCost(lDef, proj, st.floorsLvl, data);
     const vipCost = Math.round(proj.buildCost * 0.75 * lDef.mult);
     const heliCost = Math.round(proj.buildCost * 0.95 * lDef.mult);
     const sCosts = getStaffCosts(lDef, proj);
-    const curPay = getUnitPayout(lDef, proj, st);
+    const curPay = getUnitPayout(lDef, proj, st, data);
     const salPresets = [0, 500, 1500, 3500, 7500, 15000];
 
     body.innerHTML = `
@@ -1221,7 +1400,27 @@ window.ExtraLandsSystem = (function () {
 
     const inner = document.getElementById("extModalInner");
     if (activeModalTab === "overview") {
+      if (!st.mixedConfig) st.mixedConfig = { ground: "avm", mid: "hotel", top: "penthouse", roof: "helipad" };
+      const mixedHtml = proj.key === "mixedtower"
+        ? `
+          <div class="rep-section" style="border-color:#38bdf8; margin-bottom:10px;">
+            <h4>🏗️ KARMA GÖKDELENİNİ KAT KAT TASARLA (3D CANLI!)</h4>
+            <p style="font-size:12px; color:#cbd5e1; margin-bottom:7px;">Her kat kuşağının işlevini seç; 3D gökdeleninin kat renkleri ve geliri anında güncellenir!</p>
+            ${["ground", "mid", "top", "roof"].map((tier) => `
+              <div style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px;">
+                ${MIXED_TOWER_OPTIONS[tier].map((opt) => `
+                  <button class="sal-btn mixed-tier-btn ${st.mixedConfig[tier] === opt.key ? "active" : ""}" data-tier="${tier}" data-okey="${opt.key}" style="font-size:11px; padding:5px 8px;">
+                    ${opt.label} (+%${Math.round(opt.bonus * 100)})
+                  </button>
+                `).join("")}
+              </div>
+            `).join("")}
+          </div>
+        `
+        : "";
+
       inner.innerHTML = `
+        ${mixedHtml}
         <div class="upgrade-card">
           <div class="up-info">
             <h3>🏢 ${proj.floorLabel} (Kat ${st.floorsLvl}/5)</h3>
@@ -1254,7 +1453,7 @@ window.ExtraLandsSystem = (function () {
 
         <div class="upgrade-card" style="border-color:#64748b; background:rgba(15,23,42,0.75); margin-top:8px;">
           <div class="up-info">
-            <h3 style="font-size:14.5px; color:#fca5a5;">🔄 Yapıyı Yık &amp; 14 Seçenekten Başka Yapı Kur</h3>
+            <h3 style="font-size:14.5px; color:#fca5a5;">🔄 Yapıyı Yık &amp; 15 Seçenekten Başka Yapı Kur</h3>
             <p style="font-size:12px;">Mevcut yapıyı kaldırıp inşaat bedelinin %50'sini (+${Math.round(proj.buildCost * lDef.mult * 0.5).toLocaleString("tr-TR")} ₺) kasaya iade eder; arsa tapun sende kalır.</p>
           </div>
           <button id="btnExtChangeProj" class="up-buy-btn" style="background:${confirmDemolishLandId === activeManageLandId ? "#dc2626" : "#334155"}; color:#fff; font-size:12.5px;">
@@ -1262,6 +1461,16 @@ window.ExtraLandsSystem = (function () {
           </button>
         </div>
       `;
+
+      inner.querySelectorAll(".mixed-tier-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          st.mixedConfig[btn.dataset.tier] = btn.dataset.okey;
+          helpers.sfx.tap();
+          helpers.saveGame();
+          helpers.updateHUD();
+          renderExtraLandModal(data, helpers);
+        });
+      });
 
       const chgBtn = document.getElementById("btnExtChangeProj");
       if (chgBtn) {
@@ -1284,7 +1493,7 @@ window.ExtraLandsSystem = (function () {
           runtime[activeManageLandId].dirtyCount = 0;
           confirmDemolishLandId = null;
           helpers.sfx.cashRegister();
-          helpers.showToast(`🔄 Arsa temizlendi (+${refund.toLocaleString("tr-TR")} ₺ iade)! Şimdi 14 yapıdan yenisini seçebilirsin!`);
+          helpers.showToast(`🔄 Arsa temizlendi (+${refund.toLocaleString("tr-TR")} ₺ iade)! Şimdi 15 yapıdan yenisini seçebilirsin!`);
           helpers.saveGame();
           helpers.updateHUD();
           renderExtraLandModal(data, helpers);
@@ -1296,6 +1505,7 @@ window.ExtraLandsSystem = (function () {
         fBtn.addEventListener("click", () => {
           helpers.payForBusiness(floorCost, `${proj.name} Yeni Kat`, () => {
             st.floorsLvl += 1;
+            if (window.RealCityV29) window.RealCityV29.startConstructionSite(activeManageLandId, `${proj.name} Kat ${st.floorsLvl}`, data);
             helpers.sfx.perfectHit();
             helpers.showToast(`🏢 ${proj.name} ${st.floorsLvl}. kata yükseldi (${getMaxUnits(st)} ${proj.unitName})!`);
             helpers.saveGame();
@@ -1414,65 +1624,168 @@ window.ExtraLandsSystem = (function () {
   }
 
   // =========================================================================
-  // 🗺️ 10 ARAZİLİ BÖLGE HARİTASI SEÇİCİSİ (#landsDirectoryModal)
+  // 🗺️ 4 BÖLGELİ 16 ARAZİ HARİTASI & 1+10 ÇEVRE ŞEHİR SEÇİCİSİ (#landsDirectoryModal)
   // =========================================================================
-  function renderLandsDirectory(data, activeLand, onSelectLand) {
+  function renderLandsDirectory(data, activeLand, onSelectLand, helpers) {
+    if (helpers) cachedHelpers = helpers;
     const box = document.getElementById("landsDirectoryList");
     const cashEl = document.getElementById("landsDirCash");
     if (!box) return;
     if (cashEl) cashEl.textContent = Math.round(data.cash).toLocaleString("tr-TR");
     if (!data.empire.extraLands) data.empire.extraLands = createDefaultExtraLands();
 
-    const coreLands = [
-      { id: "station", title: "⛽ 1. Arazi — Ana İstasyon", status: "AKTİF MERKEZ", owned: true, desc: "9 Pompa, LPG, Çekici, Otobüs Peronu, EV Şarj, Restoran & Motel" },
-      { id: "land2", title: "🛍️ 2. Arazi — Otopark & Grand AVM", status: data.empire.land2Owned ? "TAPULU ✓" : `SATILIK (${window.EmpireSystem.LAND2_COST} ₺)`, owned: data.empire.land2Owned, desc: "Ücretli Otopark, 8 Dükkanlı AVM, Mal Kabul İşlemleri & Plaza" },
-      { id: "land3", title: "🎡 3. Arazi — Park, Filo & Tatil Köyü", status: data.empire.land3 && data.empire.land3.owned ? "TAPULU ✓" : `SATILIK (${window.Land3System.LAND3_COST} ₺)`, owned: !!(data.empire.land3 && data.empire.land3.owned), desc: "Go-Kart, Dönme Dolap, Bedava Tanker Rafinerisi, 10 Tır & Bungalov" }
-    ];
+    const comp = getMainCityCompletion(data);
+    const unlockedCitiesCount = window.MetropolisV28 ? window.MetropolisV28.getUnlockedSurroundingCount(data) : 0;
 
-    let html = "";
-    coreLands.forEach((c) => {
-      html += `
-        <div class="mall-shop-card ${c.owned ? "rented" : ""}">
-          <div class="shop-top-row">
-            <div class="shop-title">${c.title}</div>
-            <span class="shop-status-tag ${c.owned ? "tag-rented" : "tag-sale"}">${c.status}</span>
-          </div>
-          <div style="font-size:12px; color:#cbd5e1;">${c.desc}</div>
-          <div class="shop-btn-row">
-            <button class="shop-action-btn ${activeLand === c.id ? "up-rent" : "rent-fixed"} go-land-btn" data-land="${c.id}">
-              ${activeLand === c.id ? "📍 ŞU AN BURADASIN" : "🚀 BU ARAZİYE GİT ➔"}
-            </button>
-          </div>
+    const topTabsHtml = `
+      <div class="subtab-row" style="grid-template-columns: 1fr 1fr; margin-bottom:9px;">
+        <button class="city-tab-btn dir-main-tab ${activeDirectoryTab === "districts" ? "active" : ""}" data-dtab="districts">
+          🏙️ Şehir Bölgeleri (${comp.built}/${comp.total})
+        </button>
+        <button class="city-tab-btn dir-main-tab ${activeDirectoryTab === "world_cities" ? "active" : ""}" data-dtab="world_cities">
+          🌍 1+10 Şehir Haritası (${1 + unlockedCitiesCount}/11)
+        </button>
+      </div>
+    `;
+
+    if (activeDirectoryTab === "world_cities" && window.MetropolisV28) {
+      box.innerHTML = `${topTabsHtml}<div id="worldCitiesSubBox"></div>`;
+      box.querySelectorAll(".dir-main-tab").forEach((b) => {
+        b.addEventListener("click", () => {
+          activeDirectoryTab = b.dataset.dtab;
+          if (cachedHelpers && cachedHelpers.sfx) cachedHelpers.sfx.tap();
+          renderLandsDirectory(data, activeLand, onSelectLand, cachedHelpers);
+        });
+      });
+      const subBox = document.getElementById("worldCitiesSubBox");
+      window.MetropolisV28.renderWorldCitiesTab(subBox, data, cachedHelpers, () => {
+        renderLandsDirectory(data, activeLand, onSelectLand, cachedHelpers);
+      });
+      return;
+    }
+
+    const coreLookup = {
+      station: {
+        id: "station",
+        title: "⛽ 1. Arazi — Ana İstasyon",
+        status: "AKTİF MERKEZ",
+        owned: true,
+        built: true,
+        desc: "9 Pompa, LPG, Çekici, Otobüs Peronu, EV Şarj, Restoran & Motel"
+      },
+      land2: {
+        id: "land2",
+        title: "🛍️ 2. Arazi — Otopark & Grand AVM",
+        status: data.empire.land2Owned ? "TAPULU ✓" : `SATILIK (${window.EmpireSystem.LAND2_COST} ₺)`,
+        owned: data.empire.land2Owned,
+        built: isCoreLandBuilt(data, "land2"),
+        desc: "Ücretli Otopark, 8 Dükkanlı AVM, Lojistik & Plaza"
+      },
+      land3: {
+        id: "land3",
+        title: "🎡 3. Arazi — Park, Filo & Tatil Köyü",
+        status: data.empire.land3 && data.empire.land3.owned ? "TAPULU ✓" : `SATILIK (${window.Land3System.LAND3_COST} ₺)`,
+        owned: !!(data.empire.land3 && data.empire.land3.owned),
+        built: isCoreLandBuilt(data, "land3"),
+        desc: "Go-Kart, Dönme Dolap, Rafineri, 10 Tır & Bungalov"
+      }
+    };
+
+    let html = `
+      ${topTabsHtml}
+      <div class="rep-section" style="border-color:${comp.completed ? "#22c55e" : "#facc15"}; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <strong style="font-size:13.5px; color:#fff;">🏗️ Merkez Şehir Yapılanması: ${comp.built} / ${comp.total} (%${comp.pct})</strong>
+          <span class="shift-pill" style="color:${comp.completed ? "#4ade80" : "#fde047"};">${comp.completed ? "1. ÇEVRE ŞEHİR AÇIK! 🌍" : "Hedef: %100"}</span>
         </div>
-      `;
-    });
-
-    EXTRA_LANDS.forEach((l) => {
-      const st = data.empire.extraLands[l.id];
-      const pDef = st.projectKey ? getProjectDef(st.projectKey) : null;
-      const statusTxt = !st.owned
-        ? `SATILIK • ${l.deedCost.toLocaleString("tr-TR")} ₺`
-        : pDef
-        ? `${pDef.emoji} ${pDef.name} (Kat ${st.floorsLvl})`
-        : "🔑 ARSA BİZİM • PROJE SEÇ!";
-
-      html += `
-        <div class="mall-shop-card ${pDef ? "rented" : st.owned ? "owned" : ""}">
-          <div class="shop-top-row">
-            <div class="shop-title">🏞️ ${l.name}</div>
-            <span class="shop-status-tag ${pDef ? "tag-rented" : st.owned ? "tag-vacant" : "tag-sale"}">${statusTxt}</span>
-          </div>
-          <div style="font-size:12px; color:#cbd5e1;">${l.desc}</div>
-          <div class="shop-btn-row">
-            <button class="shop-action-btn ${st.owned ? "rent-share" : "buy-deed"} go-land-btn" data-land="${l.id}">
-              ${!st.owned ? `🗺️ Arsayı Gör & Satın Al (${l.deedCost.toLocaleString("tr-TR")} ₺)` : pDef ? `🚀 ${pDef.name} Haritasına Git ➔` : "🏗️ 14 Yapıdan Birini Seç & Kur ➔"}
-            </button>
-          </div>
+        <div style="width:100%; height:9px; background:#090d1a; border-radius:999px; overflow:hidden; border:1px solid #334155; margin-bottom:5px;">
+          <div style="width:${comp.pct}%; height:100%; background:linear-gradient(90deg,#38bdf8,#22c55e);"></div>
         </div>
+        <div style="font-size:11.5px; color:#cbd5e1;">
+          ${comp.completed ? "🎉 Bu şehirdeki tüm yapılar tamamlandı! Üstteki '🌍 1+10 Şehir Haritası' sekmesinden diğer şehirlere geçebilirsin!" : "Rakiplerin elindeki arazileri satın alıp tüm 16 araziye yapı kurduğunda etraftaki 10 yeni şehrin kilidi sırayla açılır!"}
+        </div>
+      </div>
+    `;
+
+    CITY_DISTRICTS.forEach((dist) => {
+      const mastered = isDistrictMastered(data, dist.key);
+      const distBuilt = dist.landIds.filter((id) => isCoreLandBuilt(data, id)).length;
+      html += `
+        <div class="rep-section" style="border-color:${mastered ? "#22c55e" : dist.color}; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; margin-bottom:4px;">
+            <h4 style="margin:0; color:${mastered ? "#86efac" : "#fde68a"};">${dist.title}</h4>
+            <span class="shift-pill" style="font-size:10.5px; color:${mastered ? "#4ade80" : "#cbd5e1"};">
+              ${mastered ? "✅ HAKİMİYET +%18" : `${distBuilt}/${dist.landIds.length} Yapı`}
+            </span>
+          </div>
+          <p style="font-size:11.5px; color:#94a3b8; margin-bottom:7px;">${dist.subtitle}</p>
       `;
+
+      dist.landIds.forEach((lid) => {
+        if (coreLookup[lid]) {
+          const c = coreLookup[lid];
+          html += `
+            <div class="mall-shop-card ${c.owned ? "rented" : ""}" style="margin-bottom:6px;">
+              <div class="shop-top-row">
+                <div class="shop-title">${c.title}</div>
+                <span class="shop-status-tag ${c.owned ? "tag-rented" : "tag-sale"}">${c.status}</span>
+              </div>
+              <div style="font-size:12px; color:#cbd5e1;">${c.desc}</div>
+              <div class="shop-btn-row">
+                <button class="shop-action-btn ${activeLand === c.id ? "up-rent" : "rent-fixed"} go-land-btn" data-land="${c.id}">
+                  ${activeLand === c.id ? "📍 ŞU AN BURADASIN" : "🚀 BU ARAZİYE GİT ➔"}
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          const l = getLandDef(lid);
+          if (!l) return;
+          const st = data.empire.extraLands[l.id] || createSingleLandState();
+          const pDef = st.projectKey ? getProjectDef(st.projectKey) : null;
+          const isRivalHeld = !st.owned && !!l.rivalBoss;
+          const statusTxt = !st.owned
+            ? isRivalHeld
+              ? `⚔️ RAKİP: ${l.rivalBoss} • ${l.deedCost.toLocaleString("tr-TR")} ₺`
+              : `SATILIK • ${l.deedCost.toLocaleString("tr-TR")} ₺`
+            : pDef
+            ? `${pDef.emoji} ${pDef.name} (Kat ${st.floorsLvl})`
+            : "🔑 ARSA BİZİM • YAPI SEÇ!";
+
+          html += `
+            <div class="mall-shop-card ${pDef ? "rented" : st.owned ? "owned" : ""}" style="margin-bottom:6px; ${isRivalHeld ? `border-color:${l.rivalColor};` : ""}">
+              <div class="shop-top-row">
+                <div class="shop-title">${isRivalHeld ? "⚔️" : "🏞️"} ${l.name}</div>
+                <span class="shop-status-tag ${pDef ? "tag-rented" : st.owned ? "tag-vacant" : "tag-sale"}">${statusTxt}</span>
+              </div>
+              <div style="font-size:12px; color:#cbd5e1;">${l.desc}</div>
+              <div class="shop-btn-row">
+                <button class="shop-action-btn ${st.owned ? "rent-share" : "buy-deed"} go-land-btn" data-land="${l.id}">
+                  ${!st.owned
+                    ? isRivalHeld
+                      ? `⚔️ Rakip Araziye Git & Satın Al (${l.deedCost.toLocaleString("tr-TR")} ₺)`
+                      : `🗺️ Arsayı Gör & Satın Al (${l.deedCost.toLocaleString("tr-TR")} ₺)`
+                    : pDef
+                    ? `🚀 ${pDef.name} Haritasına Git ➔`
+                    : "🏗️ 15 Yapıdan Birini Seç & Kur ➔"}
+                </button>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      html += `</div>`;
     });
 
     box.innerHTML = html;
+    box.querySelectorAll(".dir-main-tab").forEach((b) => {
+      b.addEventListener("click", () => {
+        activeDirectoryTab = b.dataset.dtab;
+        if (cachedHelpers && cachedHelpers.sfx) cachedHelpers.sfx.tap();
+        renderLandsDirectory(data, activeLand, onSelectLand, cachedHelpers);
+      });
+    });
     box.querySelectorAll(".go-land-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const target = btn.dataset.land;
@@ -1484,12 +1797,17 @@ window.ExtraLandsSystem = (function () {
   }
 
   return {
+    CITY_DISTRICTS,
     EXTRA_LANDS,
     PROJECT_TYPES,
+    MIXED_TOWER_OPTIONS,
     createDefaultExtraLands,
     mergeExtraLands,
     getLandDef,
     getProjectDef,
+    getMainCityCompletion,
+    isDistrictMastered,
+    setDirectoryTab(tab) { if (tab) activeDirectoryTab = tab; },
     calcTotalExtraSalary,
     calcDailyExtraWages,
     updateExtraLands,

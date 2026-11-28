@@ -366,6 +366,40 @@ window.HoldingV16 = (function () {
       if (v16.vipAssets && v16.vipAssets[a.key]) val += a.price || 0;
     });
 
+    // v28 Büyükşehir, Vadeli Kasa, Tramvay, Bayilikler, Eserler ve 10 Çevre Şehir Yatırımları
+    if (emp.v28) {
+      const v28 = emp.v28;
+      val += Math.round(v28.vaultBalance || 0);
+      if (v28.tram && v28.tram.unlocked) val += 24000 * (v28.tram.lvl || 1);
+      val += ((v28.couriers && v28.couriers.count) || 0) * 5500;
+      val += (v28.franchiseCount || 0) * 32000;
+      if (v28.sea && v28.sea.cruiseUnlocked) val += 54000;
+      if (v28.monuments) {
+        Object.values(v28.monuments).forEach((b) => { if (b) val += 85000; });
+      }
+      if (v28.surroundingCities) {
+        Object.values(v28.surroundingCities).forEach((sc) => {
+          if (sc && sc.unlocked && Array.isArray(sc.plots)) {
+            sc.plots.forEach((p) => {
+              if (p.owned) val += 120000;
+              if (p.builtKey) val += 90000 * (p.lvl || 1);
+            });
+          }
+        });
+      }
+    }
+    if (emp.v29) {
+      const v29 = emp.v29;
+      if (v29.jewelry && v29.jewelry.unlocked) {
+        val += 19500 + (v29.jewelry.goldGrams || 0) * (v29.jewelry.goldPrice || 2850) + Math.round((v29.jewelry.fxUnits || 0) * (v29.jewelry.fxPrice || 36));
+      }
+      if (v29.playerBank && v29.playerBank.unlocked) val += 85000;
+      if (v29.municipal) {
+        if (v29.municipal.cableCarUnlocked) val += 95000;
+        if (v29.municipal.bayBridgeUnlocked) val += 185000;
+      }
+    }
+
     // Devralınan rakip şirketleri
     RIVAL_DEFS.forEach((r) => {
       const st = v16.rivals[r.key];
@@ -448,6 +482,13 @@ window.HoldingV16 = (function () {
       (d.taxiIncome || 0) +
       (d.portIncome || 0) +
       (d.clubIncome || 0) +
+      (d.tramIncome || 0) +
+      (d.courierIncome || 0) +
+      (d.franchiseIncome || 0) +
+      (d.carFlipIncome || 0) +
+      (d.multiCityIncome || 0) +
+      (d.realCityIncome || 0) +
+      (d.municipalIncome || 0) +
       extTotal +
       (d.rivalIncome || 0);
 

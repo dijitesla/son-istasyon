@@ -17,7 +17,13 @@ window.MechanicsV23 = (function () {
     land7:   { ox:  -56, oz:  36, num: 7, name: "7. Arazi" },
     land8:   { ox:    0, oz:  36, num: 8, name: "8. Arazi" },
     land9:   { ox:   56, oz:  36, num: 9, name: "9. Arazi" },
-    land10:  { ox:  112, oz:  36, num: 10, name: "10. Arazi" }
+    land10:  { ox:  112, oz:  36, num: 10, name: "10. Arazi" },
+    land11:  { ox:  168, oz: -36, num: 11, name: "11. Doğu Finans Kapısı" },
+    land12:  { ox: -168, oz: -36, num: 12, name: "12. Batı Lojistik Kavşağı" },
+    land13:  { ox: -168, oz:  36, num: 13, name: "13. Batı Sahil Kordonu" },
+    land14:  { ox:  168, oz:  36, num: 14, name: "14. Doğu Marina Yolu" },
+    land15:  { ox:  -96, oz: -104, num: 15, name: "15. Kuzeybatı Zirve Tepesi" },
+    land16:  { ox:   96, oz: -104, num: 16, name: "16. Kuzeydoğu İmparatorluk Zirvesi" }
   };
 
   // 1) CANLI AKARYAKIT FİYAT POLİTİKALARI
@@ -883,8 +889,8 @@ window.MechanicsV23 = (function () {
         bossDrive.angle += steerIn * dirSign * 2.55 * dt;
       }
 
-      bossDrive.wx = Math.max(-152, Math.min(152, bossDrive.wx + Math.sin(bossDrive.angle) * bossDrive.speed * dt));
-      bossDrive.wz = Math.max(-106, Math.min(102, bossDrive.wz + Math.cos(bossDrive.angle) * bossDrive.speed * dt));
+      bossDrive.wx = Math.max(-196, Math.min(196, bossDrive.wx + Math.sin(bossDrive.angle) * bossDrive.speed * dt));
+      bossDrive.wz = Math.max(-114, Math.min(104, bossDrive.wz + Math.cos(bossDrive.angle) * bossDrive.speed * dt));
 
       if (window.Engine3D && window.Engine3D.followWorldPos) {
         window.Engine3D.followWorldPos(bossDrive.wx, bossDrive.wz);

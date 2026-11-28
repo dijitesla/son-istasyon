@@ -1,7 +1,7 @@
 {
   "name": "Son İstasyon",
   "short_name": "Son İstasyon",
-  "description": "Otoyol istasyonundan 10 arazili 3D şehir ve holding imparatorluğuna uzanan işletme simülasyonu.",
+  "description": "Otoyol istasyonundan 16 arazili 3D şehir ve 1+10 şehirlik holding imparatorluğuna uzanan işletme simülasyonu.",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",

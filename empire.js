@@ -241,6 +241,8 @@ window.EmpireSystem = (function () {
       v16: window.HoldingV16 ? window.HoldingV16.createDefaultV16() : null,
       v23: window.MechanicsV23 ? window.MechanicsV23.createDefaultV23() : null,
       v24: window.CityV24 ? window.CityV24.createDefaultV24() : null,
+      v28: window.MetropolisV28 ? window.MetropolisV28.createDefaultV28() : null,
+      v29: window.RealCityV29 ? window.RealCityV29.createDefaultV29() : null,
 
       // Çok Kaynaklı Şahsi Maaş Sistemi!
       personalCash: 0,
@@ -314,6 +316,12 @@ window.EmpireSystem = (function () {
     if (window.CityV24) {
       out.v24 = window.CityV24.mergeV24(saved.v24);
     }
+    if (window.MetropolisV28) {
+      out.v28 = window.MetropolisV28.mergeV28(saved.v28);
+    }
+    if (window.RealCityV29) {
+      out.v29 = window.RealCityV29.mergeV29(saved.v29);
+    }
 
     out.electronics = Object.assign({}, saved.electronics || {});
     out.properties = Object.assign({}, saved.properties || {});
@@ -356,11 +364,20 @@ window.EmpireSystem = (function () {
   function getShopCycleRent(shopDef, shopState, emp) {
     if (!shopState || !shopState.owned || !shopState.rented) return 0;
     const lvlMult = 1 + (shopState.lvl - 1) * 0.35;
+    let m28 = 1.0;
+    if (emp && emp.v28) {
+      const mcLvl = (emp.v28.directors && emp.v28.directors.mallChief && emp.v28.directors.mallChief.lvl) || 0;
+      m28 *= 1 + mcLvl * 0.09;
+      if (emp.v28.mayor && emp.v28.mayor.elected && emp.v28.mayor.activeDecree === "festival") m28 *= 1.35;
+    }
+    if (emp && emp.extraLands && Object.values(emp.extraLands).some((st) => st && st.owned && st.projectKey === "filmstudio")) {
+      m28 *= 1.3;
+    }
     if (shopState.contract === "share") {
       const occBonus = 1 + getParkingOccupancyBonus(emp) * 1.3;
-      return Math.round(shopDef.baseRent * lvlMult * occBonus);
+      return Math.round(shopDef.baseRent * lvlMult * occBonus * m28);
     }
-    return Math.round(shopDef.baseRent * 1.15 * lvlMult);
+    return Math.round(shopDef.baseRent * 1.15 * lvlMult * m28);
   }
 
   function getMallTotalCycleRent(emp) {
@@ -2077,7 +2094,8 @@ window.EmpireSystem = (function () {
           const sym = btn.dataset.sym;
           const act = btn.dataset.act;
           const st = emp.stocks[sym];
-          const feeRate = emp.electronics.laptop ? 0 : 0.02;
+          const hasTechPark = emp.extraLands && Object.values(emp.extraLands).some((s) => s && s.owned && s.projectKey === "techpark");
+          const feeRate = emp.electronics.laptop || hasTechPark ? 0 : 0.02;
 
           if (act === "buy1" || act === "buy5") {
             const qty = act === "buy5" ? 5 : 1;
