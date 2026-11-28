@@ -13,6 +13,37 @@
 window.RealCityV29 = (function () {
   const INCUMBENT_MAYOR_NAME = "Başkan Ekrem Çetin";
 
+  // ⚖️ BELEDİYE VERGİ POLİTİKALARI (Başkan Olunca Belediye Bütçesini Yönetir!)
+  const TAX_POLICIES = [
+    {
+      key: "low",
+      label: "🟢 %4 Düşük Vergi (Halk & Esnaf Dostu)",
+      short: "%4 Düşük",
+      taxMult: 0.62,
+      privateBizMult: 1.15,
+      dailySupportDelta: 3,
+      desc: "Belediye kasası yavaş birikir ama halk çok memnundur (+%3 oy/gün) ve şehirdeki özel şirketlerinin cirosu +%15 artar!"
+    },
+    {
+      key: "balanced",
+      label: "🟡 %8 Dengeli Vergi (Standart Tarife)",
+      short: "%8 Dengeli",
+      taxMult: 1.0,
+      privateBizMult: 1.05,
+      dailySupportDelta: 1,
+      desc: "Hem Belediye Bütçesi düzenli vergi toplar hem de esnaf ve vatandaş memnundur (+%5 şehir ticareti)."
+    },
+    {
+      key: "high",
+      label: "🔴 %14 Kalkınma Vergisi (Hızlı Yatırım)",
+      short: "%14 Yüksek",
+      taxMult: 1.8,
+      privateBizMult: 0.94,
+      dailySupportDelta: -2,
+      desc: "Belediye Kasasına neredeyse 2 kat vergi akar (Köprü ve Teleferik bütçesi hızla birikir), özel ticaret hafif yavaşlar (-%6)."
+    }
+  ];
+
   // 🌸☀️🍂❄️ 4 MEVSİM DÖNGÜSÜ (#5)
   const SEASONS = [
     { key: "spring", badge: "🌸 İlkbahar", grassTint: "#2f7a44", treeTint: "#4ade80", blossom: "#f9a8d4", desc: "Çiçek açan ağaçlar! Çarşı, Teleferik ve Mesire gelirleri +%25 artar." },
@@ -203,8 +234,14 @@ window.RealCityV29 = (function () {
         np_north: { owned: false, boughtAtMult: 1.0 },
         np_bridge: { owned: false, boughtAtMult: 1.0 }
       },
-      // 🏛️ BELEDİYE BAŞKANI OLUNCA AÇILAN KAMU HİZMETLERİ & MEGA PROJELER
+      // 🏛️ BELEDİYE HAZİNESİ, VERGİ SİSTEMİ & KAMU HİZMETLERİ (Şirket Kasasından Tamamen Ayrı Kamu Bütçesi!)
       municipal: {
+        budget: 72000, // Mevcut belediye hazinesi (seçimi kazanınca devralınır, vergilerle büyür!)
+        taxPolicy: "balanced", // "low" | "balanced" | "high"
+        dailyTaxIn: 0,
+        dailyTransitIn: 0,
+        dailyStateGrant: 0,
+        dailyMaintOut: 0,
         busCount: 0,
         garbageTrucks: 0,
         recyclingPlant: false,
@@ -390,6 +427,139 @@ window.RealCityV29 = (function () {
     return 1.0 + ((v29.municipal && v29.municipal.roadAsphaltLvl) || 0) * 0.05;
   }
 
+  // =========================================================================
+  // 🏛️ GERÇEK BELEDİYE BÜTÇESİ, VERGİ DAİRESİ & ŞEHİR NÜFUSU SİSTEMİ
+  // =========================================================================
+  function getTaxPolicyDef(v29) {
+    const k = (v29 && v29.municipal && v29.municipal.taxPolicy) || "balanced";
+    return TAX_POLICIES.find((p) => p.key === k) || TAX_POLICIES[1];
+  }
+
+  function calcCityPopulation(data) {
+    const v29 = ensureV29(data);
+    const emp = data.empire || {};
+    const v28 = emp.v28 || {};
+    const m = v29.municipal || {};
+    let pop = 38000 + getOwnedLandCount(data) * 4200;
+    if (emp.mallUnlocked) pop += 9500;
+    pop += Object.values(v29.bazaarShops || {}).filter(Boolean).length * 2400;
+    HOUSING_PROJECTS.forEach((hp) => {
+      const st = v29.housing[hp.key];
+      if (st && (st.built || st.soldCount > 0)) pop += 5500 + (st.soldCount || 0) * 2800;
+    });
+    pop += (m.busCount || 0) * 3200;
+    pop += (m.roadAsphaltLvl || 0) * 4500;
+    pop += (m.powerWaterLvl || 0) * 5200;
+    if (v28.tram && v28.tram.unlocked) pop += 14000 + (v28.tram.lvl || 1) * 3500;
+    if (m.cableCarUnlocked) pop += 12000;
+    if (m.bayBridgeUnlocked) pop += 26000;
+    return Math.round(pop);
+  }
+
+  // Belediye altyapısı geliştikçe ve vergi politikasına göre oyuncunun ÖZEL şirketlerinin kazanç çarpanı!
+  function getCityDevelopmentMult(data) {
+    const v29 = ensureV29(data);
+    const mStatus = getMayorElectionStatus(data);
+    const popBonus = Math.min(0.55, Math.max(0, (calcCityPopulation(data) - 42000) / 320000));
+    const taxMult = mStatus.elected ? getTaxPolicyDef(v29).privateBizMult : 1.0;
+    return Number(((1.0 + popBonus) * taxMult).toFixed(3));
+  }
+
+  function calcMunicipalBudgetFlow(data) {
+    const v29 = ensureV29(data);
+    const emp = data.empire || {};
+    const m = v29.municipal;
+    const season = getCurrentSeason(data).key;
+    const pol = getTaxPolicyDef(v29);
+    const pop = calcCityPopulation(data);
+
+    // 1) Emlak & Çevre Temizlik Vergisi (Nüfus + Araziler + Konutlar)
+    const propTax = Math.round((280 + (pop / 1000) * 14 + getOwnedLandCount(data) * 85) * pol.taxMult);
+
+    // 2) Esnaf Ruhsat, İlan & Reklam Harçları (AVM + Çarşı + Sanayi + Panolar)
+    const rentedMallCount = emp.mallShops ? Object.values(emp.mallShops).filter((s) => s && s.rented).length : 0;
+    const bazaarCount = Object.values(v29.bazaarShops || {}).filter(Boolean).length;
+    const bizTax = Math.round(
+      (160 + rentedMallCount * 55 + bazaarCount * 48 + (v29.autoIndustry.unlocked ? 140 : 0) + (v29.media.billboards || 0) * 40) *
+        pol.taxMult
+    );
+
+    // 3) Belediye Kamu İşletme Gelirleri (Otobüs, Köprü Gişesi, Teleferik, Elektrik/Su, Geri Dönüşüm)
+    let transitAndUtil = 0;
+    if (m.busCount > 0) transitAndUtil += m.busCount * 145;
+    if (m.garbageTrucks > 0 && m.recyclingPlant) transitAndUtil += m.garbageTrucks * 165;
+    if (m.powerWaterLvl > 0) {
+      transitAndUtil += Math.round(m.powerWaterLvl * 320 * (season === "winter" ? 1.35 : 1.0));
+    }
+    if (m.cableCarUnlocked) {
+      transitAndUtil += Math.round(680 * (season === "spring" || season === "summer" ? 1.3 : 1.0));
+    }
+    if (m.bayBridgeUnlocked) {
+      transitAndUtil += 1180;
+    }
+
+    // 4) Belediye Hizmet & Personel Bakım Gideri
+    const maintOut =
+      (m.busCount || 0) * 32 +
+      (m.garbageTrucks || 0) * 28 +
+      (m.fireStation ? 55 : 0) +
+      (m.policeHQ ? 65 : 0) +
+      (m.zabitaHQ ? 40 : 0) +
+      (m.roadAsphaltLvl || 0) * 35;
+
+    const taxTotal = propTax + bizTax;
+    const netCycle = Math.max(120, taxTotal + transitAndUtil - maintOut);
+    const dailyGrantEst = Math.round(2500 + (pop / 1000) * 75);
+
+    return {
+      pop,
+      pol,
+      propTax,
+      bizTax,
+      taxTotal,
+      transitAndUtil,
+      maintOut,
+      netCycle,
+      dailyGrantEst
+    };
+  }
+
+  function addMunicipalRevenue(data, amount, kind = "transit") {
+    const v29 = ensureV29(data);
+    const amt = Math.round(amount || 0);
+    if (amt <= 0) return;
+    v29.municipal.budget = Math.max(0, Math.round((v29.municipal.budget || 0) + amt));
+    if (kind === "tax") v29.municipal.dailyTaxIn = (v29.municipal.dailyTaxIn || 0) + amt;
+    else v29.municipal.dailyTransitIn = (v29.municipal.dailyTransitIn || 0) + amt;
+  }
+
+  function payFromMunicipalBudget(cost, title, data, helpers, onPaid) {
+    const v29 = ensureV29(data);
+    const mStatus = getMayorElectionStatus(data);
+    if (!mStatus.elected) {
+      if (helpers && helpers.sfx && helpers.sfx.burnFail) helpers.sfx.burnFail();
+      if (helpers && helpers.showToast) {
+        helpers.showToast(`🔒 "${title}" belediye yetkisindedir! Önce seçimi kazanıp Belediye Başkanı olmalısın.`);
+      }
+      return false;
+    }
+    const curBudget = Math.floor(v29.municipal.budget || 0);
+    if (curBudget < cost) {
+      if (helpers && helpers.sfx && helpers.sfx.burnFail) helpers.sfx.burnFail();
+      if (helpers && helpers.showToast) {
+        helpers.showToast(
+          `🏛️ Belediye Bütçesi yetersiz! (Kasa: ${curBudget.toLocaleString("tr-TR")} ₺ / Gereken: ${cost.toLocaleString("tr-TR")} ₺) — Vergi ve gişe gelirlerinin birikmesini bekle!`
+        );
+      }
+      return false;
+    }
+    v29.municipal.budget = curBudget - cost;
+    if (helpers && helpers.saveGame) helpers.saveGame();
+    if (helpers && helpers.updateHUD) helpers.updateHUD();
+    if (onPaid) onPaid();
+    return true;
+  }
+
   function calcNeighborhoodMultiplier(data) {
     const v29 = ensureV29(data);
     const emp = data.empire || {};
@@ -528,23 +698,10 @@ window.RealCityV29 = (function () {
     if (v29.media.localTv) biz += 540;
     if (nightMarketTimer > 0) biz += 380;
 
-    biz = Math.round(biz * cmo);
+    biz = Math.round(biz * cmo * getCityDevelopmentMult(data));
+    const muniFlow = calcMunicipalBudgetFlow(data);
 
-    // Belediye Hizmetleri & Mega Altyapı Gelirleri (#13, #14, #23, #27, #28)
-    const m = v29.municipal;
-    if (m.busCount > 0) muni += m.busCount * 110;
-    if (m.garbageTrucks > 0 && m.recyclingPlant) muni += m.garbageTrucks * 135;
-    if (m.powerWaterLvl > 0) {
-      muni += Math.round(m.powerWaterLvl * 260 * (season === "winter" ? 1.4 : 1.0));
-    }
-    if (m.cableCarUnlocked) {
-      muni += Math.round(580 * (season === "spring" || season === "summer" ? 1.3 : 1.0));
-    }
-    if (m.bayBridgeUnlocked) {
-      muni += 940;
-    }
-
-    return { biz, muni };
+    return { biz, muniFlow };
   }
 
   function updateV29(dt, data, helpers) {
@@ -751,10 +908,9 @@ window.RealCityV29 = (function () {
         const counselMult = v29.board.counsel ? 1.35 : 1.0;
         const bounty = Math.round((1850 + (data.scaleLvl || 1) * 420) * counselMult);
         if (v29.municipal.zabitaHQ || v29.municipal.policeHQ) {
-          data.cash += bounty;
+          addMunicipalRevenue(data, bounty, "transit");
           v29.scaleCaughtCount = (v29.scaleCaughtCount || 0) + 1;
-          if (data.daily) data.daily.realCityIncome = (data.daily.realCityIncome || 0) + bounty;
-          rcFloats.push({ wx: 22, wz: -38, text: `🚓 ZABITA/KANTAR CEZASI +${bounty}₺`, color: "#4ade80", life: 1.9 });
+          rcFloats.push({ wx: 22, wz: -38, text: `🏛️ BELEDİYE ZABITA CEZASI +${bounty}₺`, color: "#38bdf8", life: 1.9 });
         } else {
           activeScaleSuspect = {
             plate: `34 KCK ${100 + Math.floor(Math.random() * 890)}`,
@@ -805,18 +961,24 @@ window.RealCityV29 = (function () {
       data.security = Math.min(100, Math.max(data.security || 65, 92));
     }
 
-    // 12) Düzenli Döngü Geliri (8.0 sn)
+    // 12) Düzenli Döngü Geliri (8.0 sn): Özel İşletmeler -> Şirket Kasasına | Vergi & Kamu Geliri -> 🏛️ Belediye Bütçesine!
     cityCycleTimer += dt;
     if (cityCycleTimer >= 8.0) {
       cityCycleTimer -= 8.0;
       const earn = calcCityCycleEarnings(data);
-      const tot = earn.biz + earn.muni;
-      if (tot > 0) {
-        data.cash += tot;
-        if (data.daily) {
-          data.daily.realCityIncome = (data.daily.realCityIncome || 0) + earn.biz;
-          data.daily.municipalIncome = (data.daily.municipalIncome || 0) + earn.muni;
-        }
+      if (earn.biz > 0) {
+        data.cash += earn.biz;
+        if (data.daily) data.daily.realCityIncome = (data.daily.realCityIncome || 0) + earn.biz;
+      }
+      const mf = earn.muniFlow;
+      if (mayorElected) {
+        v29.municipal.budget = Math.max(0, Math.round((v29.municipal.budget || 0) + mf.netCycle));
+        v29.municipal.dailyTaxIn = (v29.municipal.dailyTaxIn || 0) + mf.taxTotal;
+        v29.municipal.dailyTransitIn = (v29.municipal.dailyTransitIn || 0) + mf.transitAndUtil;
+        v29.municipal.dailyMaintOut = (v29.municipal.dailyMaintOut || 0) + mf.maintOut;
+      } else {
+        // Başkan Ekrem Çetin döneminde de belediye kasasında bir miktar kamu vergisi birikir
+        v29.municipal.budget = Math.min(180000, Math.round((v29.municipal.budget || 72000) + mf.taxTotal * 0.35));
       }
     }
 
@@ -855,9 +1017,28 @@ window.RealCityV29 = (function () {
       if (v29.activeSponsors[i].daysLeft <= 0) v29.activeSponsors.splice(i, 1);
     }
 
-    // Yeni Günde Vatandaş Taleplerini Tazele (#38)
+    // Yeni Günde Vatandaş Taleplerini Tazele & Belediye Devlet Ödeneğini Yatır (#38)
     v29.citizenRequests = rollCitizenRequests();
-    return { bankInterestCollected };
+    const mayorElected = !!(data.empire && data.empire.v28 && data.empire.v28.mayor && data.empire.v28.mayor.elected);
+    const mf = calcMunicipalBudgetFlow(data);
+    let muniStateGrant = 0;
+    if (mayorElected) {
+      muniStateGrant = mf.dailyGrantEst;
+      v29.municipal.budget = Math.round((v29.municipal.budget || 0) + muniStateGrant);
+      v29.publicSupport = Math.max(25, Math.min(98, (v29.publicSupport || 55) + mf.pol.dailySupportDelta));
+    }
+    const muniSummary = {
+      budget: Math.round(v29.municipal.budget || 0),
+      taxIn: Math.round(v29.municipal.dailyTaxIn || 0),
+      transitIn: Math.round(v29.municipal.dailyTransitIn || 0),
+      stateGrant: muniStateGrant,
+      maintOut: Math.round(v29.municipal.dailyMaintOut || 0)
+    };
+    v29.municipal.dailyTaxIn = 0;
+    v29.municipal.dailyTransitIn = 0;
+    v29.municipal.dailyStateGrant = muniStateGrant;
+    v29.municipal.dailyMaintOut = 0;
+    return { bankInterestCollected, muniSummary };
   }
 
   // =========================================================================
@@ -1518,9 +1699,13 @@ window.RealCityV29 = (function () {
     }
 
     // =====================================================================
-    // SEKME 4: 🏛️ MEVCUT BAŞKAN EKREM ÇETİN -> VATANDAŞ TALEPLERİ -> BAŞKANLIK YETKİLERİ!
+    // SEKME 4: 🏛️ BELEDİYE BÜTÇESİ, VERGİ DAİRESİ & KAMU HİZMETLERİ!
     // =====================================================================
     if (currentRcTab === "civic") {
+      const m = v29.municipal;
+      const mf = calcMunicipalBudgetFlow(data);
+      const devPct = Math.round((getCityDevelopmentMult(data) - 1) * 100);
+
       const reqCards = v29.citizenRequests.map((rq, idx) => `
         <div class="upgrade-card" style="padding:9px 11px; border-color:${rq.done ? "#22c55e" : "#facc15"};">
           <div class="up-info">
@@ -1528,7 +1713,7 @@ window.RealCityV29 = (function () {
             <p style="font-size:11.5px;">"${rq.text}" • <strong style="color:#4ade80;">+%${rq.support} Halk Desteği</strong> + ${rq.reward}₺ katkı</p>
           </div>
           <button class="up-buy-btn rc29-req-btn" data-ridx="${idx}" ${rq.done ? "disabled" : ""}>
-            ${rq.done ? "ÇÖZÜLDÜ ✓" : `Çöz (${rq.cost.toLocaleString("tr-TR")}₺)`}
+            ${rq.done ? "ÇÖZÜLDÜ ✓" : `${mStatus.elected ? "🏛️" : "💵"} Çöz (${rq.cost.toLocaleString("tr-TR")}₺)`}
           </button>
         </div>
       `).join("");
@@ -1544,8 +1729,12 @@ window.RealCityV29 = (function () {
               <div style="width:${mStatus.support}%; background:linear-gradient(90deg,#22c55e,#4ade80);"></div>
               <div style="width:${mStatus.rivalSupport}%; background:#ef4444;"></div>
             </div>
+            <div class="rep-row" style="font-size:12px; margin-bottom:5px;">
+              <span>🏛️ Mevcut Belediye Hazinesi (Seçilince Devralırsın):</span>
+              <strong style="color:#fde047;">${Math.round(m.budget || 72000).toLocaleString("tr-TR")} ₺</strong>
+            </div>
             <div style="font-size:11.5px; color:#cbd5e1; margin-bottom:8px;">
-              Başkan olmadan belediye otobüsü, asfalt, çöp, elektrik/su, teleferik ve körfez köprüsü yetkileri <strong>${mStatus.incumbentName}</strong>'dedir! Adaylık şartlarını adım adım tamamla:
+              Belediye işleri kendi cebinden değil, <strong>vergilerle biriken Belediye Bütçesinden</strong> yapılır! Seçime girmek için 4 şartı tamamla:
               <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:6px; font-size:11px; font-weight:800;">
                 <span style="color:${mStatus.dayOk ? "#4ade80" : "#fca5a5"};">${mStatus.dayOk ? "✅" : "⏳"} Gün 8+ veya 4 Arazi</span>
                 <span style="color:${mStatus.repOk ? "#4ade80" : "#fca5a5"};">${mStatus.repOk ? "✅" : "⏳"} İtibar ≥ 75 (${Math.round(data.reputation || 50)})</span>
@@ -1554,19 +1743,53 @@ window.RealCityV29 = (function () {
               </div>
             </div>
             <button id="rc29WinMayorBtn" class="primary-btn" style="padding:10px; font-size:13.5px;" ${mStatus.canRun ? "" : "disabled"}>
-              ${mStatus.canRun ? `🗳️ SEÇİME GİR & ${mStatus.incumbentName.toUpperCase()}'İ DEVİR (${mStatus.campaignCost.toLocaleString("tr-TR")} ₺)` : "🔒 Önce Yukarıdaki 4 Adaylık Şartını Tamamla"}
+              ${mStatus.canRun ? `🗳️ SEÇİME GİR & BELEDİYE HAZİNESİNİ DEVRAL (${mStatus.campaignCost.toLocaleString("tr-TR")} ₺)` : "🔒 Önce Yukarıdaki 4 Adaylık Şartını Tamamla"}
             </button>
           </div>
         `
         : `
           <div class="rep-section" style="border-color:#22c55e; background:rgba(20,83,45,0.28); margin-bottom:10px;">
-            <strong style="color:#4ade80; font-size:14px;">🏛️ ŞEHRİN BELEDİYE BAŞKANI SENSİN! (Halk Desteği: %${mStatus.support})</strong>
-            <p style="font-size:11.5px; color:#e2e8f0; margin-top:3px;">Tüm belediye ulaşım, temizlik, altyapı, teleferik ve körfez köprüsü yetkileri senin emrinde!</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <strong style="color:#4ade80; font-size:14px;">🏛️ BELEDİYE BÜTÇESİ &amp; VERGİ DAİRESİ</strong>
+              <span class="shift-pill" style="color:#fde047; font-size:13px;">🏛️ ${Math.round(m.budget || 0).toLocaleString("tr-TR")} ₺</span>
+            </div>
+            <div class="mall-summary-bar" style="margin-bottom:8px;">
+              <div class="mall-stat-pill">
+                <span class="lbl">👥 ŞEHİR NÜFUSU</span>
+                <span class="val" style="color:#fff;">${mf.pop.toLocaleString("tr-TR")}</span>
+              </div>
+              <div class="mall-stat-pill">
+                <span class="lbl">📊 DÖNGÜ BÜTÇESİ</span>
+                <span class="val" style="color:#4ade80;">+${mf.netCycle.toLocaleString("tr-TR")} ₺</span>
+              </div>
+              <div class="mall-stat-pill">
+                <span class="lbl">📈 ŞİRKET KATKISI</span>
+                <span class="val" style="color:#38bdf8;">${devPct >= 0 ? `+${devPct}%` : `${devPct}%`}</span>
+              </div>
+            </div>
+            <div class="rep-row" style="font-size:12px;"><span>🏠 Emlak &amp; Çevre Temizlik Vergisi:</span><span class="val-pos">+${mf.propTax} ₺/döngü</span></div>
+            <div class="rep-row" style="font-size:12px;"><span>🏪 Esnaf Ruhsat, İlan &amp; Reklam Vergisi:</span><span class="val-pos">+${mf.bizTax} ₺/döngü</span></div>
+            <div class="rep-row" style="font-size:12px;"><span>🎫 Otobüs, Köprü, Teleferik &amp; Su Geliri:</span><span class="val-pos">+${mf.transitAndUtil} ₺/döngü</span></div>
+            <div class="rep-row" style="font-size:12px;"><span>👷 Belediye Hizmet &amp; Personel Gideri:</span><span class="val-neg">-${mf.maintOut} ₺/döngü</span></div>
+            <div class="rep-row" style="font-size:12px; border-top:1px solid #334155; margin-top:3px; padding-top:4px;"><span>🏛️ Gün Sonu İller Bankası Ödeneği:</span><span class="val-pos">+${mf.dailyGrantEst.toLocaleString("tr-TR")} ₺/gün</span></div>
+
+            <div style="margin-top:8px;">
+              <div style="font-size:11.5px; font-weight:900; color:#fde68a; margin-bottom:5px;">⚖️ Şehir Vergi Oranı (Başkan Kararı):</div>
+              <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:5px; margin-bottom:5px;">
+                ${TAX_POLICIES.map((tp) => `
+                  <button class="sal-btn rc29-tax-btn ${m.taxPolicy === tp.key ? "active" : ""}" data-tkey="${tp.key}" style="font-size:11px; padding:6px 4px;">
+                    ${tp.short}
+                  </button>
+                `).join("")}
+              </div>
+              <div style="font-size:11px; color:#cbd5e1; margin-bottom:7px;">${mf.pol.desc}</div>
+              <button id="rc29DonateMuniBtn" class="sal-btn" style="width:100%; font-size:11.5px; padding:6px; border-color:#facc15; color:#fde047;">
+                🤝 Holding Kasasından Belediyeye +25.000 ₺ Şartlı Bağış Yap (+%3 Halk Oyu)
+              </button>
+            </div>
           </div>
         `;
 
-      const m = v29.municipal;
-      const lockDis = !mStatus.elected ? "disabled" : "";
       const busCost = Math.round(14000 * Math.pow(1.38, m.busCount));
       const garCost = Math.round(11000 * Math.pow(1.4, m.garbageTrucks));
       const roadCost = Math.round(28000 * Math.pow(1.65, m.roadAsphaltLvl));
@@ -1581,75 +1804,75 @@ window.RealCityV29 = (function () {
         </div>
 
         <div class="rep-section" style="border-color:${mStatus.elected ? "#22c55e" : "#64748b"}; opacity:${mStatus.elected ? "1" : "0.78"};">
-          <h4>🏛️ BELEDİYE HİZMETLERİ &amp; MEGA KAMU PROJELERİ ${!mStatus.elected ? "(🔒 Başkan Olunca Açılır)" : ""}</h4>
+          <h4>🏛️ BELEDİYE BÜTÇESİYLE YAPILAN KAMU İŞLERİ ${!mStatus.elected ? "(🔒 Başkan Olunca Açılır)" : "(Şirket Parana Dokunmaz!)"}</h4>
 
           <div class="upgrade-card">
             <div class="up-info">
               <h3>🚌 Belediye Otobüsü &amp; Durak Ağı (${m.busCount}/8 Otobüs)</h3>
-              <p>Mahalleler, AVM, Üniversite ve Liman arasında çalışan 3D mavi belediye otobüsleri!</p>
+              <p>3D mavi belediye otobüsleri; bilet geliri Belediye Kasasına akar ve şehir nüfusunu büyütür!</p>
             </div>
             <button id="rc29MuniBusBtn" class="up-buy-btn" ${!mStatus.elected || m.busCount >= 8 ? "disabled" : ""}>
-              ${!mStatus.elected ? "🔒 Başkanlık" : m.busCount >= 8 ? "8 OTOBÜS ✓" : `${busCost.toLocaleString("tr-TR")} ₺`}
+              ${!mStatus.elected ? "🔒 Başkanlık" : m.busCount >= 8 ? "8 OTOBÜS ✓" : `🏛️ ${busCost.toLocaleString("tr-TR")} ₺`}
             </button>
           </div>
 
           <div class="upgrade-card">
             <div class="up-info">
               <h3>🗑️ Çöp Kamyonları (${m.garbageTrucks}/6) &amp; ♻️ Geri Dönüşüm</h3>
-              <p>3D turuncu temizlik araçları şehri pırıl pırıl tutar, atıktan geri dönüşüm geliri üretir!</p>
+              <p>3D turuncu temizlik araçları şehri temizler, geri dönüşüm tesisi Belediye Bütçesine gelir katar!</p>
             </div>
             <button id="rc29MuniGarbageBtn" class="up-buy-btn" ${!mStatus.elected || (m.garbageTrucks >= 6 && m.recyclingPlant) ? "disabled" : ""}>
-              ${!mStatus.elected ? "🔒 Başkanlık" : m.garbageTrucks < 6 ? `${garCost.toLocaleString("tr-TR")} ₺` : !m.recyclingPlant ? "♻️ Tesis 35B₺" : "TAM ✓"}
+              ${!mStatus.elected ? "🔒 Başkanlık" : m.garbageTrucks < 6 ? `🏛️ ${garCost.toLocaleString("tr-TR")} ₺` : !m.recyclingPlant ? "🏛️ 35.000 ₺" : "TAM ✓"}
             </button>
           </div>
 
           <div class="upgrade-card">
             <div class="up-info">
               <h3>🚒 İtfaiye, 🚓 Polis &amp; 👮 Zabıta Merkezleri</h3>
-              <p>Şehir güvenliğini 100 tutar, yangın/kaza ve kantar kaçaklarını otomatik yakalar!</p>
+              <p>Şehir güvenliğini 100 tutar, yangın/kaza ve kantar cezalarını Belediye Kasasına toplar!</p>
             </div>
             <button id="rc29MuniSafetyBtn" class="up-buy-btn" ${!mStatus.elected || (m.fireStation && m.policeHQ && m.zabitaHQ) ? "disabled" : ""}>
-              ${!mStatus.elected ? "🔒 Başkanlık" : !m.fireStation ? "🚒 İtfaiye 32B₺" : !m.policeHQ ? "🚓 Emniyet 38B₺" : !m.zabitaHQ ? "👮 Zabıta 25B₺" : "AKTİF ✓"}
+              ${!mStatus.elected ? "🔒 Başkanlık" : !m.fireStation ? "🏛️ İtfaiye 32B₺" : !m.policeHQ ? "🏛️ Emniyet 38B₺" : !m.zabitaHQ ? "🏛️ Zabıta 25B₺" : "AKTİF ✓"}
             </button>
           </div>
 
           <div class="upgrade-card">
             <div class="up-info">
               <h3>🛣️ Yol Asfaltlama &amp; Kavşak Genişletme (Sv.${m.roadAsphaltLvl}/5)</h3>
-              <p>3D sarı asfalt silindiri caddeleri yeniler; tüm şehir araç akışı +%${m.roadAsphaltLvl * 5} hızlanır!</p>
+              <p>Belediye bütçesiyle yolları yeniler; tüm şehir araç akışı +%${m.roadAsphaltLvl * 5} hızlanır ve arsa değerleri artar!</p>
             </div>
             <button id="rc29MuniRoadBtn" class="up-buy-btn" ${!mStatus.elected || m.roadAsphaltLvl >= 5 ? "disabled" : ""}>
-              ${!mStatus.elected ? "🔒 Başkanlık" : m.roadAsphaltLvl >= 5 ? "OTOBAN ✓" : `${roadCost.toLocaleString("tr-TR")} ₺`}
+              ${!mStatus.elected ? "🔒 Başkanlık" : m.roadAsphaltLvl >= 5 ? "OTOBAN ✓" : `🏛️ ${roadCost.toLocaleString("tr-TR")} ₺`}
             </button>
           </div>
 
           <div class="upgrade-card">
             <div class="up-info">
               <h3>⚡ Şehir Elektrik &amp; Su Şebekesi İdaresi (Sv.${m.powerWaterLvl}/5)</h3>
-              <p>Şehrin enerji ve temiz su altyapısını büyütüp komşu bölgelere elektrik/su satar!</p>
+              <p>Şehrin enerji ve su şebekesini büyütür; abonelik tahsilatı Belediye Kasasını hızla doldurur!</p>
             </div>
             <button id="rc29MuniGridBtn" class="up-buy-btn" ${!mStatus.elected || m.powerWaterLvl >= 5 ? "disabled" : ""}>
-              ${!mStatus.elected ? "🔒 Başkanlık" : m.powerWaterLvl >= 5 ? "TAM ŞEBEKE ✓" : `${gridCost.toLocaleString("tr-TR")} ₺`}
+              ${!mStatus.elected ? "🔒 Başkanlık" : m.powerWaterLvl >= 5 ? "TAM ŞEBEKE ✓" : `🏛️ ${gridCost.toLocaleString("tr-TR")} ₺`}
             </button>
           </div>
 
           <div class="upgrade-card" style="border-color:#4ade80;">
             <div class="up-info">
               <h3>🌲 Kuzey Tepesi 3D Teleferik &amp; Mesire Alanı (#23)</h3>
-              <p>Sahilden Kuzey Malikane Tepesine tel üzerinde havada gidip gelen canlı 3D Teleferik hattı!</p>
+              <p>Belediye bütçesiyle sahilden tepeye canlı 3D Teleferik kurar (+12.000 Nüfus &amp; yüksek bilet geliri)!</p>
             </div>
             <button id="rc29CableCarBtn" class="up-buy-btn" ${!mStatus.elected || m.cableCarUnlocked ? "disabled" : ""}>
-              ${!mStatus.elected ? "🔒 Başkanlık" : m.cableCarUnlocked ? "3D AKTİF ✓" : "95.000 ₺"}
+              ${!mStatus.elected ? "🔒 Başkanlık" : m.cableCarUnlocked ? "3D AKTİF ✓" : "🏛️ 95.000 ₺"}
             </button>
           </div>
 
           <div class="upgrade-card" style="border-color:#fde047;">
             <div class="up-info">
               <h3>🌉 Ücretli 3D Körfez Asma Köprüsü (#14)</h3>
-              <p>Güney denizinin üstüne dev kuleli, halatlı 3D gişeli köprü kurar; geçen her araçtan geçiş ücreti akar!</p>
+              <p>Belediyenin en büyük eseri! Dev 3D gişeli köprü (+26.000 Nüfus, +0.35x emlak değeri &amp; gişe geliri)!</p>
             </div>
             <button id="rc29BayBridgeBtn" class="up-buy-btn" ${!mStatus.elected || m.bayBridgeUnlocked ? "disabled" : ""}>
-              ${!mStatus.elected ? "🔒 Başkanlık" : m.bayBridgeUnlocked ? "3D KÖPRÜ ✓" : "185.000 ₺"}
+              ${!mStatus.elected ? "🔒 Başkanlık" : m.bayBridgeUnlocked ? "3D KÖPRÜ ✓" : "🏛️ 185.000 ₺"}
             </button>
           </div>
         </div>
@@ -1659,31 +1882,47 @@ window.RealCityV29 = (function () {
         btn.addEventListener("click", () => {
           const rq = v29.citizenRequests[Number(btn.dataset.ridx)];
           if (!rq || rq.done) return;
-          helpers.payForBusiness(rq.cost, rq.who, () => {
-            rq.done = true;
-            data.cash += rq.reward;
-            data.reputation = Math.min(100, (data.reputation || 50) + rq.rep);
-            v29.publicSupport = Math.min(96, (v29.publicSupport || 14) + rq.support);
-            v29.citizenRequestsSolved = (v29.citizenRequestsSolved || 0) + 1;
-            helpers.sfx.perfectHit();
-            helpers.showToast(`🗣️ Vatandaş talebi çözüldü! Halk Desteğin %${v29.publicSupport}'e yükseldi!`);
-            helpers.saveGame();
-            helpers.updateHUD();
-            renderRealCityModal(data, helpers);
-          });
+          if (mStatus.elected) {
+            // Başkan olduktan sonra vatandaş/mahalle talepleri de Belediye Bütçesinden karşılanır!
+            payFromMunicipalBudget(rq.cost, rq.who, data, helpers, () => {
+              rq.done = true;
+              addMunicipalRevenue(data, rq.reward, "tax");
+              data.reputation = Math.min(100, (data.reputation || 50) + rq.rep);
+              v29.publicSupport = Math.min(98, (v29.publicSupport || 55) + rq.support);
+              v29.citizenRequestsSolved = (v29.citizenRequestsSolved || 0) + 1;
+              helpers.sfx.perfectHit();
+              helpers.showToast(`🏛️ Mahalle talebi Belediye Bütçesinden çözüldü! Halk Desteği: %${v29.publicSupport}`);
+              renderRealCityModal(data, helpers);
+            });
+          } else {
+            // Başkan olmadan önce kendi iş insanı bütçenle mahallelere destek olup oy toplarsın!
+            helpers.payForBusiness(rq.cost, rq.who, () => {
+              rq.done = true;
+              data.cash += rq.reward;
+              data.reputation = Math.min(100, (data.reputation || 50) + rq.rep);
+              v29.publicSupport = Math.min(96, (v29.publicSupport || 14) + rq.support);
+              v29.citizenRequestsSolved = (v29.citizenRequestsSolved || 0) + 1;
+              helpers.sfx.perfectHit();
+              helpers.showToast(`🗣️ Vatandaş talebi çözüldü! Halk Desteğin %${v29.publicSupport}'e yükseldi!`);
+              helpers.saveGame();
+              helpers.updateHUD();
+              renderRealCityModal(data, helpers);
+            });
+          }
         });
       });
 
       const winBtn = document.getElementById("rc29WinMayorBtn");
       if (winBtn && mStatus.canRun) {
         winBtn.addEventListener("click", () => {
-          helpers.payForBusiness(mStatus.campaignCost, "Büyük Belediye Başkanlığı Seçimi", () => {
+          helpers.payForBusiness(mStatus.campaignCost, "Büyük Belediye Başkanlığı Seçim Kampanyası", () => {
             if (data.empire && data.empire.v28) {
               data.empire.v28.mayor.elected = true;
             }
+            m.budget = Math.max(125000, Math.round((m.budget || 72000) + 55000));
             data.reputation = 100;
             helpers.sfx.stadiumGoal();
-            helpers.showToast(`🏛️ TARİHİ ZAFER! %${mStatus.support} oyla ${INCUMBENT_MAYOR_NAME}'i devirip Belediye Başkanı seçildin!`);
+            helpers.showToast(`🏛️ BAŞKAN SEÇİLDİN! Belediye Hazinesi (${m.budget.toLocaleString("tr-TR")} ₺) ve vergi yetkisi emrinde!`);
             helpers.saveGame();
             helpers.updateHUD();
             renderRealCityModal(data, helpers);
@@ -1692,14 +1931,40 @@ window.RealCityV29 = (function () {
       }
 
       if (mStatus.elected) {
+        body.querySelectorAll(".rc29-tax-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            m.taxPolicy = btn.dataset.tkey;
+            helpers.sfx.tap();
+            helpers.showToast(`⚖️ Belediye vergi oranı güncellendi: ${getTaxPolicyDef(v29).label}`);
+            helpers.saveGame();
+            helpers.updateHUD();
+            renderRealCityModal(data, helpers);
+          });
+        });
+
+        const donBtn = document.getElementById("rc29DonateMuniBtn");
+        if (donBtn) {
+          donBtn.addEventListener("click", () => {
+            helpers.payForBusiness(25000, "Belediye Hazinesine Şartlı Bağış", () => {
+              m.budget = Math.round((m.budget || 0) + 25000);
+              v29.publicSupport = Math.min(98, (v29.publicSupport || 55) + 3);
+              data.reputation = Math.min(100, (data.reputation || 50) + 3);
+              helpers.sfx.perfectHit();
+              helpers.showToast("🤝 Belediye Hazinesine +25.000 ₺ bağışlandı! (+%3 Halk Desteği)");
+              helpers.saveGame();
+              helpers.updateHUD();
+              renderRealCityModal(data, helpers);
+            });
+          });
+        }
+
         const bBtn = document.getElementById("rc29MuniBusBtn");
         if (bBtn && m.busCount < 8) {
           bBtn.addEventListener("click", () => {
-            helpers.payForBusiness(busCost, "Yeni 3D Belediye Otobüsü", () => {
+            payFromMunicipalBudget(busCost, "Yeni 3D Belediye Otobüsü", data, helpers, () => {
               m.busCount += 1;
               helpers.sfx.carHorn();
-              helpers.saveGame();
-              helpers.updateHUD();
+              helpers.showToast(`🚌 ${m.busCount}. Belediye Otobüsü Belediye Bütçesiyle sefere çıktı!`);
               renderRealCityModal(data, helpers);
             });
           });
@@ -1708,19 +1973,17 @@ window.RealCityV29 = (function () {
         if (gBtn) {
           gBtn.addEventListener("click", () => {
             if (m.garbageTrucks < 6) {
-              helpers.payForBusiness(garCost, "Belediye Çöp Kamyonu", () => {
+              payFromMunicipalBudget(garCost, "Belediye Çöp Kamyonu", data, helpers, () => {
                 m.garbageTrucks += 1;
                 helpers.sfx.perfectHit();
-                helpers.saveGame();
-                helpers.updateHUD();
+                helpers.showToast(`🗑️ ${m.garbageTrucks}. Çöp Kamyonu Belediye Bütçesiyle alındı!`);
                 renderRealCityModal(data, helpers);
               });
             } else if (!m.recyclingPlant) {
-              helpers.payForBusiness(35000, "Geri Dönüşüm Tesisi", () => {
+              payFromMunicipalBudget(35000, "Belediye Geri Dönüşüm Tesisi", data, helpers, () => {
                 m.recyclingPlant = true;
                 helpers.sfx.perfectHit();
-                helpers.saveGame();
-                helpers.updateHUD();
+                helpers.showToast("♻️ Geri Dönüşüm Tesisi Belediye Bütçesiyle kuruldu!");
                 renderRealCityModal(data, helpers);
               });
             }
@@ -1731,14 +1994,13 @@ window.RealCityV29 = (function () {
           sfBtn.addEventListener("click", () => {
             const cost = !m.fireStation ? 32000 : !m.policeHQ ? 38000 : 25000;
             const lbl = !m.fireStation ? "İtfaiye Merkezi" : !m.policeHQ ? "Polis Emniyet Müdürlüğü" : "Zabıta Müdürlüğü";
-            helpers.payForBusiness(cost, lbl, () => {
+            payFromMunicipalBudget(cost, lbl, data, helpers, () => {
               if (!m.fireStation) m.fireStation = true;
               else if (!m.policeHQ) m.policeHQ = true;
               else m.zabitaHQ = true;
               data.security = 100;
               helpers.sfx.policeSiren();
-              helpers.saveGame();
-              helpers.updateHUD();
+              helpers.showToast(`🏛️ ${lbl} Belediye Bütçesiyle hizmete açıldı!`);
               renderRealCityModal(data, helpers);
             });
           });
@@ -1746,13 +2008,11 @@ window.RealCityV29 = (function () {
         const rdBtn = document.getElementById("rc29MuniRoadBtn");
         if (rdBtn && m.roadAsphaltLvl < 5) {
           rdBtn.addEventListener("click", () => {
-            helpers.payForBusiness(roadCost, "Yol Asfaltlama & Kavşak Genişletme", () => {
+            payFromMunicipalBudget(roadCost, "Yol Asfaltlama & Kavşak Genişletme", data, helpers, () => {
               m.roadAsphaltLvl += 1;
               liveAsphaltRoller = { wx: -180, wz: 10.5, timer: 12 };
               helpers.sfx.perfectHit();
-              helpers.showToast("🛣️ 3D Asfalt Silindiri caddeleri yeniliyor! Trafik hızlandı!");
-              helpers.saveGame();
-              helpers.updateHUD();
+              helpers.showToast("🛣️ Belediye Bütçesiyle 3D Asfalt Silindiri caddeleri yeniliyor!");
               renderRealCityModal(data, helpers);
             });
           });
@@ -1760,11 +2020,10 @@ window.RealCityV29 = (function () {
         const grBtn = document.getElementById("rc29MuniGridBtn");
         if (grBtn && m.powerWaterLvl < 5) {
           grBtn.addEventListener("click", () => {
-            helpers.payForBusiness(gridCost, "Elektrik & Su Şebekesi", () => {
+            payFromMunicipalBudget(gridCost, "Elektrik & Su Şebekesi", data, helpers, () => {
               m.powerWaterLvl += 1;
               helpers.sfx.perfectHit();
-              helpers.saveGame();
-              helpers.updateHUD();
+              helpers.showToast(`⚡ Şehir Elektrik & Su Şebekesi Belediye Bütçesiyle Sv.${m.powerWaterLvl} oldu!`);
               renderRealCityModal(data, helpers);
             });
           });
@@ -1772,12 +2031,10 @@ window.RealCityV29 = (function () {
         const ccBtn = document.getElementById("rc29CableCarBtn");
         if (ccBtn && !m.cableCarUnlocked) {
           ccBtn.addEventListener("click", () => {
-            helpers.payForBusiness(95000, "Kuzey Tepesi 3D Teleferik Hattı", () => {
+            payFromMunicipalBudget(95000, "Kuzey Tepesi 3D Teleferik Hattı", data, helpers, () => {
               m.cableCarUnlocked = true;
               helpers.sfx.stadiumGoal();
-              helpers.showToast("🌲 3D Teleferik Hattı kuruldu! Kabinler Kuzey Tepesi ile sahil arasında süzülüyor!");
-              helpers.saveGame();
-              helpers.updateHUD();
+              helpers.showToast("🌲 3D Teleferik Hattı Belediye Bütçesiyle kuruldu!");
               renderRealCityModal(data, helpers);
             });
           });
@@ -1785,12 +2042,10 @@ window.RealCityV29 = (function () {
         const bbBtn = document.getElementById("rc29BayBridgeBtn");
         if (bbBtn && !m.bayBridgeUnlocked) {
           bbBtn.addEventListener("click", () => {
-            helpers.payForBusiness(185000, "Ücretli 3D Körfez Asma Köprüsü", () => {
+            payFromMunicipalBudget(185000, "Ücretli 3D Körfez Asma Köprüsü", data, helpers, () => {
               m.bayBridgeUnlocked = true;
               helpers.sfx.stadiumGoal();
-              helpers.showToast("🌉 Dev 3D Körfez Asma Köprüsü açıldı! Gişelerden geçiş ücreti akıyor!");
-              helpers.saveGame();
-              helpers.updateHUD();
+              helpers.showToast("🌉 Dev 3D Körfez Asma Köprüsü Belediye Bütçesiyle açıldı!");
               renderRealCityModal(data, helpers);
             });
           });
@@ -2165,6 +2420,7 @@ window.RealCityV29 = (function () {
 
   return {
     INCUMBENT_MAYOR_NAME,
+    TAX_POLICIES,
     SEASONS,
     createDefaultV29,
     mergeV29,
@@ -2179,6 +2435,11 @@ window.RealCityV29 = (function () {
     getCmoCommercialMult,
     getEkspertizCarMult,
     getRoadSpeedMult,
+    calcCityPopulation,
+    getCityDevelopmentMult,
+    calcMunicipalBudgetFlow,
+    addMunicipalRevenue,
+    payFromMunicipalBudget,
     calcNeighborhoodMultiplier,
     startConstructionSite,
     speedUpAllSites,

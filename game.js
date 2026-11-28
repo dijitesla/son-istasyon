@@ -1190,9 +1190,9 @@
     const flipRev = d.carFlipIncome || 0;
     const multiCityRev = d.multiCityIncome || 0;
     const realCityRev = d.realCityIncome || 0;
-    const muniRev = d.municipalIncome || 0;
     let bankLendRev = d.bankLoanIncome || 0;
-    let metroExtraRev = tramRev + courierRev + franRev + flipRev + multiCityRev + realCityRev + muniRev + bankLendRev;
+    let metroExtraRev = courierRev + franRev + flipRev + multiCityRev + realCityRev + bankLendRev;
+    let muniRepSummary = null;
     let totalRev =
       stationSubTotal +
       land2SubTotal +
@@ -1238,6 +1238,7 @@
         d.bankLoanIncome = bankLendRev;
         metroExtraRev += bankLendRev;
         totalRev += bankLendRev;
+        muniRepSummary = s29.muniSummary || null;
       }
 
       el.repModalTitle.textContent = `📊 Gün ${data.dayNumber} Ayrıntılı Kazanç Raporu`;
@@ -1303,17 +1304,15 @@
         <div class="rep-row"><span>🏖️ Bungalov &amp; Termal Köy Kiraları</span><span class="val-pos">+${Math.round(l3ResortRev)} ₺</span></div>
       </div>
 
-      <!-- 4..16 ARAZİLER & BÜYÜKŞEHİR DÖKÜMÜ -->
+      <!-- 4..16 ARAZİLER & ÖZEL HOLDİNG GELİRLERİ DÖKÜMÜ -->
       <div class="rep-section" style="border-color:#facc15;">
-        <h4>🗺️ 4.–16. ARAZİLER &amp; BÜYÜKŞEHİR (+${Math.round(extraSubTotal + metroExtraRev)} ₺)</h4>
+        <h4>🗺️ 4.–16. ARAZİLER &amp; ŞEHİR TİCARETİ (+${Math.round(extraSubTotal + metroExtraRev)} ₺)</h4>
         ${extraLinesHtml}
-        ${tramRev > 0 ? `<div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:4px;"><span>🚄 3D Hızlı Tramvay Bilet Geliri</span><span class="val-pos">+${Math.round(tramRev)} ₺</span></div>` : ""}
-        ${courierRev > 0 ? `<div class="rep-row"><span>🛵 3D Motokurye &amp; Paket Servis Ağı</span><span class="val-pos">+${Math.round(courierRev)} ₺</span></div>` : ""}
+        ${courierRev > 0 ? `<div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:4px;"><span>🛵 3D Motokurye &amp; Paket Servis Ağı</span><span class="val-pos">+${Math.round(courierRev)} ₺</span></div>` : ""}
         ${franRev > 0 ? `<div class="rep-row"><span>⛽ Ülke Çapında Bayilik (Franchise)</span><span class="val-pos">+${Math.round(franRev)} ₺</span></div>` : ""}
         ${flipRev > 0 ? `<div class="rep-row"><span>🚗 2. El Oto Pazarı Al-Sat Kârı</span><span class="val-pos">+${Math.round(flipRev)} ₺</span></div>` : ""}
         ${multiCityRev > 0 ? `<div class="rep-row"><span>🌍 Çevre Şehirler (1+10 Harita)</span><span class="val-pos">+${Math.round(multiCityRev)} ₺</span></div>` : ""}
         ${realCityRev > 0 ? `<div class="rep-row"><span>🏪 Çarşı, Müteahhitlik, Sahil &amp; Uçuş</span><span class="val-pos">+${Math.round(realCityRev)} ₺</span></div>` : ""}
-        ${muniRev > 0 ? `<div class="rep-row"><span>🏛️ Belediye Otobüs, Teleferik &amp; Köprü</span><span class="val-pos">+${Math.round(muniRev)} ₺</span></div>` : ""}
         ${bankLendRev > 0 ? `<div class="rep-row"><span>🏦 Kendi Kredi Bankan Tahsilatı</span><span class="val-pos">+${Math.round(bankLendRev)} ₺</span></div>` : ""}
         ${d.vaultInterest > 0 ? `<div class="rep-row"><span>🔐 Merkez Bankası Vadeli Kasa Faizi (+%4)</span><span class="val-pos">+${Math.round(d.vaultInterest)} ₺</span></div>` : ""}
         ${rivalRev > 0 ? `<div class="rep-row" style="border-top:1px solid #334155; padding-top:4px; margin-top:4px;"><span>🏆 Devralınan Rakip Holdingler</span><span class="val-pos">+${Math.round(rivalRev)} ₺</span></div>` : ""}
@@ -1323,6 +1322,17 @@
         ${portRev > 0 ? `<div class="rep-row"><span>⚓ Uluslararası Liman &amp; Kruvaziyer</span><span class="val-pos">+${Math.round(portRev)} ₺</span></div>` : ""}
         ${clubRev > 0 ? `<div class="rep-row"><span>⚽ Futbol Kulübü Maç &amp; Yayın Geliri</span><span class="val-pos">+${Math.round(clubRev)} ₺</span></div>` : ""}
       </div>
+
+      ${data.empire.v28 && data.empire.v28.mayor && data.empire.v28.mayor.elected && data.empire.v29 ? `
+      <!-- BELEDİYE KAMU BÜTÇESİ (ŞİRKET KASASINDAN AYRI!) -->
+      <div class="rep-section" style="border-color:#c084fc;">
+        <h4>🏛️ BELEDİYE BÜTÇESİ &amp; VERGİ HAZİNESİ (Ayrı Kamu Kasası)</h4>
+        <div class="rep-row"><span>🏛️ Güncel Belediye Hazinesi</span><strong style="color:#fde047;">${Math.round(data.empire.v29.municipal.budget || 0).toLocaleString("tr-TR")} ₺</strong></div>
+        <div class="rep-row"><span>🏠 Toplanan Emlak &amp; Esnaf Vergileri</span><span class="val-pos">+${Math.round(muniRepSummary ? muniRepSummary.taxIn : data.empire.v29.municipal.dailyTaxIn || 0).toLocaleString("tr-TR")} ₺</span></div>
+        <div class="rep-row"><span>🎫 Tramvay, Otobüs, Köprü &amp; Su Geliri</span><span class="val-pos">+${Math.round((muniRepSummary ? muniRepSummary.transitIn : data.empire.v29.municipal.dailyTransitIn || 0) + tramRev).toLocaleString("tr-TR")} ₺</span></div>
+        ${muniRepSummary && muniRepSummary.stateGrant > 0 ? `<div class="rep-row"><span>🏛️ İller Bankası Nüfus Ödeneği</span><span class="val-pos">+${Math.round(muniRepSummary.stateGrant).toLocaleString("tr-TR")} ₺</span></div>` : ""}
+      </div>
+      ` : ""}
 
       <!-- GİDERLER -->
       <div class="rep-section">
@@ -4355,6 +4365,12 @@
       emp.v29.seaTour = { boats: 3 };
       emp.v29.flights = { routeLvl: 4, vipJet: true, flightsDone: 12 };
       emp.v29.municipal = {
+        budget: 420000,
+        taxPolicy: "balanced",
+        dailyTaxIn: 0,
+        dailyTransitIn: 0,
+        dailyStateGrant: 0,
+        dailyMaintOut: 0,
         busCount: 6,
         garbageTrucks: 4,
         recyclingPlant: true,

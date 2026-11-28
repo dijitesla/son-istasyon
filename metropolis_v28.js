@@ -422,6 +422,9 @@ window.MetropolisV28 = (function () {
     // Tamamlanan her Çevre Şehir imparatorluğa kalıcı çarpan katar!
     const compCities = getCompletedSurroundingCount(data, v28);
     m *= 1 + compCities * 0.08;
+    if (window.RealCityV29 && window.RealCityV29.getCityDevelopmentMult) {
+      m *= window.RealCityV29.getCityDevelopmentMult(data);
+    }
     return m;
   }
 
@@ -565,9 +568,13 @@ window.MetropolisV28 = (function () {
           liveTram.wx = 0;
           liveTram.stopTimer = 2.4;
           const fare = Math.round((165 + v28.tram.lvl * 95) * (syn.hasPower ? 1.35 : 1.0) * getGlobalEmpireMult(data));
-          data.cash += fare;
+          if (window.RealCityV29 && window.RealCityV29.addMunicipalRevenue) {
+            window.RealCityV29.addMunicipalRevenue(data, fare, "transit");
+          } else {
+            data.cash += fare;
+          }
           if (data.daily) data.daily.tramIncome = (data.daily.tramIncome || 0) + fare;
-          metroFloats.push({ wx: 0, wz: -1.5, text: `🚄 TRAMVAY YOLCU & BİLET +${fare}₺`, color: "#38bdf8", life: 1.8 });
+          metroFloats.push({ wx: 0, wz: -1.5, text: `🚄 TRAMVAY YOLCU & BELEDİYE BİLET +${fare}₺`, color: "#38bdf8", life: 1.8 });
           if (helpers && helpers.onTramDropPassengers) helpers.onTramDropPassengers();
         }
         if (liveTram.wx > 205) { liveTram.wx = 205; liveTram.dir = -1; }
@@ -1071,10 +1078,10 @@ window.MetropolisV28 = (function () {
         <div class="upgrade-card" style="border-color:#38bdf8;">
           <div class="up-info">
             <h3>🚄 3D Hızlı Tramvay &amp; Merkez İstasyon ${v28.tram.unlocked ? `(Sv.${v28.tram.lvl}/5)` : ""}</h3>
-            <p>Bulvarın ortasından geçen ışıklı 3D tren her duruşta tesislere müşteri indirir! ${!v28.mayor.elected ? "<strong style='color:#fde047;'>(Belediye Başkanı seçilince açılır)</strong>" : ""}</p>
+            <p>Belediye bütçesiyle kurulur! Işıklı 3D tren her duruşta tesislere müşteri indirir, bilet geliri Belediye Kasasına akar! ${!v28.mayor.elected ? "<strong style='color:#fde047;'>(Belediye Başkanı seçilince açılır)</strong>" : ""}</p>
           </div>
           <button id="m28TramBtn" class="up-buy-btn" ${(!v28.mayor.elected && !v28.tram.unlocked) || (v28.tram.unlocked && v28.tram.lvl >= 5) ? "disabled" : ""}>
-            ${!v28.mayor.elected && !v28.tram.unlocked ? "🔒 Başkanlık" : !v28.tram.unlocked ? "Kur 24.000 ₺" : v28.tram.lvl >= 5 ? "MAKS ✓" : `${tramCost.toLocaleString("tr-TR")} ₺`}
+            ${!v28.mayor.elected && !v28.tram.unlocked ? "🔒 Başkanlık" : !v28.tram.unlocked ? "🏛️ 24.000 ₺" : v28.tram.lvl >= 5 ? "MAKS ✓" : `🏛️ ${tramCost.toLocaleString("tr-TR")} ₺`}
           </button>
         </div>
 
@@ -1112,15 +1119,18 @@ window.MetropolisV28 = (function () {
       const tBtn = document.getElementById("m28TramBtn");
       if (tBtn) {
         tBtn.addEventListener("click", () => {
-          helpers.payForBusiness(tramCost, !v28.tram.unlocked ? "3D Hızlı Tramvay Hattı" : "Tramvay Hattı Yükseltme", () => {
+          const payFn = window.RealCityV29 && window.RealCityV29.payFromMunicipalBudget
+            ? (c, lbl, cb) => window.RealCityV29.payFromMunicipalBudget(c, lbl, data, helpers, cb)
+            : helpers.payForBusiness;
+          payFn(tramCost, !v28.tram.unlocked ? "3D Hızlı Tramvay Hattı" : "Tramvay Hattı Yükseltme", () => {
             if (!v28.tram.unlocked) {
               v28.tram.unlocked = true;
               v28.tram.lvl = 1;
-              addHeadline(v28, `📰 ULAŞIM DEVRİMİ: ${brand} Holding şehre modern 3D Hızlı Tramvay hattı kurdu!`);
-              helpers.showToast("🚄 3D Hızlı Tramvay Hattı açıldı! Tren bulvarda sefere başladı!");
+              addHeadline(v28, `📰 ULAŞIM DEVRİMİ: Büyükşehir Belediyesi 3D Hızlı Tramvay hattını hizmete açtı!`);
+              helpers.showToast("🚄 3D Hızlı Tramvay Belediye Bütçesiyle açıldı! Tren bulvarda sefere başladı!");
             } else {
               v28.tram.lvl += 1;
-              helpers.showToast(`🚄 Hızlı Tramvay Sv.${v28.tram.lvl} seviyesine yükseldi!`);
+              helpers.showToast(`🚄 Hızlı Tramvay Belediye Bütçesiyle Sv.${v28.tram.lvl} seviyesine yükseldi!`);
             }
             helpers.sfx.perfectHit();
             helpers.saveGame();
@@ -1204,8 +1214,8 @@ window.MetropolisV28 = (function () {
         : `
           <div class="rep-section" style="border-color:#22c55e; margin-bottom:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-              <h4 style="margin:0;">🏛️ BELEDİYE BAŞKANI KARARNAMELERİ</h4>
-              <button id="m28JumpCivicBtn" class="sal-btn" style="font-size:11px; padding:4px 8px; border-color:#38bdf8;">🚌 Belediye Hizmetleri ➔</button>
+              <h4 style="margin:0;">🏛️ BELEDİYE BÜTÇESİ: ${Math.round((data.empire && data.empire.v29 && data.empire.v29.municipal && data.empire.v29.municipal.budget) || 0).toLocaleString("tr-TR")} ₺</h4>
+              <button id="m28JumpCivicBtn" class="sal-btn" style="font-size:11px; padding:4px 8px; border-color:#38bdf8;">⚖️ Vergi &amp; Hizmetler ➔</button>
             </div>
             <div style="display:grid; gap:6px; margin-top:6px;">
               ${MAYOR_DECREES.map((d) => {
@@ -1250,10 +1260,10 @@ window.MetropolisV28 = (function () {
           <p style="font-size:12px; color:#cbd5e1; margin:4px 0 8px;">${wMode.desc}</p>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:7px;">
             <button id="m28StartRallyBtn" class="up-buy-btn" style="background:#dc2626; color:#fff;" ${rallyTimer > 0 ? "disabled" : ""}>
-              ${rallyTimer > 0 ? `🏎️ Ralli (${Math.ceil(rallyTimer)}sn)` : "🏎️ Bulvar Rallisi (4.500₺)"}
+              ${rallyTimer > 0 ? `🏎️ Ralli (${Math.ceil(rallyTimer)}sn)` : `🏎️ Bulvar Rallisi (${v28.mayor.elected ? "🏛️" : "💵"} 4.500₺)`}
             </button>
             <button id="m28StartConcertBtn" class="up-buy-btn" style="background:#7c3aed; color:#fff;" ${concertTimer > 0 ? "disabled" : ""}>
-              ${concertTimer > 0 ? `🎤 Konser (${Math.ceil(concertTimer)}sn)` : "🎤 Dev Konser (6.000₺)"}
+              ${concertTimer > 0 ? `🎤 Konser (${Math.ceil(concertTimer)}sn)` : `🎤 Dev Konser (${v28.mayor.elected ? "🏛️" : "💵"} 6.000₺)`}
             </button>
           </div>
         </div>
@@ -1267,7 +1277,10 @@ window.MetropolisV28 = (function () {
       const ralB = document.getElementById("m28StartRallyBtn");
       if (ralB && rallyTimer <= 0) {
         ralB.addEventListener("click", () => {
-          helpers.payForBusiness(4500, "3D Bulvar Süper Spor Rallisi", () => {
+          const payFn = v28.mayor.elected && window.RealCityV29
+            ? (c, l, cb) => window.RealCityV29.payFromMunicipalBudget(c, l, data, helpers, cb)
+            : helpers.payForBusiness;
+          payFn(4500, "3D Bulvar Süper Spor Rallisi", () => {
             triggerBoulevardRally(data, helpers);
             renderMetropolisModal(data, helpers);
           });
@@ -1276,7 +1289,10 @@ window.MetropolisV28 = (function () {
       const conB = document.getElementById("m28StartConcertBtn");
       if (conB && concertTimer <= 0) {
         conB.addEventListener("click", () => {
-          helpers.payForBusiness(6000, "Stadyum Dev Halk Konseri", () => {
+          const payFn = v28.mayor.elected && window.RealCityV29
+            ? (c, l, cb) => window.RealCityV29.payFromMunicipalBudget(c, l, data, helpers, cb)
+            : helpers.payForBusiness;
+          payFn(6000, "Stadyum Dev Halk Konseri", () => {
             triggerMegaConcert(data, helpers);
             renderMetropolisModal(data, helpers);
           });
@@ -1294,10 +1310,14 @@ window.MetropolisV28 = (function () {
         runM.addEventListener("click", () => {
           helpers.payForBusiness(mStatus.campaignCost, "Belediye Başkanlığı Seçim Kampanyası", () => {
             v28.mayor.elected = true;
+            if (data.empire && data.empire.v29 && data.empire.v29.municipal) {
+              const m29 = data.empire.v29.municipal;
+              m29.budget = Math.max(125000, Math.round((m29.budget || 72000) + 55000));
+            }
             data.reputation = 100;
             addHeadline(v28, `📰 SEÇİM ZAFERİ: ${brand} Holding Patronu, ${mStatus.incumbentName}'i sandıkta yenerek Belediye Başkanı seçildi!`);
             helpers.sfx.stadiumGoal();
-            helpers.showToast("🏛️ TEBRİKLER BAŞKAN! Seçimi kazandın; belediye hizmetleri, tramvay, teleferik ve körfez köprüsü yetkisi açıldı!");
+            helpers.showToast("🏛️ TEBRİKLER BAŞKAN! Belediye Hazinesi ve vergi yetkisi emrinde!");
             helpers.saveGame();
             helpers.updateHUD();
             renderMetropolisModal(data, helpers);
