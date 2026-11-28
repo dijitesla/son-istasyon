@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#090e1c" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Son İstasyon v26.0 — Gerçekçi 3D Şehir İmparatorluğu</title>
+  <title>Son İstasyon v27.0 — Akıcı 60 FPS &amp; Gerçekçi 3D Şehir İmparatorluğu</title>
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" href="./assets/app-icon.png" type="image/png" />
   <link rel="apple-touch-icon" href="./assets/app-icon.png" />
-  <link rel="stylesheet" href="./style.css?v=26.0" />
+  <link rel="stylesheet" href="./style.css?v=27.0" />
 </head>
 <body>
   <main class="phone-stage">
@@ -37,7 +37,7 @@
           ▶ OYUNA BAŞLA
         </button>
 
-        <div class="splash-meta">v26.0 Gerçekçi 3D Sürüm • Dijitesla Studio</div>
+        <div class="splash-meta">v27.0 Akıcı 60 FPS &amp; Ultra 3D Sürüm • Dijitesla Studio</div>
       </div>
     </section>
 
@@ -113,13 +113,10 @@
       <!-- Harita Üstü Yüzen Özel Gün Rozeti -->
       <div id="activeEffectBar" class="floating-effect-pill hidden"></div>
 
-      <!-- Sol Alt 3D Kamera & Patron Sürüş Kontrolleri -->
+      <!-- Sol Alt 3D Sürüş & Kamera Görünüm Sıfırlama (Yakınlaştırma & 360° Döndürme İki Parmakla / Fareyle!) -->
       <div class="cam-controls-pill">
         <button id="btnDriveBossCar" class="cam-ctrl-btn drive-cam-btn" title="3D Patron Aracıyla Şehirde Gez &amp; Teftiş Yap">🏎️</button>
-        <button id="btnCamZoomIn" class="cam-ctrl-btn" title="3D Yakınlaştır">➕</button>
-        <button id="btnCamZoomOut" class="cam-ctrl-btn" title="3D Uzaklaştır">➖</button>
-        <button id="btnCamRotate" class="cam-ctrl-btn" title="3D Haritayı 90° Döndür">🔄</button>
-        <button id="btnCamAngle" class="cam-ctrl-btn" title="3D Kamera Açısını Değiştir">🎥</button>
+        <button id="btnCamAngle" class="cam-ctrl-btn" title="Görünüm Modu (Yakın / İzometrik / Tüm Şehir)">🎥</button>
       </div>
 
       <!-- 3D Şehir Acil Müdahale Çağrı Bandı (Ambulans / İtfaiye Sevk) -->
@@ -442,18 +439,18 @@
     </div>
   </main>
 
-  <script src="./lib/three.min.js?v=26.0"></script>
-  <script src="./audio.js?v=26.0"></script>
-  <script src="./visuals.js?v=26.0"></script>
-  <script src="./map_renderer.js?v=26.0"></script>
-  <script src="./story_events.js?v=26.0"></script>
-  <script src="./land3.js?v=26.0"></script>
-  <script src="./lands_4_10.js?v=26.0"></script>
-  <script src="./holding_v16.js?v=26.0"></script>
-  <script src="./mechanics_v23.js?v=26.0"></script>
-  <script src="./city_v24.js?v=26.0"></script>
-  <script src="./empire.js?v=26.0"></script>
-  <script src="./engine3d.js?v=26.0"></script>
-  <script src="./game.js?v=26.0"></script>
+  <script src="./lib/three.min.js?v=27.0"></script>
+  <script src="./audio.js?v=27.0"></script>
+  <script src="./visuals.js?v=27.0"></script>
+  <script src="./map_renderer.js?v=27.0"></script>
+  <script src="./story_events.js?v=27.0"></script>
+  <script src="./land3.js?v=27.0"></script>
+  <script src="./lands_4_10.js?v=27.0"></script>
+  <script src="./holding_v16.js?v=27.0"></script>
+  <script src="./mechanics_v23.js?v=27.0"></script>
+  <script src="./city_v24.js?v=27.0"></script>
+  <script src="./empire.js?v=27.0"></script>
+  <script src="./engine3d.js?v=27.0"></script>
+  <script src="./game.js?v=27.0"></script>
 </body>
 </html>

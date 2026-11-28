@@ -519,13 +519,14 @@ window.MechanicsV23 = (function () {
       kind: isMedical ? "ambulance" : "fire",
       targetLand,
       title: isMedical
-        ? `🚑 ${meta.name}: VIP Misafir Rahatsızlandı!`
-        : `🚒 ${meta.name}: Elektrik Panosu Kıvılcımı!`,
+        ? `🚑 ${meta.name}: Acil Sağlık Çağrısı`
+        : `🚒 ${meta.name}: Kıvılcım Alarmı`,
       reward: baseReward,
       hasHospitalBonus: !!(isMedical && hospLand),
       hospLand,
       timeLeft: 38,
       dispatched: false,
+      bannerDismissed: false,
       vehicle: null
     };
 
@@ -571,8 +572,14 @@ window.MechanicsV23 = (function () {
   }
 
   function dispatchEmergency(data, helpers, isAuto = false) {
-    if (!activeEmergency || activeEmergency.dispatched) return false;
+    if (!activeEmergency) return false;
+    if (activeEmergency.dispatched) {
+      activeEmergency.bannerDismissed = true;
+      syncEmergencyBannerDOM();
+      return false;
+    }
     activeEmergency.dispatched = true;
+    activeEmergency.bannerDismissed = true;
 
     const hospLid = activeEmergency.kind === "ambulance" ? activeEmergency.hospLand : null;
     const startMeta = hospLid ? LAND_META[hospLid] : null;
@@ -596,28 +603,28 @@ window.MechanicsV23 = (function () {
     if (helpers && helpers.showToast) {
       helpers.showToast(
         isAuto
-          ? `🏥 Özel Hastanenden ${tMeta.name} için 3D Ambulans otomatik sevk edildi!`
-          : `${activeEmergency.kind === "ambulance" ? "🚑 3D Ambulans" : "🚒 3D Acil Müdahale Ekibi"} bulvardan ${tMeta.name}'a hızla gidiyor!`
+          ? `🏥 Özel Hastanenden ${tMeta.name} için 3D Ambulans çıktı!`
+          : `${activeEmergency.kind === "ambulance" ? "🚑 Ambulans" : "🚒 Acil Ekip"} ${tMeta.name} bölgesine sevk edildi!`
       );
     }
     return true;
   }
 
+  function dismissEmergencyBanner() {
+    if (activeEmergency) activeEmergency.bannerDismissed = true;
+    syncEmergencyBannerDOM();
+  }
+
   function syncEmergencyBannerDOM() {
     const bar = document.getElementById("cityEmergencyBar");
     if (!bar) return;
-    if (!activeEmergency) {
+    if (!activeEmergency || activeEmergency.bannerDismissed || activeEmergency.dispatched) {
       bar.classList.add("hidden");
       return;
     }
     bar.classList.remove("hidden");
-    if (activeEmergency.dispatched) {
-      bar.classList.add("dispatched");
-      bar.textContent = `${activeEmergency.kind === "ambulance" ? "🚑 Ambulans" : "🚒 Acil Ekip"} Yolda -> ${LAND_META[activeEmergency.targetLand].name} (+${activeEmergency.reward}₺)`;
-    } else {
-      bar.classList.remove("dispatched");
-      bar.textContent = `🚨 ${activeEmergency.title} — Dokun Ekip Gönder (+${activeEmergency.reward}₺ • ${Math.ceil(activeEmergency.timeLeft)}sn)`;
-    }
+    bar.classList.remove("dispatched");
+    bar.textContent = `🚨 ${activeEmergency.title} (+${activeEmergency.reward}₺ • ${Math.ceil(activeEmergency.timeLeft)}sn) — Dokun Sevk Et ✕`;
   }
 
   // =========================================================================
@@ -1387,6 +1394,7 @@ window.MechanicsV23 = (function () {
     setTouchDir,
     isDriving: () => bossDrive.active,
     dispatchEmergency,
+    dismissEmergencyBanner,
     startNewAuction,
     updateV23,
     onDayRollover,

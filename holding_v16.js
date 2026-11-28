@@ -158,11 +158,18 @@ window.HoldingV16 = (function () {
     }
   ];
 
-  // 4) KURUMSAL KREDİ PAKETLERİ
+  // 4) KURUMSAL KREDİ PAKETLERİ (Mevcut 3 Tutar Korundu + 7 Yeni Esnek Tutar Eklendi!)
   const LOAN_OFFERS = [
+    { key: "micro", name: "💵 Esnaf Can Suyu Kredisi", amount: 5000, days: 4, dailyPay: 1400, desc: "Anında 5.000 ₺ nakit • 4 gün x 1.400 ₺ taksit." },
     { key: "kobi", name: "💳 KOBİ Büyüme Kredisi", amount: 15000, days: 5, dailyPay: 3450, desc: "Anında 15.000 ₺ nakit • 5 gün x 3.450 ₺ taksit." },
+    { key: "commercial", name: "🏪 Ticari Gelişim Kredisi", amount: 30000, days: 5, dailyPay: 6800, desc: "Anında 30.000 ₺ nakit • 5 gün x 6.800 ₺ taksit." },
     { key: "growth", name: "🏦 Tesis Yatırım Kredisi", amount: 55000, days: 6, dailyPay: 10500, desc: "Anında 55.000 ₺ nakit • 6 gün x 10.500 ₺ taksit." },
-    { key: "mega", name: "👑 Holding Mega Kredisi", amount: 220000, days: 8, dailyPay: 31500, desc: "Anında 220.000 ₺ nakit • 8 gün x 31.500 ₺ taksit." }
+    { key: "deed", name: "🏬 AVM & Arsa Tapu Kredisi", amount: 110000, days: 7, dailyPay: 18000, desc: "Anında 110.000 ₺ nakit • 7 gün x 18.000 ₺ taksit." },
+    { key: "mega", name: "👑 Holding Mega Kredisi", amount: 220000, days: 8, dailyPay: 31500, desc: "Anında 220.000 ₺ nakit • 8 gün x 31.500 ₺ taksit." },
+    { key: "project", name: "🏨 Dev Proje & Otel Kredisi", amount: 500000, days: 9, dailyPay: 64000, desc: "Anında 500.000 ₺ nakit • 9 gün x 64.000 ₺ taksit." },
+    { key: "industry", name: "⚓ Liman & Sanayi Kredisi", amount: 1000000, days: 10, dailyPay: 116000, desc: "Anında 1.000.000 ₺ nakit • 10 gün x 116.000 ₺ taksit." },
+    { key: "global", name: "✈️ Uluslararası Yatırım Kredisi", amount: 2500000, days: 12, dailyPay: 242000, desc: "Anında 2.500.000 ₺ nakit • 12 gün x 242.000 ₺ taksit." },
+    { key: "empire_synd", name: "💎 İmparatorluk Sendikasyon Kredisi", amount: 5000000, days: 14, dailyPay: 415000, desc: "Anında 5.000.000 ₺ nakit • 14 gün x 415.000 ₺ taksit." }
   ];
 
   // 5) VIP PRESTİJ & HELİKOPTER / YAT / GENEL MERKEZ KATALOĞU (ŞAHSİ CÜZDANDAN!)
@@ -924,11 +931,18 @@ window.HoldingV16 = (function () {
           <button id="btnPayoffLoan" class="up-buy-btn" style="width:100%; margin-top:8px;">Krediyi Erken Kapat (${payoff.toLocaleString("tr-TR")} ₺)</button>
         `;
       } else {
+        html += `<p style="font-size:12px; color:#cbd5e1; margin-bottom:6px;">İhtiyacına uygun tutarı seç; anında <strong>Şirket Kasasına</strong> yatsın, günlük taksitle ödensin:</p>`;
         LOAN_OFFERS.forEach((ln) => {
+          const fmtAmt = ln.amount >= 1000000
+            ? `${(ln.amount / 1000000).toLocaleString("tr-TR")}M ₺`
+            : `${(ln.amount / 1000).toLocaleString("tr-TR")}B ₺`;
           html += `
             <div class="upgrade-card" style="margin-top:6px;">
-              <div class="up-info"><h3>${ln.name}</h3><p>${ln.desc}</p></div>
-              <button class="up-buy-btn loan-take-btn" data-lkey="${ln.key}">Çek</button>
+              <div class="up-info">
+                <h3>${ln.name} <span style="color:#4ade80; font-size:13px;">(+${ln.amount.toLocaleString("tr-TR")} ₺)</span></h3>
+                <p>${ln.desc}</p>
+              </div>
+              <button class="up-buy-btn loan-take-btn" data-lkey="${ln.key}" style="min-width:74px;">+${fmtAmt}</button>
             </div>
           `;
         });

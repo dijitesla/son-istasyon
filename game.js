@@ -153,11 +153,36 @@
     }
   } catch (_) {}
 
-  function saveGame() {
+  let saveTimer = null;
+  let saveDirty = false;
+  function flushSaveNow() {
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+    }
+    if (!saveDirty) return;
+    saveDirty = false;
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(data));
     } catch (_) {}
   }
+
+  function saveGame(immediate = false) {
+    saveDirty = true;
+    if (immediate) {
+      flushSaveNow();
+      return;
+    }
+    if (!saveTimer) {
+      saveTimer = setTimeout(flushSaveNow, 1200);
+    }
+  }
+
+  window.addEventListener("pagehide", flushSaveNow);
+  window.addEventListener("beforeunload", flushSaveNow);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") flushSaveNow();
+  });
 
   if (M23) M23.applyBrandThemeToDOM(data);
 
@@ -385,11 +410,32 @@
   let pendingNextSpecialDayTitle = null;
 
   let toastTimer = null;
+  let dismissedEffectKey = "";
+  let dismissedHintText = "";
+  let lastKnownHintText = "";
   function showToast(msg) {
-    el.toastBanner.textContent = msg;
+    el.toastBanner.textContent = `${msg}  ✕`;
     el.toastBanner.classList.remove("hidden");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.toastBanner.classList.add("hidden"), 2800);
+  }
+  if (el.toastBanner) {
+    el.toastBanner.addEventListener("click", () => {
+      clearTimeout(toastTimer);
+      el.toastBanner.classList.add("hidden");
+    });
+  }
+  if (el.activeEffectBar) {
+    el.activeEffectBar.addEventListener("click", () => {
+      dismissedEffectKey = el.activeEffectBar.dataset.effKey || "dismissed";
+      el.activeEffectBar.classList.add("hidden");
+    });
+  }
+  if (el.liveHintText && el.liveHintText.parentElement) {
+    el.liveHintText.parentElement.addEventListener("click", () => {
+      dismissedHintText = el.liveHintText.textContent || "dismissed";
+      el.liveHintText.parentElement.classList.add("hidden");
+    });
   }
 
   // =========================================================================
@@ -580,7 +626,22 @@
     }
   }
 
-  function updateHUD() {
+  let lastHudMs = 0;
+  function updateHUD(force = true) {
+    const nowMs = performance.now();
+    if (!force && nowMs - lastHudMs < 180) return;
+    lastHudMs = nowMs;
+
+    if (el.liveHintText && el.liveHintText.parentElement) {
+      const curHint = el.liveHintText.textContent || "";
+      if (curHint !== lastKnownHintText) {
+        lastKnownHintText = curHint;
+        if (curHint !== dismissedHintText) {
+          el.liveHintText.parentElement.classList.remove("hidden");
+        }
+      }
+    }
+
     el.cashText.textContent = formatCompactMoney(data.cash);
     el.fuelStockText.textContent = `${Math.round(data.fuelStock)}`;
     el.repText.textContent = `${Math.round(data.reputation)}`;
@@ -622,11 +683,18 @@
       if (M23.isLandInspected(activeLand)) activeMsgs.push("📣 Teftiş 2x");
     }
 
+    const effKey = activeMsgs.map((m) => m.replace(/\d+sn/g, "")).join("|");
     if (activeMsgs.length > 0) {
-      el.activeEffectBar.textContent = activeMsgs.join(" • ");
-      el.activeEffectBar.classList.remove("hidden");
-      el.activeEffectBar.classList.toggle("danger", isDanger);
+      el.activeEffectBar.dataset.effKey = effKey;
+      if (effKey !== dismissedEffectKey) {
+        el.activeEffectBar.textContent = `${activeMsgs.join(" • ")} ✕`;
+        el.activeEffectBar.classList.remove("hidden");
+        el.activeEffectBar.classList.toggle("danger", isDanger);
+      } else {
+        el.activeEffectBar.classList.add("hidden");
+      }
     } else {
+      dismissedEffectKey = "";
       el.activeEffectBar.classList.add("hidden");
     }
 
@@ -1321,9 +1389,9 @@
           }
         }
 
-        if (waitingStory.isRareEmergency && waitingStory.managerWait < 45) {
+        if (waitingStory.isRareEmergency && !waitingStory.managerDismissed && waitingStory.managerWait < 45) {
           managerAlertTargetCar = waitingStory;
-          el.managerAlertBar.textContent = `🚨 ÇOK ACİL — MÜDÜR KEMAL: İstasyonda büyük güvenlik krizi var! Müsait olunca dokun!`;
+          el.managerAlertBar.textContent = `🚨 MÜDÜR KEMAL: İstasyonda acil kriz var! Dokun Kapat / Çöz ✕`;
           el.managerAlertBar.classList.remove("hidden");
           if (!waitingStory.managerNotified) {
             waitingStory.managerNotified = true;
@@ -1956,7 +2024,7 @@
     });
     floatingTexts = floatingTexts.filter((ft) => ft.life > 0);
 
-    updateHUD();
+    updateHUD(false);
   }
 
   function completeOneMarketSale() {
@@ -2045,6 +2113,15 @@
         policeCruiser,
         workers,
         shoppers,
+        marketQueue,
+        marketProgress,
+        restaurantQueue,
+        restaurantProgress,
+        motelQueue,
+        motelOccupants,
+        motelProgress,
+        maxMotel: maxMotelRooms(),
+        pointerHeldLpg,
         floatingTexts,
         powerOutage,
         maxFuel: maxFuelCapacity()
@@ -2404,37 +2481,142 @@
     handleLogicalMapTap(getLogicalCoords(e));
   });
 
-  // Gerçek 3D Sahne Dokunma (Raycast), Sürükle-Kaydır (Pan) ve Yakınlaştırma Kontrolleri!
+  // v27.0 GERÇEK ÇOKLU DOKUNMATİK (MULTI-TOUCH) 3D KAMERA KONTROLLERİ:
+  // - Tek Parmak / Sol Tık Sürükle: 1:1 Zemine Kilitli Kaydırma (Sıfır Gecikme!)
+  // - İki Parmak Kıstır / Aç (Pinch): Kesintisiz Yakınlaştırma & Uzaklaştırma
+  // - İki Parmak Çevir (Twist): Serbest 360° İstediğin Açıdan Döndürme
+  // - İki Parmak Dikey Kaydır (veya Mac/Windows Sağ Tık / Shift+Sürükle): Dikey Bakış Açısı (Eğim) & 360° Döndürme!
   if (el.threeCanvas && is3DActive) {
-    let dragStart = null;
-    let lastPos = null;
-    let movedDist = 0;
+    const activePointers = new Map();
+    let tapStart = null;
+    let prevTwoFinger = null;
+
+    const getTwoFingerMetrics = () => {
+      const pts = Array.from(activePointers.values());
+      const p1 = pts[0];
+      const p2 = pts[1];
+      return {
+        midX: (p1.x + p2.x) * 0.5,
+        midY: (p1.y + p2.y) * 0.5,
+        dist: Math.hypot(p2.x - p1.x, p2.y - p1.y),
+        ang: Math.atan2(p2.y - p1.y, p2.x - p1.x)
+      };
+    };
+
+    const syncNearLand = () => {
+      if (E3D.getFocusedLand) {
+        const nearLand = E3D.getFocusedLand();
+        if (nearLand && nearLand !== activeLand) syncActiveLandFromCamera(nearLand);
+      }
+    };
+
+    el.threeCanvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
     el.threeCanvas.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       if (reportPaused) return;
-      dragStart = { x: e.clientX, y: e.clientY };
-      lastPos = { x: e.clientX, y: e.clientY };
-      movedDist = 0;
+      try {
+        el.threeCanvas.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+      if (activePointers.size === 1) {
+        tapStart = {
+          x: e.clientX,
+          y: e.clientY,
+          moved: 0,
+          multiTouchUsed: false,
+          button: e.button || 0
+        };
+        prevTwoFinger = null;
+      } else if (activePointers.size >= 2) {
+        if (tapStart) tapStart.multiTouchUsed = true;
+        pointerHeldPump = -1;
+        pointerHeldLpg = false;
+        prevTwoFinger = getTwoFingerMetrics();
+      }
     });
 
     el.threeCanvas.addEventListener("pointermove", (e) => {
-      if (!lastPos) return;
-      const dx = e.clientX - lastPos.x;
-      const dy = e.clientY - lastPos.y;
-      movedDist += Math.hypot(dx, dy);
-      if (movedDist > 8) {
-        E3D.panBy(dx, dy);
-        if (E3D.getFocusedLand) {
-          const nearLand = E3D.getFocusedLand();
-          if (nearLand && nearLand !== activeLand) syncActiveLandFromCamera(nearLand);
+      if (!activePointers.has(e.pointerId)) return;
+      const prevPt = activePointers.get(e.pointerId);
+      const curPt = { x: e.clientX, y: e.clientY };
+      activePointers.set(e.pointerId, curPt);
+
+      if (activePointers.size >= 2) {
+        if (tapStart) tapStart.multiTouchUsed = true;
+        const curTwo = getTwoFingerMetrics();
+        if (prevTwoFinger) {
+          // 1) İki Parmak Yakınlaştırma / Uzaklaştırma (Pinch-to-Zoom)
+          if (curTwo.dist > 14 && prevTwoFinger.dist > 14 && E3D.zoomByFactor) {
+            E3D.zoomByFactor(prevTwoFinger.dist / curTwo.dist);
+          }
+          // 2) İki Parmak Serbest 360° Döndürme (Twist-to-Rotate)
+          let dAng = curTwo.ang - prevTwoFinger.ang;
+          while (dAng > Math.PI) dAng -= Math.PI * 2;
+          while (dAng < -Math.PI) dAng += Math.PI * 2;
+          if (Math.abs(dAng) > 0.002 && curTwo.dist > 22 && E3D.rotateBy) {
+            E3D.rotateBy(dAng);
+          }
+          // 3) İki Parmak Dikey Bakış Açısı (Eğim) veya Orta Nokta Kaydırma
+          const dMidX = curTwo.midX - prevTwoFinger.midX;
+          const dMidY = curTwo.midY - prevTwoFinger.midY;
+          if (
+            Math.abs(dAng) < 0.022 &&
+            Math.abs(curTwo.dist - prevTwoFinger.dist) < 4.5 &&
+            Math.abs(dMidY) > Math.abs(dMidX) * 1.4 &&
+            E3D.tiltBy
+          ) {
+            E3D.tiltBy(dMidY * 0.0055);
+          } else if (E3D.panByScreen) {
+            E3D.panByScreen(prevTwoFinger.midX, prevTwoFinger.midY, curTwo.midX, curTwo.midY);
+          }
+          syncNearLand();
         }
+        prevTwoFinger = curTwo;
+        return;
       }
-      lastPos = { x: e.clientX, y: e.clientY };
+
+      // Tek Parmak veya Fare Sürüklemesi
+      const dx = curPt.x - prevPt.x;
+      const dy = curPt.y - prevPt.y;
+      if (tapStart) tapStart.moved += Math.hypot(dx, dy);
+
+      const isOrbitDrag =
+        (tapStart && (tapStart.button === 2 || tapStart.button === 1)) ||
+        e.buttons === 2 ||
+        e.buttons === 4 ||
+        e.shiftKey ||
+        e.altKey;
+
+      if (isOrbitDrag) {
+        // Bilgisayarda Sağ Tık / Orta Tuş / Shift+Sürükle / Alt+Sürükle ile Serbest 360° Döndürme & Eğim!
+        if (E3D.rotateBy) E3D.rotateBy(dx * 0.0075);
+        if (E3D.tiltBy) E3D.tiltBy(dy * 0.0055);
+      } else if (!tapStart || (!tapStart.multiTouchUsed && tapStart.moved > 5)) {
+        if (E3D.panByScreen) {
+          E3D.panByScreen(prevPt.x, prevPt.y, curPt.x, curPt.y);
+        } else {
+          E3D.panBy(dx, dy);
+        }
+        syncNearLand();
+      }
     });
 
     const finish3DPointer = (e) => {
-      if (dragStart && movedDist <= 10 && !reportPaused) {
+      const isCleanTap =
+        e.type === "pointerup" &&
+        tapStart &&
+        !tapStart.multiTouchUsed &&
+        tapStart.button === 0 &&
+        tapStart.moved <= 10 &&
+        activePointers.size === 1 &&
+        !reportPaused;
+
+      activePointers.delete(e.pointerId);
+      prevTwoFinger = activePointers.size >= 2 ? getTwoFingerMetrics() : null;
+
+      if (isCleanTap) {
         if (E3D.screenToWorldHit) {
           const hit = E3D.screenToWorldHit(e.clientX, e.clientY);
           if (hit.landId && hit.landId !== activeLand) syncActiveLandFromCamera(hit.landId);
@@ -2444,23 +2626,35 @@
           handleLogicalMapTap(pt, activeLand);
         }
       }
-      dragStart = null;
-      lastPos = null;
-      pointerHeldPump = -1;
-      pointerHeldLpg = false;
+
+      if (activePointers.size === 0) {
+        tapStart = null;
+        pointerHeldPump = -1;
+        pointerHeldLpg = false;
+      }
     };
 
     el.threeCanvas.addEventListener("pointerup", finish3DPointer);
-    el.threeCanvas.addEventListener("pointercancel", () => {
-      dragStart = null;
-      lastPos = null;
-      pointerHeldPump = -1;
-      pointerHeldLpg = false;
-    });
-    el.threeCanvas.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      E3D.zoomBy(e.deltaY > 0 ? 0.1 : -0.1);
-    }, { passive: false });
+    el.threeCanvas.addEventListener("pointercancel", finish3DPointer);
+
+    // Mac Trackpad İki Parmak Kıstırma (ctrlKey) + Fare Tekerleği + Shift+Tekerlek Döndürme!
+    el.threeCanvas.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        if (e.ctrlKey && E3D.zoomByFactor) {
+          E3D.zoomByFactor(Math.exp(e.deltaY * 0.011));
+        } else if ((e.shiftKey || e.altKey) && E3D.rotateBy) {
+          const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+          E3D.rotateBy(d * 0.0045);
+        } else if (E3D.zoomByFactor) {
+          E3D.zoomByFactor(e.deltaY > 0 ? 1.085 : 0.92);
+        } else {
+          E3D.zoomBy(e.deltaY > 0 ? 0.1 : -0.1);
+        }
+      },
+      { passive: false }
+    );
   }
 
   if (el.btnCamZoomIn) {
@@ -3373,10 +3567,9 @@
   }
   if (el.cityEmergencyBar && M23) {
     el.cityEmergencyBar.addEventListener("click", () => {
-      const st = M23.get3DRenderState(data);
-      const targetLid = st.pendingEmergencyLand ? st.pendingEmergencyLand.landId : null;
       M23.dispatchEmergency(data, v23Helpers, false);
-      if (targetLid && !M23.isDriving()) switchLand(targetLid);
+      if (M23.dismissEmergencyBanner) M23.dismissEmergencyBanner();
+      el.cityEmergencyBar.classList.add("hidden");
     });
   }
   [
@@ -3437,12 +3630,17 @@
     });
   }
 
-  el.managerAlertBar.addEventListener("click", () => {
-    switchLand("station");
-    if (managerAlertTargetCar && managerAlertTargetCar.state === "story_wait") {
-      openStoryEncounter(managerAlertTargetCar);
-    }
-  });
+  if (el.managerAlertBar) {
+    el.managerAlertBar.addEventListener("click", () => {
+      if (managerAlertTargetCar) managerAlertTargetCar.managerDismissed = true;
+      el.managerAlertBar.classList.add("hidden");
+      if (activeLand === "station" && managerAlertTargetCar && managerAlertTargetCar.state === "story_wait") {
+        openStoryEncounter(managerAlertTargetCar);
+      } else if (managerAlertTargetCar && managerAlertTargetCar.state === "story_wait") {
+        managerAlertTargetCar.managerWait = 99;
+      }
+    });
+  }
 
   el.openCityBtn.addEventListener("click", () => {
     sfx.tap();
@@ -3721,7 +3919,7 @@
       daily: createEmptyDailyStats(),
       empire: emp
     });
-    saveGame();
+    saveGame(true);
   }
 
   function launchIntoMap(welcomeMsg) {
@@ -3857,7 +4055,7 @@
     if (emp.v16) {
       emp.v16.vipAssets = { yacht: true, helicopter: true, hq: true };
     }
-    saveGame();
+    saveGame(true);
   }
 
   // URL parametresi (?kayit=son-durum veya ?kayit=yan-arazi) varsa doğrudan aç; normal açılışta yeni v17.0 Sinematik Kapağı göster!

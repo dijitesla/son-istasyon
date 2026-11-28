@@ -9,7 +9,7 @@
 - Yerel görsel/video yapay zekâ modeli önerme veya kurma.
 - Uydurma veri, fiyat veya sonuç yazma.
 
-## Proje Özeti: Son İstasyon (v25.0 — Tam Ekran 3D Şehir, 14 Farklı Arazi Yapısı, Malikane, Liman & Kulüp)
+## Proje Özeti: Son İstasyon (v27.0 — Akıcı 60 FPS, İki Parmak Zoom & 360° Döndürme, İç Müşteri Görünürlüğü & 10 Kredi Paketi)
 - **Canlı Oyun Linki (GitHub Pages):** https://dijitesla.github.io/son-istasyon/
 - **Son Test İlerlemesiyle Doğrudan Açılış Linki:** https://dijitesla.github.io/son-istasyon/?kayit=son-durum
 - **GitHub Deposu:** https://github.com/dijitesla/son-istasyon
@@ -106,8 +106,16 @@
     - **Ekstra Gerçekçi 3D Grafikler:** Gökyüzünde süzülen 3D bulut kümeleri, altın gün batımı kenar ışığı (`rimLight`), her aracın altında yumuşak temas gölgesi + gece asfalta vuran far hüzmeleri, hareketli deniz dalgaları, pompa koruma dubaları, lastik izli asfalt şeridi, pompadan araca bağlanan **canlı 3D yakıt dolum hortumu** ve Restoran/Fırın bacalarından yükselen sıcak duman eklendi.
     - **Android APK Otomasyonu:** GitHub Actions üzerinden dikey kilitli, çevrimdışı çalışan **Android APK (`Son-Istasyon-v26.0.apk`)** üretim hattı kuruldu.
 
-## 📌 Diğer Bilgisayardaki Asistana Devir Notu (26 Kasım — v25.0 Son Durum)
-- **Mevcut Sürüm:** **v25.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
+  - **v27.0 Akıcı 60 FPS Performans, İki Parmak Kamera, İç Müşteri Görünürlüğü, Sığan/Kapanan Uyarılar & 10 Banka Kredisi (`engine3d.js`, `game.js`, `holding_v16.js`, `mechanics_v23.js`, `style.css`, `index.html`):**
+    1. **⚡ 60 FPS Akıcılık & Sıfır Gecikme:** Şekil bazlı sıfır tahsisli (zero-alloc) 3D araç ve karakter havuzları, paylaşımlı geometri önbelleği, akıllı ekran-dışı mesafe gizleme (off-screen culling), tek aşamalı hızlı kamera takibi, kısıtlanmış DOM HUD güncellemesi ve gecikmesiz arka plan kaydı (`saveGame`) ile kasma ve dokunma gecikmesi tamamen giderildi.
+    2. **🤌 Gerçek İki Parmak Yakınlaştırma & Serbest 360° Döndürme:** Eski `➕`, `➖`, `🔄` tuşları kaldırıldı; tek parmak 1:1 zemine kilitli kaydırma, **iki parmak kıstır/aç yakınlaştırma (pinch-to-zoom)**, **iki parmak çevirerek serbest 360° döndürme (twist-to-rotate)** ve iki parmak dikey eğim (Mac/Windows'ta fare tekerleği / trackpad kıstırma + sağ tık veya `Shift+Sürükle` serbest döndürme) eklendi.
+    3. **🏪 Market, Restoran, Motel ve Servislerde Müşteri Görünürlüğü:** Market, Restoran ve Motel önüne şeffaf ışıklı 3D cam vitrinler + taş meydan eklendi; içeride müşteri varken vitrin ve Motel 2. kat oda pencereleri sıcak sarı yanar, 3D müşteriler kasa/şemsiyeli masa/resepsiyon önünde görünür ve üstlerinde canlı müşteri sayısı + ilerleme çubuğu (`🛒 MARKET: X Müşteri`, `🍽️ RESTORAN: X Müşteri`, `🏨 MOTEL: X/Y Dolu`, `⚡/🚿/🔧/⚖️/🔵`) yazar.
+    4. **🚨 Ekrana Tam Sığan & Dokununca Kapanan Uyarılar:** Acil durum uyarısının sağa taşmasına yol açan `transform` çakışması giderildi; tüm gelen uyarılar (`#cityEmergencyBar`, `#toastBanner`, `#managerAlertBar`, `#activeEffectBar`, alt ipucu çubuğu) 9:16 ekrana tam sığar ve **üzerine dokunulduğu anda kapanır**.
+    5. **🏦 10 Farklı Banka Kredisi Tutarı:** Mevcut `15.000 ₺`, `55.000 ₺` ve `220.000 ₺` kredileri korundu; `5.000 ₺`, `30.000 ₺`, `110.000 ₺`, `500.000 ₺`, `1.000.000 ₺`, `2.500.000 ₺` ve `5.000.000 ₺` tutarlarında 7 yeni kredi eklendi.
+    6. **✨ Gelişmiş 3D Grafikler:** 256px keskin asfalt ve taş meydan dokuları, gece yıldızlı gökyüzü kubbesi, araç yan aynaları, kesintisiz LED arka stop şeridi ve taksilerde ışıklı sarı `TAKSİ` tepe tabelası eklendi.
+
+## 📌 Diğer Bilgisayardaki Asistana Devir Notu (28 Kasım — v27.0 Son Durum)
+- **Mevcut Sürüm:** **v27.0** — tüm dosyalar `main` dalına yüklendi ve sözdizimi + çalışma zamanı testlerinden **0 hata** ile geçti.
 - **Bu Oturumda Tamamlanan Büyük Dönüşüm (v22.0 -> v25.0):**
   1. **6 Yeni Canlı Mekanik (`v23.0`, `mechanics_v23.js`):** 3D Patron Aracı Sürüşü (`WASD`/Oklar + Mobil D-Pad + `📣 2x Hız Teftiş`), Canlı Akaryakıt Fiyat Rekabeti (3D Totem senkronlu), 3D Ambulans/İtfaiye Acil Müdahale, Süreli Dev İhaleler, Kendi Marka Adını & Neon Rengini 3D Tabelalara Basma ve Çalışan Morali / Bayram İkramiyesi (%150 hız).
   2. **Tam Ekran Görüntüleme, Şehir Radarı & 4 Yeni Bölge (`v24.0`, `city_v24.js`, `style.css`):** Dar `450px` kutu kaldırılıp Mac/Windows ve yatay/dikey telefonda **%100 Tam Ekran 3D Şehir** görünümüne geçildi; sol üste tek dokunuşla ışınlayan **Kuşbakışı Şehir Radarı** eklendi. Kuzeye **3D Patron Malikanesi Tepesi**, güneye **Mavi Deniz, Marina & 3D Kargo Gemili İhracat Limanı**, stadyuma **Kendi Futbol Kulübün (`<MARKA> SK`)** ve caddelere **8 Araçlık Sarı Taksi & Dolmuş Filosu** eklendi.

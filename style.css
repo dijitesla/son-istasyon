@@ -275,11 +275,11 @@ html, body {
   right: 8px;
   left: auto;
   transform: none;
-  max-width: calc(100% - 140px);
+  max-width: calc(100% - 138px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  background: rgba(15, 23, 42, 0.84);
+  background: rgba(15, 23, 42, 0.88);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1.5px solid rgba(250, 204, 21, 0.65);
@@ -288,8 +288,9 @@ html, body {
   font-size: 10.5px;
   font-weight: 900;
   color: #fef08a;
-  z-index: 15;
-  pointer-events: none;
+  z-index: 18;
+  pointer-events: auto;
+  cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 }
 .floating-effect-pill.danger {
@@ -354,24 +355,29 @@ html, body {
 .floating-hint-pill {
   position: absolute;
   bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: calc(100% - 20px);
-  background: rgba(9, 14, 28, 0.8);
+  left: 44px;
+  right: 50px;
+  width: auto;
+  max-width: none;
+  transform: none;
+  background: rgba(9, 14, 28, 0.84);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 999px;
-  padding: 5px 12px;
-  font-size: 11px;
+  padding: 5px 10px;
+  font-size: 10.8px;
   font-weight: 800;
   color: #fde68a;
+  text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   z-index: 14;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
+.floating-hint-pill.hidden { display: none; }
 
 .cat-pill {
   display: inline-block;
@@ -516,21 +522,28 @@ html, body {
 
 .manager-alert-bar {
   position: absolute;
-  top: 40px;
-  left: 10px;
-  right: 68px;
-  background: linear-gradient(90deg, rgba(185, 28, 28, 0.94), rgba(234, 88, 12, 0.94));
+  top: 112px;
+  left: 8px;
+  right: 52px;
+  width: auto;
+  max-width: none;
+  transform: none;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, rgba(185, 28, 28, 0.95), rgba(234, 88, 12, 0.95));
   color: #fff;
   border: 1.8px solid #fde047;
   border-radius: 12px;
   padding: 7px 10px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 900;
+  line-height: 1.28;
   text-align: center;
+  white-space: normal;
+  word-break: break-word;
   cursor: pointer;
-  z-index: 17;
+  z-index: 23;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
-  animation: pulseWarn 0.95s infinite;
+  animation: emergencyGlow 1.1s infinite;
 }
 
 .manager-alert-bar.hidden { display: none; }
@@ -839,24 +852,32 @@ html, body {
 .dock-title { font-size: 13.5px; font-weight: 900; text-align: center; }
 .dock-sub { font-size: 11.5px; font-weight: 700; color: #fde68a; }
 
-/* ÜST BİLDİRİM BALONU (BÜYÜK YAZI) */
+/* ÜST BİLDİRİM BALONU (EKRANA TAM SIĞAR • DOKUNUNCA HEMEN KAPANIR!) */
 .toast-banner {
   position: absolute;
-  top: 98px;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 92%;
-  background: #0f172a;
+  top: 96px;
+  left: 10px;
+  right: 10px;
+  width: auto;
+  max-width: none;
+  transform: none;
+  box-sizing: border-box;
+  background: rgba(15, 23, 42, 0.96);
   color: #fde68a;
-  border: 2.5px solid var(--amber);
-  border-radius: 14px;
-  padding: 9px 16px;
-  font-size: 14.5px;
+  border: 2px solid var(--amber);
+  border-radius: 13px;
+  padding: 8px 12px;
+  font-size: 13px;
   font-weight: 900;
+  line-height: 1.3;
   text-align: center;
+  white-space: normal;
+  word-break: break-word;
   z-index: 60;
+  cursor: pointer;
+  pointer-events: auto;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75);
-  transition: opacity 0.25s;
+  transition: opacity 0.2s;
 }
 
 .toast-banner.hidden { opacity: 0; pointer-events: none; }
@@ -1415,25 +1436,41 @@ html, body {
   box-shadow: 0 0 14px rgba(34, 197, 94, 0.75);
 }
 
+@keyframes emergencyGlow {
+  0%, 100% {
+    border-color: #fef08a;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65), 0 0 8px rgba(250, 204, 21, 0.35);
+  }
+  50% {
+    border-color: #ef4444;
+    box-shadow: 0 6px 22px rgba(239, 68, 68, 0.6), 0 0 16px rgba(254, 240, 138, 0.7);
+  }
+}
+
 .city-emergency-bar {
   position: absolute;
-  top: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 18px);
-  max-width: 410px;
+  top: 112px;
+  left: 8px;
+  right: 52px;
+  width: auto;
+  max-width: none;
+  transform: none;
+  box-sizing: border-box;
   background: linear-gradient(90deg, rgba(185, 28, 28, 0.96), rgba(127, 29, 29, 0.96));
   border: 2px solid #fef08a;
   border-radius: 12px;
-  padding: 8px 12px;
+  padding: 7px 10px;
   color: #ffffff;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 900;
+  line-height: 1.28;
   text-align: center;
-  z-index: 22;
+  white-space: normal;
+  word-break: break-word;
+  z-index: 24;
   cursor: pointer;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.65);
-  animation: pulseWarn 0.95s infinite;
+  animation: emergencyGlow 0.95s infinite;
 }
 
 .city-emergency-bar.dispatched {
